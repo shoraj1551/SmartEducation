@@ -328,7 +328,55 @@ mobileOtpForm.addEventListener('submit', async (e) => {
     }
 });
 
-// ... (close modal handlers remain same) ...
+// Open Modals
+signInBtn.addEventListener('click', () => showModal(signInModal));
+signUpBtn.addEventListener('click', () => showModal(signUpModal));
+getStartedBtn.addEventListener('click', () => showModal(signUpModal));
+
+// Close Modals
+closeSignIn.addEventListener('click', () => hideModal(signInModal));
+closeSignUp.addEventListener('click', () => hideModal(signUpModal));
+closeOtp.addEventListener('click', () => hideModal(otpModal));
+closeEmailOtp.addEventListener('click', () => hideModal(emailOtpModal));
+closeMobileOtp.addEventListener('click', () => hideModal(mobileOtpModal));
+closeForgotPassword.addEventListener('click', () => hideModal(forgotPasswordModal));
+closeResetPassword.addEventListener('click', () => hideModal(resetPasswordModal));
+
+// Switch Modals
+switchToSignUp.addEventListener('click', (e) => {
+    e.preventDefault();
+    hideModal(signInModal);
+    showModal(signUpModal);
+});
+
+switchToSignIn.addEventListener('click', (e) => {
+    e.preventDefault();
+    hideModal(signUpModal);
+    showModal(signInModal);
+});
+
+forgotPasswordLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    hideModal(signInModal);
+    showModal(forgotPasswordModal);
+});
+
+backToSignIn.addEventListener('click', (e) => {
+    e.preventDefault();
+    hideModal(forgotPasswordModal);
+    showModal(signInModal);
+});
+
+// Close modal when clicking outside
+window.addEventListener('click', (e) => {
+    if (e.target === signInModal) hideModal(signInModal);
+    if (e.target === signUpModal) hideModal(signUpModal);
+    if (e.target === otpModal) hideModal(otpModal);
+    if (e.target === emailOtpModal) hideModal(emailOtpModal);
+    if (e.target === mobileOtpModal) hideModal(mobileOtpModal);
+    if (e.target === forgotPasswordModal) hideModal(forgotPasswordModal);
+    if (e.target === resetPasswordModal) hideModal(resetPasswordModal);
+});
 
 // Sign Up Handler
 signUpForm.addEventListener('submit', async (e) => {
@@ -613,5 +661,5 @@ document.addEventListener('mousemove', (e) => {
     });
 });
 
-console.log('SmartEducation - Welcome! 🚀 (v3)');
+console.log('SmartEducation - Welcome! 🚀 (v4)');
 console.log('API Base URL:', API_BASE_URL);
