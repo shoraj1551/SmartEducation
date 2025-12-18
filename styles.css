@@ -630,6 +630,126 @@ body {
     color: #764ba2;
 }
 
+/* ===== Password Toggle & Verification Styles ===== */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    padding-right: 3rem;
+    flex: 1;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    font-size: 1.2rem;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+}
+
+.password-toggle:hover {
+    opacity: 0.7;
+}
+
+.password-hint {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.password-match-status {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.password-match-status.match {
+    color: #4ade80;
+}
+
+.password-match-status.no-match {
+    color: #f87171;
+}
+
+/* Input with Button (for inline verification) */
+.input-with-button {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.input-with-button input {
+    flex: 1;
+}
+
+.btn-verify {
+    padding: 0.75rem 1.25rem;
+    background: var(--accent-gradient);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+}
+
+.btn-verify:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-verify:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+}
+
+.btn-verify.verified {
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+}
+
+.btn-verify .verify-icon {
+    display: none;
+}
+
+.btn-verify.verified .verify-text {
+    display: none;
+}
+
+.btn-verify.verified .verify-icon {
+    display: inline;
+}
+
+.verification-status {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.verification-status.verified {
+    color: #4ade80;
+}
+
+.verification-status.pending {
+    color: #fbbf24;
+}
+
+.verification-status.error {
+    color: #f87171;
+}
+
 /* ===== Responsive Design ===== */
 @media (max-width: 768px) {
     .brand-name {

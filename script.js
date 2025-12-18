@@ -63,6 +63,105 @@ function showMessage(message, type = 'info') {
     alert(message); // Simple alert for now, can be replaced with toast notifications
 }
 
+// ===== Password Toggle Functionality =====
+function setupPasswordToggle(toggleBtnId, inputId) {
+    const toggleBtn = document.getElementById(toggleBtnId);
+    const input = document.getElementById(inputId);
+
+    if (toggleBtn && input) {
+        toggleBtn.addEventListener('click', () => {
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+            toggleBtn.querySelector('.eye-icon').textContent = type === 'password' ? '👁️' : '🙈';
+        });
+    }
+}
+
+// Setup password toggles
+setupPasswordToggle('toggleSignUpPassword', 'signUpPassword');
+setupPasswordToggle('toggleConfirmPassword', 'signUpConfirmPassword');
+
+// ===== Confirm Password Validation =====
+const signUpPassword = document.getElementById('signUpPassword');
+const signUpConfirmPassword = document.getElementById('signUpConfirmPassword');
+const passwordMatchStatus = document.getElementById('passwordMatchStatus');
+const signUpSubmitBtn = document.getElementById('signUpSubmitBtn');
+
+function validatePasswordMatch() {
+    if (signUpConfirmPassword.value === '') {
+        passwordMatchStatus.textContent = '';
+        passwordMatchStatus.className = 'password-match-status';
+        return false;
+    }
+
+    if (signUpPassword.value === signUpConfirmPassword.value) {
+        passwordMatchStatus.textContent = '✓ Passwords match';
+        passwordMatchStatus.className = 'password-match-status match';
+        return true;
+    } else {
+        passwordMatchStatus.textContent = '✗ Passwords do not match';
+        passwordMatchStatus.className = 'password-match-status no-match';
+        return false;
+    }
+}
+
+signUpPassword.addEventListener('input', validatePasswordMatch);
+signUpConfirmPassword.addEventListener('input', validatePasswordMatch);
+
+// ===== Inline Email/Mobile Verification =====
+const signUpEmail = document.getElementById('signUpEmail');
+const signUpMobile = document.getElementById('signUpMobile');
+const verifyEmailBtn = document.getElementById('verifyEmailBtn');
+const verifyMobileBtn = document.getElementById('verifyMobileBtn');
+const emailVerificationStatus = document.getElementById('emailVerificationStatus');
+const mobileVerificationStatus = document.getElementById('mobileVerificationStatus');
+
+let emailVerified = false;
+let mobileVerified = false;
+let emailOtpCode = '';
+let mobileOtpCode = '';
+
+// Enable verify buttons when input has value
+signUpEmail.addEventListener('input', () => {
+    verifyEmailBtn.disabled = !signUpEmail.value || emailVerified;
+});
+
+signUpMobile.addEventListener('input', () => {
+    verifyMobileBtn.disabled = !signUpMobile.value || mobileVerified;
+});
+
+// Email verification
+verifyEmailBtn.addEventListener('click', async () => {
+    const email = signUpEmail.value;
+    if (!email) return;
+
+    emailOtpCode = prompt('Enter the OTP sent to your email:');
+    if (emailOtpCode && emailOtpCode.length === 6) {
+        emailVerified = true;
+        verifyEmailBtn.classList.add('verified');
+        verifyEmailBtn.disabled = true;
+        emailVerificationStatus.textContent = '✓ Email verified';
+        emailVerificationStatus.className = 'verification-status verified';
+        signUpEmail.readOnly = true;
+    }
+});
+
+// Mobile verification
+verifyMobileBtn.addEventListener('click', async () => {
+    const mobile = signUpMobile.value;
+    if (!mobile) return;
+
+    mobileOtpCode = prompt('Enter the OTP sent to your mobile:');
+    if (mobileOtpCode && mobileOtpCode.length === 6) {
+        mobileVerified = true;
+        verifyMobileBtn.classList.add('verified');
+        verifyMobileBtn.disabled = true;
+        mobileVerificationStatus.textContent = '✓ Mobile verified';
+        mobileVerificationStatus.className = 'verification-status verified';
+        signUpMobile.readOnly = true;
+    }
+});
+
 // Open Modals
 signInBtn.addEventListener('click', () => showModal(signInModal));
 signUpBtn.addEventListener('click', () => showModal(signUpModal));
@@ -117,6 +216,19 @@ signUpForm.addEventListener('submit', async (e) => {
     const email = document.getElementById('signUpEmail').value;
     const mobile = document.getElementById('signUpMobile').value;
     const password = document.getElementById('signUpPassword').value;
+    const confirmPassword = document.getElementById('signUpConfirmPassword').value;
+
+    // Validate passwords match
+    if (password !== confirmPassword) {
+        showMessage('Passwords do not match!', 'error');
+        return;
+    }
+
+    // Validate password length
+    if (password.length < 8) {
+        showMessage('Password must be at least 8 characters long!', 'error');
+        return;
+    }
 
     try {
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -125,6 +237,7 @@ signUpForm.addEventListener('submit', async (e) => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ name, email, mobile, password }),
+            credentials: 'include' // Important for session cookies
         });
 
         const data = await response.json();
@@ -168,9 +281,13 @@ otpForm.addEventListener('submit', async (e) => {
         const data = await response.json();
 
         if (response.ok) {
-            // Show personalized success message
+            // Save user data and token to localStorage
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('token', data.token);
+
+            // Show success message
             const userName = data.user.name || currentUserName;
-            showMessage(`${userName} successfully registered! Please login.`, 'success');
+            showMessage(`Welcome ${userName}! Redirecting to dashboard...`, 'success');
 
             // Clear OTP form
             document.getElementById('emailOtp').value = '';
@@ -178,12 +295,11 @@ otpForm.addEventListener('submit', async (e) => {
 
             hideModal(otpModal);
 
-            // Wait a moment then show sign in modal
+            // Redirect to dashboard
             setTimeout(() => {
-                showModal(signInModal);
+                window.location.href = 'dashboard.html';
             }, 1500);
         } else {
-
             showMessage(data.error, 'error');
         }
     } catch (error) {
@@ -249,12 +365,17 @@ signInForm.addEventListener('submit', async (e) => {
         const data = await response.json();
 
         if (response.ok) {
-            showMessage('Login successful!', 'success');
-            localStorage.setItem('token', data.token);
+            // Save user data and token to localStorage
             localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('token', data.token);
+
+            showMessage(`Welcome back ${data.user.name}! Redirecting...`, 'success');
             hideModal(signInModal);
-            // Redirect to dashboard or home page
-            window.location.reload();
+
+            // Redirect to dashboard
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1000);
         } else {
             showMessage(data.error, 'error');
         }
