@@ -5,6 +5,10 @@ const API_BASE_URL = 'http://localhost:5000/api';
 let currentUserId = null;
 let currentUserName = null;
 let currentPurpose = 'registration';
+let tempUserId = null; // Added missing declaration
+let emailVerified = false; // Added missing declaration
+let mobileVerified = false; // Added missing declaration
+
 
 // Modal elements
 const signInBtn = document.getElementById('signInBtn');
@@ -122,9 +126,8 @@ const verifyMobileBtn = document.getElementById('verifyMobileBtn');
 const emailVerificationStatus = document.getElementById('emailVerificationStatus');
 const mobileVerificationStatus = document.getElementById('mobileVerificationStatus');
 
-let emailVerified = false;
-let mobileVerified = false;
-let tempUserId = null; // Store temp user ID for inline verification
+// Variables moved to top of file
+
 
 // Enable verify buttons when input has value
 signUpEmail.addEventListener('input', () => {
