@@ -48,7 +48,7 @@ class OTP(db.Model):
     __tablename__ = 'otps'
     
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.String(100), nullable=False, index=True)  # Changed to String to support temp user IDs
     otp_code = db.Column(db.String(6), nullable=False)
     otp_type = db.Column(db.String(10), nullable=False)  # 'email' or 'mobile'
     purpose = db.Column(db.String(20), nullable=False)  # 'registration' or 'reset'

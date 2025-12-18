@@ -13,10 +13,14 @@ def create_app():
     app = Flask(__name__, static_folder='.')
     app.config.from_object(Config)
     
+    # Configure session for temporary user storage
+    app.config['SESSION_TYPE'] = 'filesystem'
+    app.config['SESSION_PERMANENT'] = False
+    
     # Initialize extensions
     db.init_app(app)
     mail.init_app(app)
-    CORS(app)
+    CORS(app, supports_credentials=True)
     
     # Register blueprints
     app.register_blueprint(auth_bp)

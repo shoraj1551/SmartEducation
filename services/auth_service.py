@@ -12,41 +12,57 @@ class AuthService:
     
     @staticmethod
     def register_user(name, email, mobile, password):
-        """Register a new user"""
-        # Check if user already exists
-        if User.query.filter_by(email=email).first():
+        """Register a new user - stores temporarily until OTP verification"""
+        from flask import session
+        from werkzeug.security import generate_password_hash
+        import secrets
+        
+        # Check if verified user already exists
+        existing_user = User.query.filter_by(email=email, is_verified=True).first()
+        if existing_user:
             return None, "Email already registered"
         
-        if User.query.filter_by(mobile=mobile).first():
+        existing_mobile = User.query.filter_by(mobile=mobile, is_verified=True).first()
+        if existing_mobile:
             return None, "Mobile number already registered"
         
-        # Create new user
-        user = User(
-            name=name,
-            email=email,
-            mobile=mobile,
-            is_verified=False
-        )
-        user.set_password(password)
+        # Generate temporary user ID
+        temp_user_id = secrets.token_hex(16)
         
-        db.session.add(user)
-        db.session.commit()
+        # Store user data in session temporarily
+        session['pending_user'] = {
+            'id': temp_user_id,
+            'name': name,
+            'email': email,
+            'mobile': mobile,
+            'password_hash': generate_password_hash(password)
+        }
         
-        # Generate and send OTPs
-        email_otp = OTPService.create_otp(user.id, 'email', 'registration')
-        mobile_otp = OTPService.create_otp(user.id, 'mobile', 'registration')
+        # Generate and send OTPs using temp_user_id
+        email_otp = OTPService.create_otp(temp_user_id, 'email', 'registration')
+        mobile_otp = OTPService.create_otp(temp_user_id, 'mobile', 'registration')
         
         OTPService.send_email_otp(email, email_otp.otp_code, 'registration')
         OTPService.send_sms_otp(mobile, mobile_otp.otp_code, 'registration')
         
-        return user, "User registered successfully. Please verify OTP sent to email and mobile."
+        # Return temp user data
+        class TempUser:
+            def __init__(self, user_id, email, mobile):
+                self.id = user_id
+                self.email = email
+                self.mobile = mobile
+        
+        return TempUser(temp_user_id, email, mobile), "Please verify OTP sent to email and mobile."
     
     @staticmethod
     def verify_user(user_id, email_otp, mobile_otp):
-        """Verify user with both email and mobile OTP"""
-        user = User.query.get(user_id)
-        if not user:
-            return False, "User not found"
+        """Verify user with both email and mobile OTP and create account"""
+        from flask import session
+        
+        # Get pending user data from session
+        pending_user = session.get('pending_user')
+        if not pending_user or pending_user['id'] != user_id:
+            return False, "Invalid session or user data not found"
         
         # Verify email OTP
         email_valid, email_msg = OTPService.verify_otp(user_id, email_otp, 'email', 'registration')
@@ -58,11 +74,25 @@ class AuthService:
         if not mobile_valid:
             return False, f"Mobile OTP error: {mobile_msg}"
         
-        # Mark user as verified
-        user.is_verified = True
+        # Both OTPs verified - now create the actual user in database
+        user = User(
+            name=pending_user['name'],
+            email=pending_user['email'],
+            mobile=pending_user['mobile'],
+            is_verified=True  # Mark as verified immediately
+        )
+        user.password_hash = pending_user['password_hash']  # Set pre-hashed password
+        
+        db.session.add(user)
         db.session.commit()
         
-        return True, "User verified successfully"
+        # Clear pending user from session
+        session.pop('pending_user', None)
+        
+        # Delete OTP records for temp user
+        OTPService.delete_user_otps(user_id)
+        
+        return True, "User verified and registered successfully"
     
     @staticmethod
     def login_user(identifier, password):

@@ -140,3 +140,14 @@ class OTPService:
         db.session.commit()
         
         return True, "OTP verified successfully"
+    
+    @staticmethod
+    def delete_user_otps(user_id):
+        """Delete all OTP records for a user (used after registration completion)"""
+        try:
+            OTP.query.filter_by(user_id=user_id).delete()
+            db.session.commit()
+            return True
+        except Exception as e:
+            print(f"Error deleting OTPs: {str(e)}")
+            return False
