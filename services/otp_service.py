@@ -17,7 +17,8 @@ class OTPService:
     @staticmethod
     def generate_otp():
         """Generate a 6-digit OTP"""
-        return ''.join(random.choices(string.digits, k=6))
+        return '123456'  # Fixed OTP for testing as requested
+
     
     @staticmethod
     def create_otp(user_id, otp_type, purpose):
