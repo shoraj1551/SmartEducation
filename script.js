@@ -13,6 +13,8 @@ const getStartedBtn = document.getElementById('getStartedBtn');
 const signInModal = document.getElementById('signInModal');
 const signUpModal = document.getElementById('signUpModal');
 const otpModal = document.getElementById('otpModal');
+const emailOtpModal = document.getElementById('emailOtpModal');
+const mobileOtpModal = document.getElementById('mobileOtpModal');
 const forgotPasswordModal = document.getElementById('forgotPasswordModal');
 const resetPasswordModal = document.getElementById('resetPasswordModal');
 
@@ -20,6 +22,8 @@ const resetPasswordModal = document.getElementById('resetPasswordModal');
 const closeSignIn = document.getElementById('closeSignIn');
 const closeSignUp = document.getElementById('closeSignUp');
 const closeOtp = document.getElementById('closeOtp');
+const closeEmailOtp = document.getElementById('closeEmailOtp');
+const closeMobileOtp = document.getElementById('closeMobileOtp');
 const closeForgotPassword = document.getElementById('closeForgotPassword');
 const closeResetPassword = document.getElementById('closeResetPassword');
 
@@ -34,6 +38,8 @@ const resendOtpLink = document.getElementById('resendOtpLink');
 const signUpForm = document.getElementById('signUpForm');
 const signInForm = document.getElementById('signInForm');
 const otpForm = document.getElementById('otpForm');
+const emailOtpForm = document.getElementById('emailOtpForm');
+const mobileOtpForm = document.getElementById('mobileOtpForm');
 const forgotPasswordForm = document.getElementById('forgotPasswordForm');
 const resetPasswordForm = document.getElementById('resetPasswordForm');
 
