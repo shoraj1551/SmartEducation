@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartEducation - Learn, Grow, Succeed</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <!-- Animated Background -->
+    <div class="background-animation">
+        <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+            <div class="shape shape-4"></div>
+            <div class="shape shape-5"></div>
+            <div class="shape shape-6"></div>
+        </div>
+        <div class="particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <nav class="navbar">
+            <div class="logo">
+                <span class="logo-icon">📚</span>
+                <span class="logo-text">SmartEducation</span>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" id="signInBtn">Sign In</button>
+                <button class="btn btn-primary" id="signUpBtn">Sign Up</button>
+            </div>
+        </nav>
+
+        <main class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="welcome-text">Welcome to</span>
+                    <span class="brand-name">SmartEducation</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Unlock your potential with personalized learning experiences.
+                    <br>Transform the way you learn, grow, and succeed.
+                </p>
+                <div class="hero-buttons">
+                    <button class="btn btn-large btn-primary" id="getStartedBtn">
+                        Get Started
+                        <span class="btn-icon">→</span>
+                    </button>
+                    <button class="btn btn-large btn-outline">
+                        Learn More
+                        <span class="btn-icon">↓</span>
+                    </button>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-number">10K+</div>
+                        <div class="stat-label">Active Learners</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">3x</div>
+                        <div class="stat-label">Higher Completion Rate</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Sign In -->
+    <div class="modal" id="signInModal">
+        <div class="modal-content">
+            <span class="close" id="closeSignIn">&times;</span>
+            <h2>Welcome Back!</h2>
+            <form class="auth-form" id="signInForm">
+                <div class="form-group">
+                    <label for="signInIdentifier">Email or Mobile Number</label>
+                    <input type="text" id="signInIdentifier" placeholder="Enter your email or mobile" required>
+                </div>
+                <div class="form-group">
+                    <label for="signInPassword">Password</label>
+                    <input type="password" id="signInPassword" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+                <p class="form-footer">
+                    <a href="#" id="forgotPasswordLink">Forgot password?</a> ·
+                    Don't have an account? <a href="#" id="switchToSignUp">Sign up</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Sign Up -->
+    <div class="modal" id="signUpModal">
+        <div class="modal-content">
+            <span class="close" id="closeSignUp">&times;</span>
+            <h2>Join SmartEducation</h2>
+            <form class="auth-form" id="signUpForm">
+                <div class="form-group">
+                    <label for="signUpName">Full Name</label>
+                    <input type="text" id="signUpName" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="signUpEmail">Email</label>
+                    <input type="email" id="signUpEmail" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="signUpMobile">Mobile Number</label>
+                    <input type="tel" id="signUpMobile" placeholder="Enter your mobile number" required>
+                </div>
+                <div class="form-group">
+                    <label for="signUpPassword">Password</label>
+                    <input type="password" id="signUpPassword" placeholder="Create a password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Sign Up</button>
+                <p class="form-footer">
+                    Already have an account? <a href="#" id="switchToSignIn">Sign in</a>
+                </p>
+            </form>
+        </div>
+
+        <!-- Modal for OTP Verification -->
+        <div class="modal" id="otpModal">
+            <div class="modal-content">
+                <span class="close" id="closeOtp">&times;</span>
+                <h2>Verify Your Account</h2>
+                <p class="modal-subtitle">Enter the OTP sent to your email and mobile</p>
+                <form class="auth-form" id="otpForm">
+                    <div class="form-group">
+                        <label for="emailOtp">Email OTP</label>
+                        <input type="text" id="emailOtp" placeholder="Enter 6-digit OTP" maxlength="6" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mobileOtp">Mobile OTP</label>
+                        <input type="text" id="mobileOtp" placeholder="Enter 6-digit OTP" maxlength="6" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Verify</button>
+                    <p class="form-footer">
+                        Didn't receive OTP? <a href="#" id="resendOtpLink">Resend</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal for Forgot Password -->
+        <div class="modal" id="forgotPasswordModal">
+            <div class="modal-content">
+                <span class="close" id="closeForgotPassword">&times;</span>
+                <h2>Reset Password</h2>
+                <p class="modal-subtitle">Enter your email or mobile number</p>
+                <form class="auth-form" id="forgotPasswordForm">
+                    <div class="form-group">
+                        <label for="resetIdentifier">Email or Mobile Number</label>
+                        <input type="text" id="resetIdentifier" placeholder="Enter your email or mobile" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Send OTP</button>
+                    <p class="form-footer">
+                        Remember your password? <a href="#" id="backToSignIn">Sign in</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal for Reset Password with OTP -->
+        <div class="modal" id="resetPasswordModal">
+            <div class="modal-content">
+                <span class="close" id="closeResetPassword">&times;</span>
+                <h2>Reset Password</h2>
+                <p class="modal-subtitle">Enter OTP and new password</p>
+                <form class="auth-form" id="resetPasswordForm">
+                    <div class="form-group">
+                        <label for="resetEmailOtp">Email OTP</label>
+                        <input type="text" id="resetEmailOtp" placeholder="Enter 6-digit OTP" maxlength="6" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="resetMobileOtp">Mobile OTP</label>
+                        <input type="text" id="resetMobileOtp" placeholder="Enter 6-digit OTP" maxlength="6" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" placeholder="Enter new password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Reset Password</button>
+                </form>
+            </div>
+        </div>
+
+        <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,52 @@
+"""
+SmartEducation - Flask Application
+"""
+from flask import Flask, send_from_directory
+from flask_cors import CORS
+from config import Config
+from models import db
+from services.otp_service import mail
+from routes.auth_routes import auth_bp
+
+def create_app():
+    """Create and configure Flask application"""
+    app = Flask(__name__, static_folder='.')
+    app.config.from_object(Config)
+    
+    # Initialize extensions
+    db.init_app(app)
+    mail.init_app(app)
+    CORS(app)
+    
+    # Register blueprints
+    app.register_blueprint(auth_bp)
+    
+    # Serve static files
+    @app.route('/')
+    def index():
+        return send_from_directory('.', 'index.html')
+    
+    @app.route('/<path:path>')
+    def serve_static(path):
+        return send_from_directory('.', path)
+    
+    # Create database tables
+    with app.app_context():
+        db.create_all()
+    
+    return app
+
+if __name__ == "__main__":
+    app = create_app()
+    print("=" * 50)
+    print("SmartEducation Backend Server")
+    print("=" * 50)
+    print(f"Server running at: http://{app.config['HOST']}:{app.config['PORT']}")
+    print(f"API Base URL: http://{app.config['HOST']}:{app.config['PORT']}/api")
+    print("=" * 50)
+    app.run(
+        host=app.config.get('HOST', 'localhost'),
+        port=app.config.get('PORT', 5000),
+        debug=app.config.get('DEBUG', True)
+    )
+

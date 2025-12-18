@@ -1,0 +1,21 @@
+# Core Dependencies
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-CORS==4.0.0
+
+# Authentication & Security
+bcrypt==4.1.2
+PyJWT==2.8.0
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Email Service
+Flask-Mail==0.9.1
+
+# SMS Service (Twilio)
+twilio==8.11.0
+
+# Development
+pytest==7.4.3
+
