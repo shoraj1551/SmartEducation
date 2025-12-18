@@ -3,6 +3,7 @@ const API_BASE_URL = 'http://localhost:5000/api';
 
 // State management
 let currentUserId = null;
+let currentUserName = null;
 let currentPurpose = 'registration';
 
 // Modal elements
@@ -117,6 +118,7 @@ signUpForm.addEventListener('submit', async (e) => {
 
         if (response.ok) {
             currentUserId = data.user_id;
+            currentUserName = name;
             currentPurpose = 'registration';
             showMessage(data.message, 'success');
             hideModal(signUpModal);
@@ -153,13 +155,22 @@ otpForm.addEventListener('submit', async (e) => {
         const data = await response.json();
 
         if (response.ok) {
-            showMessage('Account verified successfully!', 'success');
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
+            // Show personalized success message
+            const userName = data.user.name || currentUserName;
+            showMessage(`${userName} successfully registered! Please login.`, 'success');
+
+            // Clear OTP form
+            document.getElementById('emailOtp').value = '';
+            document.getElementById('mobileOtp').value = '';
+
             hideModal(otpModal);
-            // Redirect to dashboard or home page
-            window.location.reload();
+
+            // Wait a moment then show sign in modal
+            setTimeout(() => {
+                showModal(signInModal);
+            }, 1500);
         } else {
+
             showMessage(data.error, 'error');
         }
     } catch (error) {

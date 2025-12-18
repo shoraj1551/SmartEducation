@@ -41,12 +41,17 @@ if __name__ == "__main__":
     print("=" * 50)
     print("SmartEducation Backend Server")
     print("=" * 50)
-    print(f"Server running at: http://{app.config['HOST']}:{app.config['PORT']}")
-    print(f"API Base URL: http://{app.config['HOST']}:{app.config['PORT']}/api")
+    host = app.config.get('HOST', 'localhost')
+    port = app.config.get('PORT', 5000)
+    print(f"Server running at: http://{host}:{port}")
+    print(f"API Base URL: http://{host}:{port}/api")
     print("=" * 50)
+    print("\n⚠️  NOTE: Email and SMS OTPs will NOT work until you configure credentials in .env")
+    print("Follow CREDENTIALS_SETUP.md for instructions\n")
     app.run(
-        host=app.config.get('HOST', 'localhost'),
-        port=app.config.get('PORT', 5000),
+        host=host,
+        port=port,
         debug=app.config.get('DEBUG', True)
     )
+
 
