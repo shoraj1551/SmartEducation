@@ -613,5 +613,5 @@ document.addEventListener('mousemove', (e) => {
     });
 });
 
-console.log('SmartEducation - Welcome! 🚀');
+console.log('SmartEducation - Welcome! 🚀 (v3)');
 console.log('API Base URL:', API_BASE_URL);
