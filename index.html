@@ -118,7 +118,7 @@
                     <label for="signUpName">Full Name</label>
                     <input type="text" id="signUpName" placeholder="Enter your full name" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="signUpEmail">Email</label>
                     <div class="input-with-button">
@@ -130,7 +130,7 @@
                     </div>
                     <span class="verification-status" id="emailVerificationStatus"></span>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="signUpMobile">Mobile Number</label>
                     <div class="input-with-button">
@@ -142,7 +142,7 @@
                     </div>
                     <span class="verification-status" id="mobileVerificationStatus"></span>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="signUpPassword">Password</label>
                     <div class="password-input-wrapper">
@@ -153,7 +153,7 @@
                     </div>
                     <small class="password-hint">Minimum 8 characters</small>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="signUpConfirmPassword">Confirm Password</label>
                     <div class="password-input-wrapper">
@@ -164,80 +164,120 @@
                     </div>
                     <span class="password-match-status" id="passwordMatchStatus"></span>
                 </div>
-                
+
                 <button type="submit" class="btn btn-primary btn-full" id="signUpSubmitBtn">Sign Up</button>
                 <p class="form-footer">
                     Already have an account? <a href="#" id="switchToSignIn">Sign in</a>
                 </p>
             </form>
         </div>
-    </div>      <!-- Modal for OTP Verification -->
-        <div class="modal" id="otpModal">
-            <div class="modal-content">
-                <span class="close" id="closeOtp">&times;</span>
-                <h2>Verify Your Account</h2>
-                <p class="modal-subtitle">Enter the OTP sent to your email and mobile</p>
-                <form class="auth-form" id="otpForm">
-                    <div class="form-group">
-                        <label for="emailOtp">Email OTP</label>
-                        <input type="text" id="emailOtp" placeholder="Enter 6-digit OTP" maxlength="6" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="mobileOtp">Mobile OTP</label>
-                        <input type="text" id="mobileOtp" placeholder="Enter 6-digit OTP" maxlength="6" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full">Verify</button>
-                    <p class="form-footer">
-                        Didn't receive OTP? <a href="#" id="resendOtpLink">Resend</a>
-                    </p>
-                </form>
-            </div>
-        </div>
+    </div>
 
-        <!-- Modal for Forgot Password -->
-        <div class="modal" id="forgotPasswordModal">
-            <div class="modal-content">
-                <span class="close" id="closeForgotPassword">&times;</span>
-                <h2>Reset Password</h2>
-                <p class="modal-subtitle">Enter your email or mobile number</p>
-                <form class="auth-form" id="forgotPasswordForm">
-                    <div class="form-group">
-                        <label for="resetIdentifier">Email or Mobile Number</label>
-                        <input type="text" id="resetIdentifier" placeholder="Enter your email or mobile" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full">Send OTP</button>
-                    <p class="form-footer">
-                        Remember your password? <a href="#" id="backToSignIn">Sign in</a>
-                    </p>
-                </form>
-            </div>
+    <!-- Modal for Inline Email OTP Verification -->
+    <div class="modal" id="emailOtpModal">
+        <div class="modal-content">
+            <span class="close" id="closeEmailOtp">&times;</span>
+            <h2>Verify Email</h2>
+            <p class="modal-subtitle">Enter the OTP sent to <span id="emailToVerify"></span></p>
+            <form class="auth-form" id="emailOtpForm">
+                <div class="form-group">
+                    <label for="emailOtpInput">Email OTP</label>
+                    <input type="text" id="emailOtpInput" placeholder="Enter 6-digit OTP" maxlength="6" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Verify Email</button>
+                <p class="form-footer">
+                    Didn't receive OTP? <a href="#" id="resendEmailOtpLink">Resend</a>
+                </p>
+            </form>
         </div>
+    </div>
 
-        <!-- Modal for Reset Password with OTP -->
-        <div class="modal" id="resetPasswordModal">
-            <div class="modal-content">
-                <span class="close" id="closeResetPassword">&times;</span>
-                <h2>Reset Password</h2>
-                <p class="modal-subtitle">Enter OTP and new password</p>
-                <form class="auth-form" id="resetPasswordForm">
-                    <div class="form-group">
-                        <label for="resetEmailOtp">Email OTP</label>
-                        <input type="text" id="resetEmailOtp" placeholder="Enter 6-digit OTP" maxlength="6" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="resetMobileOtp">Mobile OTP</label>
-                        <input type="text" id="resetMobileOtp" placeholder="Enter 6-digit OTP" maxlength="6" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="newPassword">New Password</label>
-                        <input type="password" id="newPassword" placeholder="Enter new password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full">Reset Password</button>
-                </form>
-            </div>
+    <!-- Modal for Inline Mobile OTP Verification -->
+    <div class="modal" id="mobileOtpModal">
+        <div class="modal-content">
+            <span class="close" id="closeMobileOtp">&times;</span>
+            <h2>Verify Mobile</h2>
+            <p class="modal-subtitle">Enter the OTP sent to <span id="mobileToVerify"></span></p>
+            <form class="auth-form" id="mobileOtpForm">
+                <div class="form-group">
+                    <label for="mobileOtpInput">Mobile OTP</label>
+                    <input type="text" id="mobileOtpInput" placeholder="Enter 6-digit OTP" maxlength="6" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Verify Mobile</button>
+                <p class="form-footer">
+                    Didn't receive OTP? <a href="#" id="resendMobileOtpLink">Resend</a>
+                </p>
+            </form>
         </div>
+    </div>
 
-        <script src="script.js"></script>
+    <!-- Modal for OTP Verification -->
+    <div class="modal" id="otpModal">
+        <div class="modal-content">
+            <span class="close" id="closeOtp">&times;</span>
+            <h2>Verify Your Account</h2>
+            <p class="modal-subtitle">Enter the OTP sent to your email and mobile</p>
+            <form class="auth-form" id="otpForm">
+                <div class="form-group">
+                    <label for="emailOtp">Email OTP</label>
+                    <input type="text" id="emailOtp" placeholder="Enter 6-digit OTP" maxlength="6" required>
+                </div>
+                <div class="form-group">
+                    <label for="mobileOtp">Mobile OTP</label>
+                    <input type="text" id="mobileOtp" placeholder="Enter 6-digit OTP" maxlength="6" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Verify</button>
+                <p class="form-footer">
+                    Didn't receive OTP? <a href="#" id="resendOtpLink">Resend</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Forgot Password -->
+    <div class="modal" id="forgotPasswordModal">
+        <div class="modal-content">
+            <span class="close" id="closeForgotPassword">&times;</span>
+            <h2>Reset Password</h2>
+            <p class="modal-subtitle">Enter your email or mobile number</p>
+            <form class="auth-form" id="forgotPasswordForm">
+                <div class="form-group">
+                    <label for="resetIdentifier">Email or Mobile Number</label>
+                    <input type="text" id="resetIdentifier" placeholder="Enter your email or mobile" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Send OTP</button>
+                <p class="form-footer">
+                    Remember your password? <a href="#" id="backToSignIn">Sign in</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Reset Password with OTP -->
+    <div class="modal" id="resetPasswordModal">
+        <div class="modal-content">
+            <span class="close" id="closeResetPassword">&times;</span>
+            <h2>Reset Password</h2>
+            <p class="modal-subtitle">Enter OTP and new password</p>
+            <form class="auth-form" id="resetPasswordForm">
+                <div class="form-group">
+                    <label for="resetEmailOtp">Email OTP</label>
+                    <input type="text" id="resetEmailOtp" placeholder="Enter 6-digit OTP" maxlength="6" required>
+                </div>
+                <div class="form-group">
+                    <label for="resetMobileOtp">Mobile OTP</label>
+                    <input type="text" id="resetMobileOtp" placeholder="Enter 6-digit OTP" maxlength="6" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" placeholder="Enter new password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Reset Password</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 
 </html>
