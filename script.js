@@ -399,7 +399,7 @@ otpForm.addEventListener('submit', async (e) => {
 
             // Show success message
             const userName = data.user.name || currentUserName;
-            showMessage(`Welcome ${userName}! Redirecting to dashboard...`, 'success');
+            showMessage(`Welcome ${userName}! Let's personalize your experience...`, 'success');
 
             // Clear OTP form
             document.getElementById('emailOtp').value = '';
@@ -407,9 +407,9 @@ otpForm.addEventListener('submit', async (e) => {
 
             hideModal(otpModal);
 
-            // Redirect to dashboard
+            // Redirect to welcome survey page
             setTimeout(() => {
-                window.location.href = 'dashboard.html';
+                window.location.href = 'welcome.html';
             }, 1500);
         } else {
             showMessage(data.error, 'error');
