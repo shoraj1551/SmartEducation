@@ -11,8 +11,104 @@ class AuthService:
     """Service for authentication operations"""
     
     @staticmethod
-    def register_user(name, email, mobile, password):
-        """Register a new user - stores temporarily until OTP verification"""
+    def send_verification_otp(name, contact, otp_type, purpose):
+        """Send OTP for inline verification"""
+        from flask import session
+        import secrets
+        
+        # Check if session exists or create new
+        if 'pending_user' not in session:
+            temp_user_id = secrets.token_hex(16)
+            session['pending_user'] = {
+                'id': temp_user_id,
+                'name': name,
+                'email': contact if otp_type == 'email' else '',
+                'mobile': contact if otp_type == 'mobile' else '',
+                'email_verified': False,
+                'mobile_verified': False
+            }
+        else:
+            temp_user_id = session['pending_user']['id']
+            # Update contact info
+            if otp_type == 'email':
+                session['pending_user']['email'] = contact
+            else:
+                session['pending_user']['mobile'] = contact
+                
+        # Generate and send OTP
+        otp = OTPService.create_otp(temp_user_id, otp_type, purpose)
+        
+        if otp_type == 'email':
+            OTPService.send_email_otp(contact, otp.otp_code, purpose)
+        else:
+            OTPService.send_sms_otp(contact, otp.otp_code, purpose)
+            
+        return temp_user_id
+        
+    @staticmethod
+    def verify_inline_otp(temp_user_id, otp_type, otp_code, purpose):
+        """Verify inline OTP and update session"""
+        from flask import session
+        
+        # Verify OTP
+        is_valid, message = OTPService.verify_otp(temp_user_id, otp_code, otp_type, purpose)
+        
+        if is_valid:
+            # Update session verification status
+            if 'pending_user' in session and session['pending_user']['id'] == temp_user_id:
+                if otp_type == 'email':
+                    session['pending_user']['email_verified'] = True
+                else:
+                    session['pending_user']['mobile_verified'] = True
+                session.modified = True
+                return True, "Verified successfully"
+            return False, "Session expired"
+        return False, message
+
+    @staticmethod
+    def create_verified_user_from_session():
+        """Create user immediately from verified session data"""
+        from flask import session
+        
+        pending_user = session.get('pending_user')
+        if not pending_user:
+            return None, "Session expired"
+            
+        # Check if user already exists (unverified)
+        user = User.query.filter_by(email=pending_user['email']).first()
+        if not user:
+            user = User.query.filter_by(mobile=pending_user['mobile']).first()
+            
+        if user:
+            # Update existing unverified user
+            user.name = pending_user['name']
+            user.email = pending_user['email']
+            user.mobile = pending_user['mobile']
+            user.password_hash = pending_user['password_hash']
+            user.is_verified = True
+            user.updated_at = datetime.utcnow()
+        else:
+            # Create new user
+            user = User(
+                name=pending_user['name'],
+                email=pending_user['email'],
+                mobile=pending_user['mobile'],
+                is_verified=True
+            )
+            user.password_hash = pending_user['password_hash']
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        # Clear session
+        session.pop('pending_user', None)
+        OTPService.delete_user_otps(pending_user['id'])
+        
+        return user, "User registered successfully"
+
+    @staticmethod
+    def register_user(name, email, mobile, password, temp_user_id=None):
+        """Register a new user - checks for existing verification"""
         from flask import session
         from werkzeug.security import generate_password_hash
         import secrets
@@ -25,34 +121,57 @@ class AuthService:
         existing_mobile = User.query.filter_by(mobile=mobile, is_verified=True).first()
         if existing_mobile:
             return None, "Mobile number already registered"
+            
+        # Check if we have a valid pre-verified session
+        if temp_user_id and 'pending_user' in session and session['pending_user']['id'] == temp_user_id:
+            # Update fields
+            session['pending_user']['name'] = name
+            session['pending_user']['email'] = email
+            session['pending_user']['mobile'] = mobile
+            session['pending_user']['password_hash'] = generate_password_hash(password)
+            
+            # Check if ALREADY verified
+            if session['pending_user'].get('email_verified') and session['pending_user'].get('mobile_verified'):
+                # Immediate creation!
+                return AuthService.create_verified_user_from_session()
         
-        # Generate temporary user ID
-        temp_user_id = secrets.token_hex(16)
+        # Fresh registration or incomplete verification
+        if not temp_user_id or 'pending_user' not in session:
+            temp_user_id = secrets.token_hex(16)
+            session['pending_user'] = {
+                'id': temp_user_id,
+                'name': name,
+                'email': email,
+                'mobile': mobile,
+                'password_hash': generate_password_hash(password),
+                'email_verified': False,
+                'mobile_verified': False
+            }
         
-        # Store user data in session temporarily
-        session['pending_user'] = {
-            'id': temp_user_id,
-            'name': name,
-            'email': email,
-            'mobile': mobile,
-            'password_hash': generate_password_hash(password)
-        }
+        # Generate and send OTPs Only if NOT verified yet
+        # If one is verified, skip sending that one
         
-        # Generate and send OTPs using temp_user_id
-        email_otp = OTPService.create_otp(temp_user_id, 'email', 'registration')
-        mobile_otp = OTPService.create_otp(temp_user_id, 'mobile', 'registration')
+        email_verified = session['pending_user'].get('email_verified', False)
+        mobile_verified = session['pending_user'].get('mobile_verified', False)
         
-        OTPService.send_email_otp(email, email_otp.otp_code, 'registration')
-        OTPService.send_sms_otp(mobile, mobile_otp.otp_code, 'registration')
-        
+        if not email_verified:
+            email_otp = OTPService.create_otp(temp_user_id, 'email', 'registration')
+            OTPService.send_email_otp(email, email_otp.otp_code, 'registration')
+            
+        if not mobile_verified:
+            mobile_otp = OTPService.create_otp(temp_user_id, 'mobile', 'registration')
+            OTPService.send_sms_otp(mobile, mobile_otp.otp_code, 'registration')
+            
         # Return temp user data
         class TempUser:
-            def __init__(self, user_id, email, mobile):
+            def __init__(self, user_id, email, mobile, is_verified):
                 self.id = user_id
                 self.email = email
                 self.mobile = mobile
+                self.is_verified = is_verified # Flag to tell frontend if done
         
-        return TempUser(temp_user_id, email, mobile), "Please verify OTP sent to email and mobile."
+        is_fully_verified = email_verified and mobile_verified
+        return TempUser(temp_user_id, email, mobile, is_fully_verified), "Please verify OTPs."
     
     @staticmethod
     def verify_user(user_id, email_otp, mobile_otp):
@@ -74,14 +193,30 @@ class AuthService:
         if not mobile_valid:
             return False, f"Mobile OTP error: {mobile_msg}"
         
-        # Both OTPs verified - now create the actual user in database
-        user = User(
-            name=pending_user['name'],
-            email=pending_user['email'],
-            mobile=pending_user['mobile'],
-            is_verified=True  # Mark as verified immediately
-        )
-        user.password_hash = pending_user['password_hash']  # Set pre-hashed password
+        # Both OTPs verified - now create or update the user in database
+        
+        # Check if user already exists (unverified)
+        user = User.query.filter_by(email=pending_user['email']).first()
+        if not user:
+            user = User.query.filter_by(mobile=pending_user['mobile']).first()
+            
+        if user:
+            # Update existing unverified user
+            user.name = pending_user['name']
+            user.email = pending_user['email']
+            user.mobile = pending_user['mobile']
+            user.password_hash = pending_user['password_hash']
+            user.is_verified = True
+            user.updated_at = datetime.utcnow()
+        else:
+            # Create new user
+            user = User(
+                name=pending_user['name'],
+                email=pending_user['email'],
+                mobile=pending_user['mobile'],
+                is_verified=True  # Mark as verified immediately
+            )
+            user.password_hash = pending_user['password_hash']
         
         db.session.add(user)
         db.session.commit()

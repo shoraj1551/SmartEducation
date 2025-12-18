@@ -24,21 +24,94 @@ def register():
             data['name'],
             data['email'],
             data['mobile'],
-            data['password']
+            data['password'],
+            data.get('temp_user_id')  # Pass temp ID if available
         )
         
         if not user:
             return jsonify({'error': message}), 400
+            
+        # Check if user is already fully verified (immediate creation)
+        if hasattr(user, 'is_verified') and user.is_verified is True:
+            # Check if it's a real User model (has updated_at) or TempUser
+            if hasattr(user, 'created_at'):
+                # This is a real user! Registration complete!
+                return jsonify({
+                    'message': 'Registration successful!',
+                    'user_id': user.id,
+                    'email': user.email,
+                    'mobile': user.mobile,
+                    'verification_completed': True
+                }), 201
         
         return jsonify({
             'message': message,
             'user_id': user.id,
             'email': user.email,
-            'mobile': user.mobile
+            'mobile': user.mobile,
+            'verification_completed': False
         }), 201
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@auth_bp.route('/send-verification-otp', methods=['POST'])
+def send_verification_otp():
+    """Send OTP for inline verification"""
+    try:
+        data = request.get_json()
+        
+        if not all([data.get('name')]):
+             return jsonify({'error': 'Name is required'}), 400
+             
+        contact = data.get('email') or data.get('mobile')
+        if not contact:
+            return jsonify({'error': 'Email or mobile is required'}), 400
+            
+        otp_type = data.get('otp_type')
+        if otp_type not in ['email', 'mobile']:
+            return jsonify({'error': 'Invalid OTP type'}), 400
+            
+        temp_user_id = AuthService.send_verification_otp(
+            data['name'],
+            contact,
+            otp_type,
+            'registration'
+        )
+        
+        return jsonify({
+            'message': 'OTP sent successfully',
+            'temp_user_id': temp_user_id
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@auth_bp.route('/verify-inline-otp', methods=['POST'])
+def verify_inline_otp():
+    """Verify inline OTP"""
+    try:
+        data = request.get_json()
+        
+        required = ['temp_user_id', 'otp_type', 'otp_code']
+        if not all([data.get(f) for f in required]):
+            return jsonify({'error': 'Missing required fields'}), 400
+            
+        success, message = AuthService.verify_inline_otp(
+            data['temp_user_id'],
+            data['otp_type'],
+            data['otp_code'],
+            'registration'
+        )
+        
+        if success:
+            return jsonify({'message': message}), 200
+        else:
+            return jsonify({'error': message}), 400
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 
 @auth_bp.route('/verify-otp', methods=['POST'])
