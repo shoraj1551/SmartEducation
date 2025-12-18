@@ -40,10 +40,23 @@ const resetPasswordForm = document.getElementById('resetPasswordForm');
 // Helper Functions
 function showModal(modal) {
     modal.classList.add('active');
+    // Force reflow to ensure animation triggers
+    void modal.offsetWidth;
+    // Ensure modal content is visible
+    const content = modal.querySelector('.modal-content');
+    if (content) {
+        content.style.opacity = '1';
+        content.style.transform = 'translateY(0)';
+    }
 }
 
 function hideModal(modal) {
     modal.classList.remove('active');
+    // Reset form if it exists
+    const form = modal.querySelector('form');
+    if (form) {
+        form.reset();
+    }
 }
 
 function showMessage(message, type = 'info') {
