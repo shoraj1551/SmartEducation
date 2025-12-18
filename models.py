@@ -21,7 +21,8 @@ class User(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    otps = db.relationship('OTP', backref='user', lazy=True, cascade='all, delete-orphan')
+    # otps relationship removed because OTP.user_id is a String (for temp IDs) and has no foreign key
+
     
     def set_password(self, password):
         """Hash and set password"""
