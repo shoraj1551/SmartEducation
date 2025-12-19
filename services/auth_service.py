@@ -225,7 +225,7 @@ class AuthService:
         # Delete OTP records for temp user
         OTPService.delete_user_otps(user_id)
         
-        return True, "User verified and registered successfully"
+        return user, "User verified and registered successfully"
     
     @staticmethod
     def login_user(identifier, password):

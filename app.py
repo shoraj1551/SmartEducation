@@ -6,7 +6,8 @@ from flask_cors import CORS
 from config import Config
 from models import db
 from services.otp_service import mail
-from routes.auth_routes import auth_bp
+from routes.user_routes import user_bp
+from routes.bookmark_routes import bookmark_bp
 
 def create_app():
     """Create and configure Flask application"""
@@ -23,7 +24,8 @@ def create_app():
     CORS(app, supports_credentials=True)
     
     # Register blueprints
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(user_bp)
+    app.register_blueprint(bookmark_bp)
     
     # Serve static files
     @app.route('/')

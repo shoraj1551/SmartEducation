@@ -1,17 +1,21 @@
 # SmartEducation
 
-**Version:** 0.1.0
+**Version:** 0.2.0
 
 ## Overview
-SmartEducation is an innovative educational platform designed to revolutionize the learning experience.
+SmartEducation is a premium AI-powered educational dashboard and resource management platform.
 
-## Features
-- Coming soon...
+## Key Features
+- **Modern Dashboard:** Glassmorphism UI with interactive stats (Hours Spent, Completion, etc.).
+- **User Activity Framework:** Real-time tracking of user interactions, logins, and learning milestones.
+- **AI Bookmark System:** Intelligent resource categorization and ranking based on learning goals.
+- **Session Resumption:** "Welcome Back" logic that prompts users to resume their last significant activity.
+- **Secure Authentication:** Integrated JWT authentication with OTP-based registration and password reset.
 
 ## Tech Stack
-- **Backend:** Python
-- **Frontend:** TBD
-- **Database:** TBD
+- **Backend:** Flask (Python) with SQLAlchemy & JWT.
+- **Frontend:** Vanilla JS, CSS3 (Glassmorphism), FontAwesome.
+- **Database:** SQLite (SQLAlchemy ORM).
 
 ## Getting Started
 

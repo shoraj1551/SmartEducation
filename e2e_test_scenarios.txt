@@ -1,0 +1,38 @@
+# SmartEducation E2E Test Scenarios
+
+## Scenario 1: New User Registration (Success)
+1. Navigate to landing page.
+2. Click "Sign Up".
+3. Enter valid Name, Email, Mobile, and matching Passwords.
+4. Click "Get Started".
+5. Observe OTP buttons appearing for Email and Mobile.
+6. Click "Verify" for Email (OTP is hardcoded to 123456).
+7. Click "Verify" for Mobile (OTP is hardcoded to 123456).
+8. Once both verified, click "Sign Up" button.
+9. Verify redirect to `welcome.html`.
+10. Complete survey flow.
+11. Verify final redirect to dashboard.
+
+## Scenario 2: New User Registration (Failures)
+- **Missing Fields**: Attempt to click "Get Started" with empty fields. Verify error alerts.
+- **Password Mismatch**: Enter different passwords. Verify checkmarks turn red or error message.
+- **Duplicate Email**: Attempt registration with an already registered email. Verify error from backend.
+- **Invalid OTP**: Enter wrong OTP code. Verify error message.
+
+## Scenario 3: Login (Existing User)
+1. Navigate to landing page.
+2. Click "Sign In".
+3. Toggle to "Email" or "Mobile".
+4. Enter correct credentials.
+5. Click "Login".
+6. Verify redirect to dashboard.
+
+## Scenario 4: Forgot Password Flow
+1. Navigate to landing page.
+2. Click "Sign In" -> "Forgot Password?".
+3. Enter registered Email/Mobile.
+4. Click "Send OTP".
+5. Enter OTP (123456).
+6. Enter new password and confirm.
+7. Click "Reset Password".
+8. Verify success message and try login with new password.

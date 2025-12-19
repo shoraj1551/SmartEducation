@@ -6,174 +6,634 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - SmartEducation</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap"
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <style>
-        .dashboard-container {
-            min-height: 100vh;
-            padding: 2rem;
+        :root {
+            --sidebar-width: 280px;
         }
 
-        .dashboard-header {
+        body {
+            background: #0f172a;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            min-height: 100vh;
+        }
+
+        /* Glass Sidebar */
+        .sidebar {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            padding: 0 0.5rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .logo-text {
+            font-weight: 800;
+            font-size: 1.2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: rgba(124, 58, 237, 0.1);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem 3rem;
+            max-width: 1400px;
+        }
+
+        .top-nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 3rem;
-            padding: 2rem;
-            background: var(--bg-card);
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
+        }
+
+        .search-container {
+            position: relative;
+            width: 400px;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 2.8rem;
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .welcome-section h1 {
-            font-size: 2.5rem;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
-        }
-
-        .welcome-section p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
-
-        .btn-logout {
-            padding: 0.75rem 1.75rem;
-            background: var(--secondary-gradient);
-            border: none;
             border-radius: 12px;
             color: white;
-            font-weight: 600;
-            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary);
+        }
+
+        /* User Profile Dropdown */
+        .user-menu-container {
+            position: relative;
+        }
+
+        .user-trigger {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-family: 'Inter', sans-serif;
         }
 
-        .btn-logout:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(240, 147, 251, 0.4);
+        .user-trigger:hover {
+            background: rgba(255, 255, 255, 0.08);
         }
 
-        .dashboard-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
         }
 
-        .dashboard-card {
-            padding: 2rem;
-            background: var(--bg-card);
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
+        .user-info-brief {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 120%;
+            right: 0;
+            width: 220px;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s ease;
+            border-radius: 16px;
+            padding: 0.75rem;
+            display: none;
+            flex-direction: column;
+            gap: 0.25rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: slideInUp 0.3s ease;
         }
 
-        .dashboard-card:hover {
-            transform: translateY(-5px);
+        .user-dropdown.active {
+            display: flex;
         }
 
-        .dashboard-card h3 {
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 0.5rem;
+        }
+
+        .logout-item {
+            color: #ef4444;
+        }
+
+        .logout-item:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 1.5rem;
-            margin-bottom: 1rem;
-            background: var(--accent-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
-        .dashboard-card p {
-            color: var(--text-secondary);
+        .blue {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .purple {
+            background: rgba(124, 58, 237, 0.1);
+            color: #7c3aed;
+        }
+
+        .green {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .orange {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .stat-info h4 {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-info p {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Recent Activity */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .activity-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 2rem;
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .activity-marker {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .activity-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .activity-line {
+            width: 2px;
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 5px;
+        }
+
+        .activity-content h5 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-content p {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.3);
+            margin-top: 0.5rem;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Resume Modal */
+        .resume-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-card {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 3rem;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-card p {
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 2rem;
             line-height: 1.6;
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 1rem;
         }
     </style>
 </head>
 
 <body>
-    <!-- Animated Background -->
-    <div class="background-animation">
-        <div class="floating-shapes">
-            <div class="shape shape-1"></div>
-            <div class="shape shape-2"></div>
-            <div class="shape shape-3"></div>
-            <div class="shape shape-4"></div>
-            <div class="shape shape-5"></div>
-            <div class="shape shape-6"></div>
-        </div>
-        <div class="particles">
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <span class="logo-text">SmartEdu</span>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active">
+                    <i class="fas fa-th-large"></i>
+                    Dashboard
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-bookmark"></i>
+                    Bookmarks
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-star"></i>
+                    Achievements
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    Schedule
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="nav-item logout-item" id="sidebarLogout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="search-input" placeholder="Search for courses, activities...">
+                </div>
+
+                <div class="user-menu-container">
+                    <div class="user-trigger" id="userMenuTrigger">
+                        <div class="user-avatar" id="avatarInitials">U</div>
+                        <div class="user-info-brief">
+                            <span class="user-name" id="userNameBrief">User Name</span>
+                        </div>
+                        <i class="fas fa-chevron-down" style="font-size: 0.8rem; opacity: 0.5;"></i>
+                    </div>
+
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i>
+                            My Profile
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-sliders-h"></i>
+                            Preferences
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-shield-alt"></i>
+                            Security
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item logout-item" id="dropdownLogout">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Log Out
+                        </a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Stats -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="fas fa-hourglass-half"></i></div>
+                    <div class="stat-info">
+                        <h4>Hours Spent</h4>
+                        <p>12.5</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple"><i class="fas fa-tasks"></i></div>
+                    <div class="stat-info">
+                        <h4>Completed</h4>
+                        <p>48%</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="fas fa-trophy"></i></div>
+                    <div class="stat-info">
+                        <h4>Badges</h4>
+                        <p>6</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange"><i class="fas fa-fire"></i></div>
+                    <div class="stat-info">
+                        <h4>Streak</h4>
+                        <p>4 Days</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Sections -->
+            <div class="dashboard-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                <!-- Bookmark Section -->
+                <div class="main-section">
+                    <div class="section-header">
+                        <h2>My Bookmarks</h2>
+                        <button class="primary-btn" onclick="openBookmarkModal()"
+                            style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">
+                            <i class="fas fa-plus"></i> Add Bookmark
+                        </button>
+                    </div>
+
+                    <div class="activity-card" id="bookmarkContainer">
+                        <div class="activity-list" id="bookmarkList">
+                            <!-- Populated by JS -->
+                            <div class="activity-item">
+                                <p style="color: rgba(255,255,255,0.4);">Loading bookmarks...</p>
+                            </div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="pagination-container" id="bookmarkPagination"
+                            style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem;">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Feed -->
+                <div class="activity-section">
+                    <div class="section-header">
+                        <h2>Recent Activity</h2>
+                    </div>
+
+                    <div class="activity-card">
+                        <div class="activity-list" id="activityFeed">
+                            <!-- Populated by JS -->
+                            <div class="activity-item">
+                                <p style="color: rgba(255,255,255,0.4);">Loading activities...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Bookmark Modal -->
+    <div class="resume-modal" id="bookmarkModal">
+        <div class="modal-card" style="max-width: 600px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h3 style="margin: 0;">Add Educational Bookmark</h3>
+                <button onclick="closeBookmarkModal()"
+                    style="background: none; border: none; color: white; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            </div>
+
+            <form id="addBookmarkForm" class="auth-form">
+                <div class="form-group slide-up" style="--delay: 1">
+                    <label>Resource URL</label>
+                    <input type="url" id="bmUrl" placeholder="https://youtube.com/watch?v=..." required
+                        style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                </div>
+                <div class="form-group slide-up" style="--delay: 2">
+                    <label>Title (Optional)</label>
+                    <input type="text" id="bmTitle" placeholder="Tutorial Name"
+                        style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                </div>
+                <div class="form-group slide-up" style="--delay: 3">
+                    <label>Description (Optional)</label>
+                    <textarea id="bmDesc" placeholder="What will you learn?" rows="3"
+                        style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; resize: none;"></textarea>
+                </div>
+
+                <button type="submit" class="primary-btn nav-btn" style="width: 100%; margin-top: 1rem;">
+                    <i class="fas fa-magic"></i> Add with AI Identification
+                </button>
+            </form>
         </div>
     </div>
 
-    <!-- Dashboard Content -->
-    <div class="container dashboard-container">
-        <div class="dashboard-header">
-            <div class="welcome-section">
-                <h1>Welcome, <span id="userName">User</span>!</h1>
-                <p>Ready to continue your learning journey?</p>
-            </div>
-            <button class="btn-logout" id="logoutBtn">Logout</button>
-        </div>
-
-        <div class="dashboard-content">
-            <div class="dashboard-card">
-                <h3>📚 My Courses</h3>
-                <p>View and manage your enrolled courses. Track your progress and continue learning.</p>
-            </div>
-
-            <div class="dashboard-card">
-                <h3>📊 Progress</h3>
-                <p>Monitor your learning progress, achievements, and milestones.</p>
-            </div>
-
-            <div class="dashboard-card">
-                <h3>🎯 Goals</h3>
-                <p>Set and track your learning goals to stay motivated and focused.</p>
-            </div>
-
-            <div class="dashboard-card">
-                <h3>👤 Profile</h3>
-                <p>Manage your account settings, preferences, and personal information.</p>
+    <!-- Resume Session Modal -->
+    <div class="resume-modal" id="resumeModal">
+        <div class="modal-card">
+            <div class="modal-icon"><i class="fas fa-history"></i></div>
+            <h3>Welcome Back!</h3>
+            <p>Would you like to resume your last session and pick up where you left off?</p>
+            <div class="modal-btns">
+                <button class="nav-btn secondary-btn" id="startFreshBtn" style="flex: 1;">Start Fresh</button>
+                <button class="nav-btn primary-btn" id="resumeSessionBtn" style="flex: 1;">Resume Session</button>
             </div>
         </div>
     </div>
 
-    <script>
-        // Get user data from localStorage
-        const userData = JSON.parse(localStorage.getItem('user') || '{}');
-        const userName = userData.name || 'User';
-
-        // Display user name
-        document.getElementById('userName').textContent = userName;
-
-        // Logout functionality
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            localStorage.removeItem('user');
-            localStorage.removeItem('token');
-            window.location.href = 'index.html';
-        });
-
-        // Check if user is logged in
-        if (!localStorage.getItem('token')) {
-            window.location.href = 'index.html';
-        }
-    </script>
+    <script src="dashboard.js"></script>
 </body>
 
 </html>

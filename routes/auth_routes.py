@@ -4,6 +4,7 @@ Authentication routes for SmartEducation API
 from flask import Blueprint, request, jsonify
 from models import db, User
 from services.auth_service import AuthService
+from services.activity_service import ActivityService
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
@@ -134,17 +135,16 @@ def verify_otp():
             return jsonify({'error': 'user_id, email_otp, and mobile_otp are required'}), 400
         
         # Verify OTPs
-        success, message = AuthService.verify_user(
+        user, message = AuthService.verify_user(
             data['user_id'],
             data['email_otp'],
             data['mobile_otp']
         )
         
-        if not success:
+        if not user:
             return jsonify({'error': message}), 400
         
-        # Get user and generate token
-        user = User.query.get(data['user_id'])
+        # user object is now returned directly from verify_user
         token = AuthService.generate_token(user.id)
         
         return jsonify({
@@ -202,6 +202,8 @@ def login():
         if not result:
             return jsonify({'error': message}), 401
         
+        # Log successful login
+        ActivityService.log_activity(result['user']['id'], 'login', 'User logged in successfully')
         return jsonify({
             'message': message,
             'user': result['user'],

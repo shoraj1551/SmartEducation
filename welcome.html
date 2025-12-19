@@ -38,148 +38,207 @@
         </div>
     </div>
 
-    <!-- Registration Success Overlay -->
-    <div class="success-overlay" id="successOverlay">
-        <div class="success-icon-container">
-            <span>✓</span>
-        </div>
-        <div class="success-message">
-            <h1 class="welcome-header" style="text-align: center; margin-bottom: 0.5rem; color: white;">Registration
-                Successful!</h1>
-            <p style="color: rgba(255,255,255,0.8);">Welcome, <span id="overlayUserName">User</span></p>
+    <!-- Registration    <!-- Success Overlay -->
+    <div id="success-overlay" class="success-overlay">
+        <div class="success-content">
+            <div class="checkmark-circle">
+                <div class="checkmark draw"></div>
+            </div>
+            <h1 class="fade-in">Registration Successful!</h1>
+            <p class="fade-in delay-1">Welcome aboard, <span id="user-display-name">Learner</span>!</p>
+            <p class="fade-in delay-2">Let's personalize your experience...</p>
         </div>
     </div>
 
-    <!-- Welcome Content -->
-    <div class="container welcome-container" id="mainContainer" style="opacity: 0; transition: opacity 0.5s ease;">
-        <div class="welcome-card">
-            <div class="welcome-header">
-                <div class="welcome-icon">👋</div>
-                <h1>Let's personalize your path!</h1>
-                <p>Help us tailor the experience for you</p>
+    <div class="welcome-container">
+        <div class="survey-card glass">
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+                <div class="progress-text" id="progress-text">Step 1 of 4</div>
             </div>
 
-            <form id="surveyForm">
-                <div class="wizard-container" id="surveyWizard">
-
-                    <!-- Question 1 -->
-                    <div class="wizard-step" data-step="1">
-                        <div class="question-card-header">
-                            <div class="question-number">Question 1 of 4</div>
-                            <h3>What's your primary learning goal?</h3>
-                        </div>
-                        <div class="radio-group" data-question="goal">
-                            <div class="radio-option" data-value="career">
-                                <label>Career advancement</label>
-                            </div>
-                            <div class="radio-option" data-value="skills">
-                                <label>Learn new skills</label>
-                            </div>
-                            <div class="radio-option" data-value="hobby">
-                                <label>Personal interest/hobby</label>
-                            </div>
-                            <div class="radio-option" data-value="academic">
-                                <label>Academic requirements</label>
+            <div class="survey-steps" id="survey-steps">
+                <!-- Step 1: Goal -->
+                <div class="survey-step active" data-step="1" data-type="single">
+                    <h2 class="step-title">What's your primary goal?</h2>
+                    <p class="step-desc">Help us tailor your learning path (Select one)</p>
+                    <div class="options-grid">
+                        <div class="option-card" data-value="upskill">
+                            <div class="option-icon"><i class="fas fa-briefcase"></i></div>
+                            <div class="option-info">
+                                <h3>Career Upskilling</h3>
+                                <p>Advance in your current field</p>
                             </div>
                         </div>
-                        <div class="button-group">
-                            <button type="button" class="btn btn-secondary btn-skip"
-                                onclick="wizard.skipStep()">Skip</button>
-                        </div>
-                    </div>
-
-                    <!-- Question 2 -->
-                    <div class="wizard-step" data-step="2">
-                        <div class="question-card-header">
-                            <div class="question-number">Question 2 of 4</div>
-                            <h3>How do you prefer to learn?</h3>
-                        </div>
-                        <div class="radio-group" data-question="style">
-                            <div class="radio-option" data-value="video">
-                                <label>Video tutorials</label>
-                            </div>
-                            <div class="radio-option" data-value="reading">
-                                <label>Reading articles/books</label>
-                            </div>
-                            <div class="radio-option" data-value="interactive">
-                                <label>Interactive exercises</label>
-                            </div>
-                            <div class="radio-option" data-value="mixed">
-                                <label>Mix of everything</label>
+                        <div class="option-card" data-value="switch">
+                            <div class="option-icon"><i class="fas fa-random"></i></div>
+                            <div class="option-info">
+                                <h3>Career Switch</h3>
+                                <p>Transition to a new industry</p>
                             </div>
                         </div>
-                        <div class="button-group">
-                            <button type="button" class="btn btn-secondary btn-skip"
-                                onclick="wizard.skipStep()">Skip</button>
+                        <div class="option-card" data-value="academic">
+                            <div class="option-icon"><i class="fas fa-graduation-cap"></i></div>
+                            <div class="option-info">
+                                <h3>Academic Excellence</h3>
+                                <p>Support for current studies</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="hobby">
+                            <div class="option-icon"><i class="fas fa-heart"></i></div>
+                            <div class="option-info">
+                                <h3>Personal Interest</h3>
+                                <p>Learn something new for fun</p>
+                            </div>
                         </div>
                     </div>
-
-                    <!-- Question 3 -->
-                    <div class="wizard-step" data-step="3">
-                        <div class="question-card-header">
-                            <div class="question-number">Question 3 of 4</div>
-                            <h3>What's your experience level?</h3>
-                        </div>
-                        <div class="radio-group" data-question="level">
-                            <div class="radio-option" data-value="beginner">
-                                <label>Beginner - Just starting out</label>
-                            </div>
-                            <div class="radio-option" data-value="intermediate">
-                                <label>Intermediate - Some experience</label>
-                            </div>
-                            <div class="radio-option" data-value="advanced">
-                                <label>Advanced - Looking to master</label>
-                            </div>
-                        </div>
-                        <div class="button-group">
-                            <button type="button" class="btn btn-secondary btn-skip"
-                                onclick="wizard.skipStep()">Skip</button>
-                        </div>
-                    </div>
-
-                    <!-- Question 4 -->
-                    <div class="wizard-step" data-step="4">
-                        <div class="question-card-header">
-                            <div class="question-number">Question 4 of 4</div>
-                            <h3>Time commitment per week?</h3>
-                        </div>
-                        <div class="radio-group" data-question="time">
-                            <div class="radio-option" data-value="1-3">
-                                <label>1-3 hours</label>
-                            </div>
-                            <div class="radio-option" data-value="4-7">
-                                <label>4-7 hours</label>
-                            </div>
-                            <div class="radio-option" data-value="8+">
-                                <label>8+ hours</label>
-                            </div>
-                        </div>
-                        <div class="button-group">
-                            <button type="button" class="btn btn-secondary btn-skip"
-                                onclick="wizard.skipStep()">Skip</button>
-                        </div>
-                    </div>
-
-                    <!-- Final Step -->
-                    <div class="wizard-step" data-step="5" style="text-align: center;">
-                        <div class="welcome-icon" style="margin-top: 2rem;">🚀</div>
-                        <h2>All Set!</h2>
-                        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Thanks for helping us personalize
-                            your dashboard.</p>
-                        <div class="button-group" style="justify-content: center;">
-                            <button type="button" class="btn btn-primary" id="finishBtn">Go to Dashboard</button>
-                        </div>
-                    </div>
-
                 </div>
 
-                <div class="wizard-progress">
-                    <div class="progress-dot active" data-step="1"></div>
-                    <div class="progress-dot" data-step="2"></div>
-                    <div class="progress-dot" data-step="3"></div>
-                    <div class="progress-dot" data-step="4"></div>
+                <!-- Step 2: Interests (Multi-select) -->
+                <div class="survey-step" data-step="2" data-type="multi">
+                    <h2 class="step-title">What are you interested in?</h2>
+                    <p class="step-desc">Choose as many as you like</p>
+                    <div class="options-grid scrollable">
+                        <div class="option-card" data-value="tech">
+                            <div class="option-icon"><i class="fas fa-code"></i></div>
+                            <div class="option-info">
+                                <h3>Technology</h3>
+                                <p>Programming, AI, Data Science</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="business">
+                            <div class="option-icon"><i class="fas fa-chart-line"></i></div>
+                            <div class="option-info">
+                                <h3>Business</h3>
+                                <p>Marketing, Leadership, Finance</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="design">
+                            <div class="option-icon"><i class="fas fa-paint-brush"></i></div>
+                            <div class="option-info">
+                                <h3>Design</h3>
+                                <p>UI/UX, Graphic, Animation</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="languages">
+                            <div class="option-icon"><i class="fas fa-language"></i></div>
+                            <div class="option-info">
+                                <h3>Languages</h3>
+                                <p>Learn a new language</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="science">
+                            <div class="option-icon"><i class="fas fa-atom"></i></div>
+                            <div class="option-info">
+                                <h3>Science</h3>
+                                <p>Physics, Bio, Chemistry</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="humanities">
+                            <div class="option-icon"><i class="fas fa-book"></i></div>
+                            <div class="option-info">
+                                <h3>Humanities</h3>
+                                <p>History, Philosophy, Arts</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </form>
+
+                <!-- Step 3: Commitment -->
+                <div class="survey-step" data-step="3" data-type="single">
+                    <h2 class="step-title">Weekly commitment?</h2>
+                    <p class="step-desc">How much time can you spend per week?</p>
+                    <div class="options-grid">
+                        <div class="option-card" data-value="light">
+                            <div class="option-icon"><i class="fas fa-seedling"></i></div>
+                            <div class="option-info">
+                                <h3>Light (1-3 hrs)</h3>
+                                <p>Casual learning at your pace</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="moderate">
+                            <div class="option-icon"><i class="fas fa-leaf"></i></div>
+                            <div class="option-info">
+                                <h3>Moderate (3-7 hrs)</h3>
+                                <p>Balanced and consistent progress</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="intensive">
+                            <div class="option-icon"><i class="fas fa-tree"></i></div>
+                            <div class="option-info">
+                                <h3>Intensive (7+ hrs)</h3>
+                                <p>Fast-track your learning journey</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Level -->
+                <div class="survey-step" data-step="4" data-type="single">
+                    <h2 class="step-title">Current expertise level?</h2>
+                    <p class="step-desc">Where are you starting from?</p>
+                    <div class="options-grid">
+                        <div class="option-card" data-value="beginner">
+                            <div class="option-icon"><i class="fas fa-star-half-alt"></i></div>
+                            <div class="option-info">
+                                <h3>Beginner</h3>
+                                <p>Starting from scratch</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="intermediate">
+                            <div class="option-icon"><i class="fas fa-star"></i></div>
+                            <div class="option-info">
+                                <h3>Intermediate</h3>
+                                <p>Some prior knowledge</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="advanced">
+                            <div class="option-icon"><i class="fas fa-award"></i></div>
+                            <div class="option-info">
+                                <h3>Advanced</h3>
+                                <p>Looking to master the field</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skip Option -->
+            <div class="skip-container">
+                <button id="skip-btn" class="nav-btn text-btn">Skip this question</button>
+            </div>
+
+            <!-- Navigation Controls -->
+            <div class="survey-controls">
+                <button id="prev-btn" class="nav-btn secondary-btn" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <div class="control-spacer"></div>
+                <button id="next-btn" class="nav-btn primary-btn">
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Footer Dots -->
+            <div class="step-dots" id="step-dots">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final All Set Overlay -->
+    <div id="all-set-overlay" class="success-overlay" style="display: none;">
+        <div class="success-content">
+            <div class="confetti-container"></div>
+            <div class="checkmark-circle">
+                <div class="checkmark draw"></div>
+            </div>
+            <h1 class="fade-in">All Set!</h1>
+            <p class="fade-in delay-1">Redirecting you to your personalized dashboard...</p>
         </div>
     </div>
 
