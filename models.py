@@ -626,3 +626,74 @@ class AccountabilityPartner(Document):
             'notify_on_violations': self.notify_on_violations
         }
 
+
+# ============================================================================
+# FEATURE 5: SINGLE FOCUS LEARNING MODE
+# ============================================================================
+
+class FocusSession(Document):
+    """Tracks active focus mode sessions"""
+    meta = {'collection': 'focus_sessions'}
+    
+    user_id = ReferenceField(User, required=True)
+    learning_item_id = ReferenceField(LearningItem, required=True)
+    daily_task_id = ReferenceField(DailyTask)  # Optional - specific task being focused on
+    
+    # Session Details
+    started_at = DateTimeField(default=datetime.utcnow)
+    ended_at = DateTimeField()
+    duration_minutes = IntField(default=0)
+    
+    # Status
+    is_active = BooleanField(default=True)
+    exit_reason = StringField(max_length=100)  # completed, emergency_exit, timeout
+    
+    # Distraction Tracking
+    distraction_attempts = IntField(default=0)  # How many times user tried to navigate away
+    distraction_log = ListField(DictField())  # Log of distraction attempts
+    
+    # Progress During Session
+    tasks_completed = IntField(default=0)
+    content_consumed_minutes = IntField(default=0)
+    
+    # Session Metadata
+    session_metadata = DictField()
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'user_id': str(self.user_id.id),
+            'learning_item_id': str(self.learning_item_id.id),
+            'daily_task_id': str(self.daily_task_id.id) if self.daily_task_id else None,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'ended_at': self.ended_at.isoformat() if self.ended_at else None,
+            'duration_minutes': self.duration_minutes,
+            'is_active': self.is_active,
+            'exit_reason': self.exit_reason,
+            'distraction_attempts': self.distraction_attempts,
+            'tasks_completed': self.tasks_completed,
+            'content_consumed_minutes': self.content_consumed_minutes
+        }
+    
+    def end_session(self, reason='completed'):
+        """End the focus session"""
+        self.is_active = False
+        self.ended_at = datetime.utcnow()
+        self.exit_reason = reason
+        
+        if self.started_at:
+            duration = (self.ended_at - self.started_at).total_seconds() / 60
+            self.duration_minutes = int(duration)
+        
+        self.save()
+    
+    def log_distraction(self, distraction_type, details=None):
+        """Log a distraction attempt"""
+        self.distraction_attempts += 1
+        self.distraction_log.append({
+            'timestamp': datetime.utcnow().isoformat(),
+            'type': distraction_type,
+            'details': details or {}
+        })
+        self.save()
+

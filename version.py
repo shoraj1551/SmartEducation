@@ -2,7 +2,7 @@
 SmartEducation Application Version
 """
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 
 # Version History:
 # 0.1.0 - Initial release with authentication and basic dashboard
@@ -13,3 +13,4 @@ __version__ = "0.8.0"
 # 0.6.0 - Feature 2 Complete: Scheduling intelligence, Today's view, Plan visualization
 # 0.7.0 - Feature 3 Complete: Hard Commitment Mode with discipline enforcement
 # 0.8.0 - Feature 4 Complete: Smart Priority Engine with multi-factor ranking
+# 0.9.0 - Feature 5 Complete: Single Focus Learning Mode with distraction prevention
