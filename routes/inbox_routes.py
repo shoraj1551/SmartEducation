@@ -201,3 +201,51 @@ def bulk_update(user_id):
     
     except Exception as e:
         return jsonify({'error': f'Bulk update failed: {str(e)}'}), 500
+
+
+@inbox_bp.route('/check-capacity', methods=['GET'])
+@token_required
+def check_capacity(user_id):
+    """Check if user can add new items and get detailed feedback"""
+    try:
+        result = InboxService.check_can_add_item(user_id)
+        
+        return jsonify(result), 200
+    
+    except Exception as e:
+        return jsonify({'error': f'Failed to check capacity: {str(e)}'}), 500
+
+
+@inbox_bp.route('/blocking-details', methods=['GET'])
+@token_required
+def get_blocking_details(user_id):
+    """Get detailed information about why adding items is blocked"""
+    try:
+        details = InboxService.get_blocking_details(user_id)
+        
+        return jsonify(details), 200
+    
+    except Exception as e:
+        return jsonify({'error': f'Failed to get blocking details: {str(e)}'}), 500
+
+
+@inbox_bp.route('/validate-addition', methods=['POST'])
+@token_required
+def validate_addition(user_id):
+    """Validate if an item can be added before actually creating it"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        force = data.get('force', False)  # Admin override
+        validation_result = InboxService.validate_item_addition(user_id, data, force)
+        
+        status_code = 200 if validation_result['can_proceed'] else 400
+        
+        return jsonify(validation_result), status_code
+    
+    except Exception as e:
+        return jsonify({'error': f'Validation failed: {str(e)}'}), 500
+

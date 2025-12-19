@@ -315,3 +315,214 @@ class InboxService:
             'updated_items': updated_items,
             'errors': errors
         }
+    
+    @staticmethod
+    def check_can_add_item(user_id):
+        """
+        Check if user can add a new item and provide detailed feedback
+        
+        Args:
+            user_id: User ID
+            
+        Returns:
+            Dictionary with can_add boolean and detailed message
+        """
+        try:
+            if isinstance(user_id, str):
+                user = User.objects.get(id=user_id)
+            else:
+                user = user_id
+        except DoesNotExist:
+            return {
+                'can_add': False,
+                'reason': 'User not found',
+                'active_items': [],
+                'suggestions': []
+            }
+        
+        active_items = LearningItem.objects(user_id=user, status='active')
+        active_count = active_items.count()
+        
+        can_add = active_count < InboxService.MAX_ACTIVE_ITEMS
+        
+        result = {
+            'can_add': can_add,
+            'active_count': active_count,
+            'max_allowed': InboxService.MAX_ACTIVE_ITEMS,
+            'slots_available': max(0, InboxService.MAX_ACTIVE_ITEMS - active_count)
+        }
+        
+        if not can_add:
+            # Provide detailed blocking information
+            result['reason'] = f'Maximum active items limit reached ({active_count}/{InboxService.MAX_ACTIVE_ITEMS})'
+            result['active_items'] = [
+                {
+                    'id': str(item.id),
+                    'title': item.title,
+                    'progress_percentage': item.progress_percentage,
+                    'added_at': item.added_at.isoformat() if item.added_at else None
+                }
+                for item in active_items
+            ]
+            result['suggestions'] = [
+                'Complete an existing learning item to free up a slot',
+                'Pause a learning item you\'re not currently working on',
+                'Drop a learning item you no longer wish to pursue'
+            ]
+            result['message'] = (
+                f"You have reached the maximum limit of {InboxService.MAX_ACTIVE_ITEMS} active learning items. "
+                f"To maintain focus and prevent content hoarding, please complete, pause, or drop "
+                f"one of your existing items before adding new content."
+            )
+        else:
+            # Provide warning if approaching limit
+            if active_count == InboxService.MAX_ACTIVE_ITEMS - 1:
+                result['warning'] = f'You have {active_count} active items. Only 1 slot remaining!'
+                result['message'] = 'You can add this item, but you\'re at your limit. Focus on completing current items.'
+            else:
+                result['message'] = f'You can add new items. {result["slots_available"]} slots available.'
+        
+        return result
+    
+    @staticmethod
+    def get_blocking_details(user_id):
+        """
+        Get detailed information about why adding new items is blocked
+        
+        Args:
+            user_id: User ID
+            
+        Returns:
+            Dictionary with blocking details and recommendations
+        """
+        check_result = InboxService.check_can_add_item(user_id)
+        
+        if check_result['can_add']:
+            return {
+                'is_blocked': False,
+                'message': 'You can add new learning items'
+            }
+        
+        # Calculate additional metrics for blocked users
+        try:
+            if isinstance(user_id, str):
+                user = User.objects.get(id=user_id)
+            else:
+                user = user_id
+        except DoesNotExist:
+            return {'is_blocked': True, 'message': 'User not found'}
+        
+        active_items = LearningItem.objects(user_id=user, status='active')
+        
+        # Find items closest to completion
+        items_with_progress = []
+        for item in active_items:
+            items_with_progress.append({
+                'id': str(item.id),
+                'title': item.title,
+                'progress_percentage': item.progress_percentage,
+                'remaining_percentage': 100 - item.progress_percentage,
+                'total_duration': item.total_duration,
+                'completed_duration': item.completed_duration,
+                'remaining_duration': item.total_duration - item.completed_duration
+            })
+        
+        # Sort by progress (highest first)
+        items_with_progress.sort(key=lambda x: x['progress_percentage'], reverse=True)
+        
+        return {
+            'is_blocked': True,
+            'reason': check_result['reason'],
+            'active_count': check_result['active_count'],
+            'max_allowed': check_result['max_allowed'],
+            'message': check_result['message'],
+            'active_items_details': items_with_progress,
+            'recommendations': [
+                {
+                    'action': 'complete_closest',
+                    'description': 'Focus on completing the item closest to 100%',
+                    'item': items_with_progress[0] if items_with_progress else None
+                },
+                {
+                    'action': 'pause_least_progress',
+                    'description': 'Pause the item with least progress if you\'re not actively working on it',
+                    'item': items_with_progress[-1] if items_with_progress else None
+                },
+                {
+                    'action': 'review_all',
+                    'description': 'Review all active items and decide which to keep, pause, or drop'
+                }
+            ]
+        }
+    
+    @staticmethod
+    def validate_item_addition(user_id, item_data, force=False):
+        """
+        Comprehensive validation before adding a new item
+        
+        Args:
+            user_id: User ID
+            item_data: Item data to validate
+            force: If True, bypass capacity checks (admin override)
+            
+        Returns:
+            Dictionary with validation result
+        """
+        validation_result = {
+            'is_valid': True,
+            'errors': [],
+            'warnings': [],
+            'can_proceed': True
+        }
+        
+        # Check capacity unless forced
+        if not force:
+            capacity_check = InboxService.check_can_add_item(user_id)
+            if not capacity_check['can_add']:
+                validation_result['is_valid'] = False
+                validation_result['can_proceed'] = False
+                validation_result['errors'].append({
+                    'field': 'capacity',
+                    'message': capacity_check['message'],
+                    'details': capacity_check
+                })
+                return validation_result
+            
+            # Add warning if approaching limit
+            if 'warning' in capacity_check:
+                validation_result['warnings'].append({
+                    'type': 'approaching_limit',
+                    'message': capacity_check['warning']
+                })
+        
+        # Validate required fields
+        required_fields = ['title', 'source_type']
+        for field in required_fields:
+            if field not in item_data or not item_data[field]:
+                validation_result['is_valid'] = False
+                validation_result['errors'].append({
+                    'field': field,
+                    'message': f'Missing required field: {field}'
+                })
+        
+        # Validate source_type
+        valid_source_types = ['course', 'video', 'pdf', 'bookmark', 'playlist', 'article']
+        if 'source_type' in item_data and item_data['source_type'] not in valid_source_types:
+            validation_result['is_valid'] = False
+            validation_result['errors'].append({
+                'field': 'source_type',
+                'message': f'Invalid source_type. Must be one of: {", ".join(valid_source_types)}'
+            })
+        
+        # Validate URL format if provided
+        if 'source_url' in item_data and item_data['source_url']:
+            url = item_data['source_url']
+            if not (url.startswith('http://') or url.startswith('https://')):
+                validation_result['warnings'].append({
+                    'type': 'invalid_url',
+                    'message': 'Source URL should start with http:// or https://'
+                })
+        
+        validation_result['can_proceed'] = validation_result['is_valid']
+        return validation_result
+
