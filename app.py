@@ -15,6 +15,7 @@ from routes.commitment_routes import commitments_bp
 from routes.priority_routes import priority_bp
 from routes.focus_routes import focus_bp
 from routes.reality_routes import reality_bp
+from routes.video_guard_routes import video_guard_bp
 
 def create_app():
     """Create and configure Flask application"""
@@ -43,6 +44,7 @@ def create_app():
     app.register_blueprint(priority_bp)  # NEW: Priority engine routes
     app.register_blueprint(focus_bp)  # NEW: Focus mode routes
     app.register_blueprint(reality_bp)  # NEW: Reality metrics routes
+    app.register_blueprint(video_guard_bp)  # NEW: Video guard routes
 
     
     # Serve static files
