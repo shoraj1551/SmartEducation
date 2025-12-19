@@ -341,3 +341,149 @@ class ContentSource(Document):
             'last_import_count': self.last_import_count,
             'connected_at': self.connected_at.isoformat() if self.connected_at else None
         }
+
+
+# ============================================================================
+# FEATURE 2: AUTO COURSE BREAKDOWN INTO DAILY TASKS
+# ============================================================================
+
+class LearningPlan(Document):
+    """Overall learning plan for a learning item"""
+    meta = {'collection': 'learning_plans'}
+    
+    learning_item_id = ReferenceField(LearningItem, required=True)
+    user_id = ReferenceField(User, required=True)
+    
+    # Plan Configuration
+    target_completion_date = DateTimeField(required=True)
+    daily_availability_minutes = IntField(required=True)  # How many minutes per day user can study
+    total_estimated_duration = IntField(required=True)  # Total course duration in minutes
+    
+    # Schedule Settings
+    skip_weekends = BooleanField(default=True)
+    buffer_percentage = FloatField(default=20.0)  # Add 20% buffer time
+    
+    # Plan Status
+    status = StringField(max_length=20, default='active')  # active, completed, abandoned
+    created_at = DateTimeField(default=datetime.utcnow)
+    last_adjusted_at = DateTimeField()
+    
+    # Progress Tracking
+    total_tasks = IntField(default=0)
+    completed_tasks = IntField(default=0)
+    missed_tasks = IntField(default=0)
+    
+    # Metadata
+    plan_metadata = DictField()  # Store algorithm parameters, adjustments history
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'learning_item_id': str(self.learning_item_id.id),
+            'user_id': str(self.user_id.id),
+            'target_completion_date': self.target_completion_date.isoformat() if self.target_completion_date else None,
+            'daily_availability_minutes': self.daily_availability_minutes,
+            'total_estimated_duration': self.total_estimated_duration,
+            'skip_weekends': self.skip_weekends,
+            'buffer_percentage': self.buffer_percentage,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'total_tasks': self.total_tasks,
+            'completed_tasks': self.completed_tasks,
+            'missed_tasks': self.missed_tasks,
+            'progress_percentage': (self.completed_tasks / self.total_tasks * 100) if self.total_tasks > 0 else 0
+        }
+
+
+class DailyTask(Document):
+    """Individual daily task generated from a learning plan"""
+    meta = {'collection': 'daily_tasks'}
+    
+    learning_plan_id = ReferenceField(LearningPlan, required=True)
+    learning_item_id = ReferenceField(LearningItem, required=True)
+    user_id = ReferenceField(User, required=True)
+    
+    # Task Details
+    title = StringField(max_length=300, required=True)
+    description = StringField()
+    task_type = StringField(max_length=50, default='study')  # study, practice, review, project
+    
+    # Scheduling
+    scheduled_date = DateTimeField(required=True)
+    estimated_duration_minutes = IntField(required=True)
+    
+    # Content Reference
+    content_reference = DictField()  # chapter, video, page numbers, etc.
+    
+    # Task Dependencies
+    depends_on_task_ids = ListField(StringField())  # IDs of tasks that must be completed first
+    is_prerequisite_for = ListField(StringField())  # IDs of tasks that depend on this one
+    
+    # Difficulty & Priority
+    difficulty_level = StringField(max_length=20, default='medium')  # easy, medium, hard
+    priority_score = FloatField(default=0.0)
+    
+    # Status & Progress
+    status = StringField(max_length=20, default='pending')  # pending, in_progress, completed, skipped, missed
+    completed_at = DateTimeField()
+    actual_duration_minutes = IntField(default=0)
+    
+    # Timestamps
+    created_at = DateTimeField(default=datetime.utcnow)
+    started_at = DateTimeField()
+    
+    # Metadata
+    task_metadata = DictField()  # Additional task-specific data
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'learning_plan_id': str(self.learning_plan_id.id),
+            'learning_item_id': str(self.learning_item_id.id),
+            'user_id': str(self.user_id.id),
+            'title': self.title,
+            'description': self.description,
+            'task_type': self.task_type,
+            'scheduled_date': self.scheduled_date.isoformat() if self.scheduled_date else None,
+            'estimated_duration_minutes': self.estimated_duration_minutes,
+            'content_reference': self.content_reference,
+            'depends_on_task_ids': self.depends_on_task_ids,
+            'difficulty_level': self.difficulty_level,
+            'priority_score': self.priority_score,
+            'status': self.status,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'actual_duration_minutes': self.actual_duration_minutes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'is_overdue': self.is_overdue(),
+            'is_today': self.is_today()
+        }
+    
+    def is_overdue(self):
+        """Check if task is overdue"""
+        if self.status in ['completed', 'skipped']:
+            return False
+        if self.scheduled_date:
+            return datetime.utcnow() > self.scheduled_date
+        return False
+    
+    def is_today(self):
+        """Check if task is scheduled for today"""
+        if self.scheduled_date:
+            today = datetime.utcnow().date()
+            task_date = self.scheduled_date.date()
+            return today == task_date
+        return False
+    
+    def mark_complete(self, actual_duration=None):
+        """Mark task as completed"""
+        self.status = 'completed'
+        self.completed_at = datetime.utcnow()
+        if actual_duration:
+            self.actual_duration_minutes = actual_duration
+        self.save()
+        
+        # Update learning plan stats
+        plan = self.learning_plan_id
+        plan.completed_tasks += 1
+        plan.save()
+
