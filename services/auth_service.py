@@ -170,17 +170,7 @@ class AuthService:
             
         # Return temp user data
         is_fully_verified = email_verified and mobile_verified
-        return TempUser(temp_user_id, email, mobile, is_fully_verified), "Please verify OTPs."
-
-class TempUser:
-    """Temporary user object for registration flow"""
-    def __init__(self, user_id, email, mobile, is_verified):
-        self.id = user_id
-        self.email = email
-        self.mobile = mobile
-        self.is_verified = is_verified
-
-    
+        return TempUser(temp_user_id, email, mobile, is_fully_verified), "Please verify OTPs."    
     @staticmethod
     def verify_user(user_id, email_otp, mobile_otp):
         """Verify user with both email and mobile OTP and create account"""
@@ -339,3 +329,12 @@ class TempUser:
             return None
         except jwt.InvalidTokenError:
             return None
+
+class TempUser:
+    """Temporary user object for registration flow"""
+    def __init__(self, user_id, email, mobile, is_verified):
+        self.id = user_id
+        self.email = email
+        self.mobile = mobile
+        self.is_verified = is_verified
+
