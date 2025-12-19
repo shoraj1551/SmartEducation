@@ -12,6 +12,7 @@ from routes.bookmark_routes import bookmark_bp
 from routes.inbox_routes import inbox_bp
 from routes.task_routes import tasks_bp
 from routes.commitment_routes import commitments_bp
+from routes.priority_routes import priority_bp
 
 def create_app():
     """Create and configure Flask application"""
@@ -37,6 +38,7 @@ def create_app():
     app.register_blueprint(inbox_bp)  # NEW: Unified Learning Inbox routes
     app.register_blueprint(tasks_bp)  # NEW: Task generation routes
     app.register_blueprint(commitments_bp)  # NEW: Commitment routes
+    app.register_blueprint(priority_bp)  # NEW: Priority engine routes
 
     
     # Serve static files
