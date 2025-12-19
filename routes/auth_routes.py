@@ -12,6 +12,8 @@ def register():
     """Register a new user"""
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No input data provided'}), 400
         
         # Validate required fields
         required_fields = ['name', 'email', 'mobile', 'password']
@@ -31,9 +33,13 @@ def register():
         if not user:
             return jsonify({'error': message}), 400
             
+        # Ensure user object has ID (Robustness Fix)
+        if not hasattr(user, 'id'):
+             return jsonify({'error': 'Registration failed: User object missing ID'}), 500
+
         # Check if user is already fully verified (immediate creation)
         if hasattr(user, 'is_verified') and user.is_verified is True:
-            # Check if it's a real User model (has updated_at) or TempUser
+            # Check if it's a real User model (has created_at) or TempUser
             if hasattr(user, 'created_at'):
                 # This is a real user! Registration complete!
                 return jsonify({
@@ -48,6 +54,7 @@ def register():
             'message': message,
             'user_id': user.id,
             'email': user.email,
+
             'mobile': user.mobile,
             'verification_completed': False
         }), 201
@@ -86,6 +93,8 @@ def send_verification_otp():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
 
 @auth_bp.route('/verify-inline-otp', methods=['POST'])
 def verify_inline_otp():

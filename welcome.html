@@ -11,131 +11,6 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap"
         rel="stylesheet">
-    <style>
-        .welcome-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-
-        .welcome-card {
-            max-width: 600px;
-            width: 100%;
-            background: var(--bg-card);
-            border-radius: 24px;
-            padding: 3rem;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: var(--shadow-xl);
-        }
-
-        .welcome-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .welcome-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-        }
-
-        .welcome-header h1 {
-            font-size: 2.5rem;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
-        }
-
-        .welcome-header p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
-
-        .survey-section {
-            margin-top: 2rem;
-        }
-
-        .survey-section h3 {
-            font-size: 1.3rem;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-        }
-
-        .survey-subtitle {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .question {
-            margin-bottom: 1.5rem;
-        }
-
-        .question label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-            color: var(--text-primary);
-        }
-
-        .radio-group,
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .radio-option,
-        .checkbox-option {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .radio-option:hover,
-        .checkbox-option:hover {
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .radio-option input,
-        .checkbox-option input {
-            cursor: pointer;
-        }
-
-        .radio-option label,
-        .checkbox-option label {
-            cursor: pointer;
-            margin: 0;
-            font-weight: 400;
-            color: var(--text-secondary);
-        }
-
-        .button-group {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .btn-skip {
-            background: transparent;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: var(--text-primary);
-        }
-
-        .btn-skip:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.5);
-        }
-    </style>
 </head>
 
 <body>
@@ -163,155 +38,153 @@
         </div>
     </div>
 
+    <!-- Registration Success Overlay -->
+    <div class="success-overlay" id="successOverlay">
+        <div class="success-icon-container">
+            <span>✓</span>
+        </div>
+        <div class="success-message">
+            <h1 class="welcome-header" style="text-align: center; margin-bottom: 0.5rem; color: white;">Registration
+                Successful!</h1>
+            <p style="color: rgba(255,255,255,0.8);">Welcome, <span id="overlayUserName">User</span></p>
+        </div>
+    </div>
+
     <!-- Welcome Content -->
-    <div class="container welcome-container">
+    <div class="container welcome-container" id="mainContainer" style="opacity: 0; transition: opacity 0.5s ease;">
         <div class="welcome-card">
             <div class="welcome-header">
-                <div class="welcome-icon">🎉</div>
-                <h1>Welcome, <span id="userName">User</span>!</h1>
-                <p>Your account has been successfully created</p>
+                <div class="welcome-icon">👋</div>
+                <h1>Let's personalize your path!</h1>
+                <p>Help us tailor the experience for you</p>
             </div>
 
-            <div class="survey-section">
-                <h3>Help us personalize your experience</h3>
-                <p class="survey-subtitle">This is optional and will only take a minute</p>
+            <form id="surveyForm">
+                <div class="wizard-container" id="surveyWizard">
 
-                <form id="surveyForm">
                     <!-- Question 1 -->
-                    <div class="question">
-                        <label>What's your primary learning goal?</label>
-                        <div class="radio-group">
-                            <div class="radio-option">
-                                <input type="radio" name="goal" value="career" id="goal1">
-                                <label for="goal1">Career advancement</label>
+                    <div class="wizard-step" data-step="1">
+                        <div class="question-card-header">
+                            <div class="question-number">Question 1 of 4</div>
+                            <h3>What's your primary learning goal?</h3>
+                        </div>
+                        <div class="radio-group" data-question="goal">
+                            <div class="radio-option" data-value="career">
+                                <label>Career advancement</label>
                             </div>
-                            <div class="radio-option">
-                                <input type="radio" name="goal" value="skills" id="goal2">
-                                <label for="goal2">Learn new skills</label>
+                            <div class="radio-option" data-value="skills">
+                                <label>Learn new skills</label>
                             </div>
-                            <div class="radio-option">
-                                <input type="radio" name="goal" value="hobby" id="goal3">
-                                <label for="goal3">Personal interest/hobby</label>
+                            <div class="radio-option" data-value="hobby">
+                                <label>Personal interest/hobby</label>
                             </div>
-                            <div class="radio-option">
-                                <input type="radio" name="goal" value="academic" id="goal4">
-                                <label for="goal4">Academic requirements</label>
+                            <div class="radio-option" data-value="academic">
+                                <label>Academic requirements</label>
                             </div>
+                        </div>
+                        <div class="button-group">
+                            <button type="button" class="btn btn-secondary btn-skip"
+                                onclick="wizard.skipStep()">Skip</button>
                         </div>
                     </div>
 
                     <!-- Question 2 -->
-                    <div class="question">
-                        <label>How do you prefer to learn?</label>
-                        <div class="radio-group">
-                            <div class="radio-option">
-                                <input type="radio" name="style" value="video" id="style1">
-                                <label for="style1">Video tutorials</label>
+                    <div class="wizard-step" data-step="2">
+                        <div class="question-card-header">
+                            <div class="question-number">Question 2 of 4</div>
+                            <h3>How do you prefer to learn?</h3>
+                        </div>
+                        <div class="radio-group" data-question="style">
+                            <div class="radio-option" data-value="video">
+                                <label>Video tutorials</label>
                             </div>
-                            <div class="radio-option">
-                                <input type="radio" name="style" value="reading" id="style2">
-                                <label for="style2">Reading articles/books</label>
+                            <div class="radio-option" data-value="reading">
+                                <label>Reading articles/books</label>
                             </div>
-                            <div class="radio-option">
-                                <input type="radio" name="style" value="interactive" id="style3">
-                                <label for="style3">Interactive exercises</label>
+                            <div class="radio-option" data-value="interactive">
+                                <label>Interactive exercises</label>
                             </div>
-                            <div class="radio-option">
-                                <input type="radio" name="style" value="mixed" id="style4">
-                                <label for="style4">Mix of everything</label>
+                            <div class="radio-option" data-value="mixed">
+                                <label>Mix of everything</label>
                             </div>
+                        </div>
+                        <div class="button-group">
+                            <button type="button" class="btn btn-secondary btn-skip"
+                                onclick="wizard.skipStep()">Skip</button>
                         </div>
                     </div>
 
                     <!-- Question 3 -->
-                    <div class="question">
-                        <label>What's your experience level?</label>
-                        <div class="radio-group">
-                            <div class="radio-option">
-                                <input type="radio" name="level" value="beginner" id="level1">
-                                <label for="level1">Beginner - Just starting out</label>
+                    <div class="wizard-step" data-step="3">
+                        <div class="question-card-header">
+                            <div class="question-number">Question 3 of 4</div>
+                            <h3>What's your experience level?</h3>
+                        </div>
+                        <div class="radio-group" data-question="level">
+                            <div class="radio-option" data-value="beginner">
+                                <label>Beginner - Just starting out</label>
                             </div>
-                            <div class="radio-option">
-                                <input type="radio" name="level" value="intermediate" id="level2">
-                                <label for="level2">Intermediate - Some experience</label>
+                            <div class="radio-option" data-value="intermediate">
+                                <label>Intermediate - Some experience</label>
                             </div>
-                            <div class="radio-option">
-                                <input type="radio" name="level" value="advanced" id="level3">
-                                <label for="level3">Advanced - Looking to master</label>
+                            <div class="radio-option" data-value="advanced">
+                                <label>Advanced - Looking to master</label>
                             </div>
+                        </div>
+                        <div class="button-group">
+                            <button type="button" class="btn btn-secondary btn-skip"
+                                onclick="wizard.skipStep()">Skip</button>
                         </div>
                     </div>
 
                     <!-- Question 4 -->
-                    <div class="question">
-                        <label>How much time can you dedicate per week?</label>
-                        <div class="radio-group">
-                            <div class="radio-option">
-                                <input type="radio" name="time" value="1-3" id="time1">
-                                <label for="time1">1-3 hours</label>
+                    <div class="wizard-step" data-step="4">
+                        <div class="question-card-header">
+                            <div class="question-number">Question 4 of 4</div>
+                            <h3>Time commitment per week?</h3>
+                        </div>
+                        <div class="radio-group" data-question="time">
+                            <div class="radio-option" data-value="1-3">
+                                <label>1-3 hours</label>
                             </div>
-                            <div class="radio-option">
-                                <input type="radio" name="time" value="4-7" id="time2">
-                                <label for="time2">4-7 hours</label>
+                            <div class="radio-option" data-value="4-7">
+                                <label>4-7 hours</label>
                             </div>
-                            <div class="radio-option">
-                                <input type="radio" name="time" value="8+" id="time3">
-                                <label for="time3">8+ hours</label>
+                            <div class="radio-option" data-value="8+">
+                                <label>8+ hours</label>
                             </div>
+                        </div>
+                        <div class="button-group">
+                            <button type="button" class="btn btn-secondary btn-skip"
+                                onclick="wizard.skipStep()">Skip</button>
                         </div>
                     </div>
 
-                    <div class="button-group">
-                        <button type="button" class="btn btn-secondary btn-skip" id="skipBtn">Skip for now</button>
-                        <button type="submit" class="btn btn-primary" style="flex: 1;">Continue</button>
+                    <!-- Final Step -->
+                    <div class="wizard-step" data-step="5" style="text-align: center;">
+                        <div class="welcome-icon" style="margin-top: 2rem;">🚀</div>
+                        <h2>All Set!</h2>
+                        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Thanks for helping us personalize
+                            your dashboard.</p>
+                        <div class="button-group" style="justify-content: center;">
+                            <button type="button" class="btn btn-primary" id="finishBtn">Go to Dashboard</button>
+                        </div>
                     </div>
-                </form>
-            </div>
+
+                </div>
+
+                <div class="wizard-progress">
+                    <div class="progress-dot active" data-step="1"></div>
+                    <div class="progress-dot" data-step="2"></div>
+                    <div class="progress-dot" data-step="3"></div>
+                    <div class="progress-dot" data-step="4"></div>
+                </div>
+            </form>
         </div>
     </div>
 
-    <script>
-        // Get user data from localStorage
-        const userData = JSON.parse(localStorage.getItem('user') || '{}');
-        const userName = userData.name || 'User';
-
-        // Display user name
-        document.getElementById('userName').textContent = userName;
-
-        // Handle survey submission
-        document.getElementById('surveyForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const formData = new FormData(e.target);
-            const preferences = {
-                goal: formData.get('goal'),
-                style: formData.get('style'),
-                level: formData.get('level'),
-                time: formData.get('time')
-            };
-
-            // Save preferences to localStorage
-            localStorage.setItem('learningPreferences', JSON.stringify(preferences));
-
-            // Show success message
-            alert('Thank you! Your preferences have been saved.');
-
-            // Redirect to login
-            window.location.href = 'index.html';
-        });
-
-        // Handle skip button
-        document.getElementById('skipBtn').addEventListener('click', () => {
-            window.location.href = 'index.html';
-        });
-
-        // Auto-redirect if no user data (shouldn't happen, but safety check)
-        if (!localStorage.getItem('user')) {
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 3000);
-        }
-    </script>
+    <!-- Load new script -->
+    <script src="welcome.js"></script>
 </body>
 
 </html>

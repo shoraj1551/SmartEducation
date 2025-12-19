@@ -17,7 +17,7 @@ class AuthService:
         import secrets
         
         # Check if session exists or create new
-        if 'pending_user' not in session:
+        if 'pending_user' not in session or 'id' not in session.get('pending_user', {}):
             temp_user_id = secrets.token_hex(16)
             session['pending_user'] = {
                 'id': temp_user_id,
@@ -25,7 +25,8 @@ class AuthService:
                 'email': contact if otp_type == 'email' else '',
                 'mobile': contact if otp_type == 'mobile' else '',
                 'email_verified': False,
-                'mobile_verified': False
+                'mobile_verified': False,
+                'password_hash': None  # Initialize to prevent KeyError
             }
         else:
             temp_user_id = session['pending_user']['id']
@@ -37,6 +38,8 @@ class AuthService:
                 
         # Generate and send OTP
         otp = OTPService.create_otp(temp_user_id, otp_type, purpose)
+        if not otp:
+             raise ValueError("Failed to generate OTP")
         
         if otp_type == 'email':
             OTPService.send_email_otp(contact, otp.otp_code, purpose)
@@ -110,7 +113,7 @@ class AuthService:
     def register_user(name, email, mobile, password, temp_user_id=None):
         """Register a new user - checks for existing verification"""
         from flask import session
-        from werkzeug.security import generate_password_hash
+        import bcrypt
         import secrets
         
         # Check if verified user already exists
@@ -128,7 +131,7 @@ class AuthService:
             session['pending_user']['name'] = name
             session['pending_user']['email'] = email
             session['pending_user']['mobile'] = mobile
-            session['pending_user']['password_hash'] = generate_password_hash(password)
+            session['pending_user']['password_hash'] = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             
             # Check if ALREADY verified
             if session['pending_user'].get('email_verified') and session['pending_user'].get('mobile_verified'):
@@ -143,8 +146,10 @@ class AuthService:
                 'name': name,
                 'email': email,
                 'mobile': mobile,
-                'password_hash': generate_password_hash(password),
+                # Use bcrypt here too
+                'password_hash': bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
                 'email_verified': False,
+
                 'mobile_verified': False
             }
         
@@ -159,19 +164,22 @@ class AuthService:
             OTPService.send_email_otp(email, email_otp.otp_code, 'registration')
             
         if not mobile_verified:
+
             mobile_otp = OTPService.create_otp(temp_user_id, 'mobile', 'registration')
             OTPService.send_sms_otp(mobile, mobile_otp.otp_code, 'registration')
             
         # Return temp user data
-        class TempUser:
-            def __init__(self, user_id, email, mobile, is_verified):
-                self.id = user_id
-                self.email = email
-                self.mobile = mobile
-                self.is_verified = is_verified # Flag to tell frontend if done
-        
         is_fully_verified = email_verified and mobile_verified
         return TempUser(temp_user_id, email, mobile, is_fully_verified), "Please verify OTPs."
+
+class TempUser:
+    """Temporary user object for registration flow"""
+    def __init__(self, user_id, email, mobile, is_verified):
+        self.id = user_id
+        self.email = email
+        self.mobile = mobile
+        self.is_verified = is_verified
+
     
     @staticmethod
     def verify_user(user_id, email_otp, mobile_otp):
