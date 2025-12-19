@@ -25,6 +25,11 @@ class DashboardManager {
         this.startFreshBtn = document.getElementById('startFreshBtn');
         this.resumeSessionBtn = document.getElementById('resumeSessionBtn');
 
+        // Session State
+        this.idleTimeout = null;
+        this.IDLE_LIMIT = 60 * 60 * 1000; // 60 minutes
+        this.lastAction = Date.now();
+
         this.init();
     }
 
@@ -46,8 +51,63 @@ class DashboardManager {
         // 4. Fetch Bookmarks
         await this.fetchBookmarks();
 
-        // 5. Attach Listeners
+        // 5. Fetch Full Profile for AI Personalization
+        await this.fetchFullProfile();
+
+        // 6. Attach Listeners
         this.attachListeners();
+
+        // 7. Setup Idle Detection
+        this.setupIdleTimer();
+    }
+
+    async fetchFullProfile() {
+        try {
+            const response = await fetch('/api/user/profile', {
+                headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+            const user = await response.json();
+            if (response.ok) {
+                this.userData = user;
+                localStorage.setItem('user', JSON.stringify(user));
+                this.updatePersonalizedGreeting();
+                this.renderRecommendations();
+                this.updateCommitmentTracker();
+                this.updateStats();
+            }
+        } catch (err) {
+            console.error('Error fetching full profile:', err);
+        }
+    }
+
+    updatePersonalizedGreeting() {
+        const name = this.userData.name.split(' ')[0];
+        const goal = this.userData.learning_goal || 'learning';
+        const greetingEl = document.querySelector('.main-content h1');
+
+        // Map goals to friendly phrases
+        const goalPhrases = {
+            'school': 'crushing your school boards',
+            'competitive': 'conquering your competitive exams',
+            'college': 'excelling in your university studies',
+            'upskill': 'mastering new professional skills',
+            'switch': 'on your path to a new career',
+            'academic': 'striving for general excellence',
+            'hobby': 'exploring your passions'
+        };
+
+        const phrase = goalPhrases[goal] || 'glad to have you back';
+
+        if (greetingEl) {
+            greetingEl.innerHTML = `Welcome back, ${name}! <span style="font-size: 1rem; color: rgba(255,255,255,0.4); display: block; margin-top: 0.5rem; font-weight: 400;">You're ${phrase}.</span>`;
+        } else {
+            // If there's no H1, insert one at the top of main content
+            const topNav = document.querySelector('.top-nav');
+            const h1 = document.createElement('h1');
+            h1.style.marginBottom = '2rem';
+            h1.innerHTML = `Welcome back, ${name}! <span style="font-size: 1rem; color: rgba(255,255,255,0.4); display: block; margin-top: 0.5rem; font-weight: 400;">You're ${phrase}.</span>`;
+            topNav.parentNode.insertBefore(h1, topNav.nextSibling);
+        }
     }
 
     updateProfileUI() {
@@ -56,11 +116,102 @@ class DashboardManager {
         this.avatarInitials.textContent = name.charAt(0).toUpperCase();
     }
 
+    renderRecommendations() {
+        const area = document.getElementById('recommendationArea');
+        const grid = document.getElementById('recommendationGrid');
+        const pathLabel = document.getElementById('interestPathLabel');
+
+        const interests = this.userData.interests || [];
+        const primaryInterest = interests.length > 0 ? interests[0] : 'Learning';
+
+        if (pathLabel) pathLabel.textContent = primaryInterest;
+        if (area) area.style.display = 'block';
+
+        // Mock recommendations based on interests
+        const mocks = {
+            'government': [
+                { title: 'SSC CGL Complete Guide', type: 'Course', icon: '🏛️', url: '#' },
+                { title: 'Banking Awareness 2024', type: 'Article', icon: '🏦', url: '#' },
+                { title: 'UPSC Current Affairs Daily', type: 'Video', icon: '📰', url: '#' }
+            ],
+            'entrance': [
+                { title: 'JEE Advanced Maths Mastery', type: 'Course', icon: '📐', url: '#' },
+                { title: 'NEET Biology Rapid Revision', type: 'Article', icon: '🩺', url: '#' },
+                { title: 'GATE CS Theory of Computation', type: 'Video', icon: '🖥️', url: '#' }
+            ],
+            'school_subjects': [
+                { title: 'Class 12 Physics: Optics', type: 'Course', icon: '🔭', url: '#' },
+                { title: 'Calculus for Beginners', type: 'Article', icon: '🔢', url: '#' },
+                { title: 'Tenth Grade History Simplified', type: 'Video', icon: '📜', url: '#' }
+            ],
+            'tech': [
+                { title: 'Full-Stack Roadmap 2024', type: 'Course', icon: '💻', url: '#' },
+                { title: 'System Design Fundamentals', type: 'Article', icon: '🏗️', url: '#' },
+                { title: 'Advanced React Patterns', type: 'Video', icon: '⚛️', url: '#' }
+            ],
+            'design': [
+                { title: 'UI/UX Design Masterclass', type: 'Course', icon: '🎨', url: '#' },
+                { title: 'Typography in Modern Apps', type: 'Article', icon: '✍️', url: '#' },
+                { title: 'Figma to Code Workflow', type: 'Video', icon: '🛠️', url: '#' }
+            ],
+            'business': [
+                { title: 'Product Management 101', type: 'Course', icon: '📈', url: '#' },
+                { title: 'Agile Methodology Guide', type: 'Article', icon: '🤝', url: '#' },
+                { title: 'Market Analysis Techniques', type: 'Video', icon: '📊', url: '#' }
+            ]
+        };
+
+        const recs = mocks[primaryInterest.toLowerCase()] || mocks['tech'];
+
+        if (grid) {
+            grid.innerHTML = recs.map(rec => `
+                <div class="stat-card" style="cursor: pointer; transition: transform 0.3s ease;" onclick="window.open('${rec.url}', '_blank')">
+                    <div class="stat-icon purple" style="background: rgba(124, 58, 237, 0.1); font-size: 1.2rem;">${rec.icon}</div>
+                    <div class="stat-info">
+                        <h4 style="font-size: 0.7rem;">${rec.type}</h4>
+                        <p style="font-size: 0.95rem; line-height: 1.2;">${rec.title}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+
+    updateCommitmentTracker() {
+        const level = this.userData.commitment_level || 'moderate';
+        const bar = document.getElementById('commitmentBar');
+        const label = document.getElementById('commitmentLabel');
+
+        const goals = { 'light': 2, 'moderate': 5, 'intensive': 10 };
+        const goalHours = goals[level] || 5;
+
+        // Mocking hours spent for now (will connect to session data later)
+        const spent = 1.2;
+        const percentage = Math.min((spent / goalHours) * 100, 100);
+
+        if (bar) bar.style.width = `${percentage}%`;
+        if (label) {
+            const levelUpper = level.charAt(0).toUpperCase() + level.slice(1);
+            label.textContent = `${levelUpper} (${spent}/${goalHours}h)`;
+        }
+    }
+
+    updateStats() {
+        const hoursEl = document.getElementById('hoursSpent');
+        if (hoursEl) hoursEl.textContent = '1.2'; // Mock
+
+        const rateEl = document.getElementById('completionRate');
+        if (rateEl) rateEl.textContent = '15%'; // Mock
+    }
+
     attachListeners() {
         // Dropdown Toggle
         this.userMenuTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
             this.userDropdown.classList.toggle('active');
+        });
+
+        this.userDropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
         });
 
         // Close dropdown on outside click
@@ -85,6 +236,11 @@ class DashboardManager {
         if (this.addBookmarkForm) {
             this.addBookmarkForm.addEventListener('submit', (e) => this.handleAddBookmark(e));
         }
+
+        // Idle Reset Listeners
+        ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(evt => {
+            document.addEventListener(evt, () => this.resetIdleTimer());
+        });
     }
 
     async handleAddBookmark(e) {
@@ -219,6 +375,9 @@ class DashboardManager {
     }
 
     async checkSessionStatus() {
+        // FEEDBACK FIX: Only check once per browser session
+        if (sessionStorage.getItem('checked_resumption')) return;
+
         try {
             const response = await fetch('/api/user/session-status', {
                 headers: { 'Authorization': `Bearer ${this.token}` }
@@ -227,11 +386,26 @@ class DashboardManager {
             if (data.has_previous_session) {
                 setTimeout(() => {
                     this.resumeModal.style.display = 'flex';
+                    sessionStorage.setItem('checked_resumption', 'true');
                 }, 800);
             }
         } catch (err) {
             console.error('Error checking session status:', err);
         }
+    }
+
+    setupIdleTimer() {
+        if (this.idleTimeout) clearTimeout(this.idleTimeout);
+        this.idleTimeout = setTimeout(() => {
+            // Re-trigger session prompt after 60 mins of inactivity
+            sessionStorage.removeItem('checked_resumption');
+            this.checkSessionStatus();
+        }, this.IDLE_LIMIT);
+    }
+
+    resetIdleTimer() {
+        this.lastAction = Date.now();
+        this.setupIdleTimer();
     }
 
     async fetchActivities() {

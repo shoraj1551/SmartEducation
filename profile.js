@@ -47,13 +47,26 @@ class ProfileManager {
     populateForm(user) {
         const fields = [
             'name', 'job_title', 'bio', 'education_info',
-            'linkedin_url', 'github_url', 'website_url'
+            'linkedin_url', 'github_url', 'website_url',
+            'learning_goal', 'commitment_level', 'expertise_level'
         ];
 
         fields.forEach(field => {
             const el = document.getElementById(field);
             if (el) el.value = user[field] || '';
         });
+
+        // Show verified badge for goal if set
+        const goalVerified = document.getElementById('goalVerified');
+        if (goalVerified) {
+            goalVerified.style.display = user.learning_goal ? 'inline' : 'none';
+        }
+
+        // Handle interests (Array to Comma String)
+        const interestsEl = document.getElementById('interests');
+        if (interestsEl && Array.isArray(user.interests)) {
+            interestsEl.value = user.interests.join(', ');
+        }
     }
 
     updateUI(user) {
@@ -77,12 +90,20 @@ class ProfileManager {
         const formData = {};
         const fields = [
             'name', 'job_title', 'bio', 'education_info',
-            'linkedin_url', 'github_url', 'website_url'
+            'linkedin_url', 'github_url', 'website_url',
+            'learning_goal', 'commitment_level', 'expertise_level'
         ];
 
         fields.forEach(field => {
-            formData[field] = document.getElementById(field).value;
+            const el = document.getElementById(field);
+            if (el) formData[field] = el.value;
         });
+
+        // Handle interests (Comma String to Array)
+        const interestsVal = document.getElementById('interests').value;
+        formData['interests'] = interestsVal.split(',')
+            .map(i => i.trim())
+            .filter(i => i !== '');
 
         const btn = this.profileForm.querySelector('button[type="submit"]');
         const originalText = btn.innerHTML;

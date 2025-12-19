@@ -134,11 +134,43 @@ class SurveyWizard {
             'Next <i class="fas fa-arrow-right"></i>';
     }
 
-    completeSurvey() {
-        // Save preferences
+    async completeSurvey() {
+        // 1. Prepare formatted data for backend
+        const formattedData = {
+            goal: this.surveyData[1],
+            interests: this.surveyData[2],
+            commitment: this.surveyData[3],
+            level: this.surveyData[4]
+        };
+
+        // 2. Save to localStorage (legacy support)
         localStorage.setItem('surveyPreferences', JSON.stringify(this.surveyData));
 
-        // Final transition
+        // 3. Send to Backend API
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                const response = await fetch('/api/user/onboarding', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formattedData)
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    console.log('Survey data persisted to cloud');
+                } else {
+                    console.error('Failed to persist survey data:', result.error);
+                }
+            } catch (err) {
+                console.error('Network error persisting survey:', err);
+            }
+        }
+
+        // 4. Final transition
         document.querySelector('.welcome-container').style.opacity = '0';
 
         setTimeout(() => {

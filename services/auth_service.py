@@ -5,7 +5,7 @@ import jwt
 from datetime import datetime, timedelta
 from flask import current_app
 from mongoengine.queryset.visitor import Q
-from models import User
+from models import User, UserSession
 from services.otp_service import OTPService
 
 class AuthService:
@@ -210,8 +210,7 @@ class AuthService:
             )
             user.password_hash = pending_user['password_hash']
         
-        db.session.add(user)
-        db.session.commit()
+        user.save()
         
         # Clear pending user from session
         session.pop('pending_user', None)
@@ -239,7 +238,21 @@ class AuthService:
         # Generate JWT token
         token = AuthService.generate_token(user.id)
         
-        return {'user': user.to_dict(), 'token': token}, "Login successful"
+        # Create UserSession
+        import secrets
+        session_id = secrets.token_hex(16)
+        user_session = UserSession(
+            user_id=user,
+            session_id=session_id,
+            is_active=True
+        )
+        user_session.save()
+        
+        return {
+            'user': user.to_dict(), 
+            'token': token,
+            'session_id': session_id
+        }, "Login successful"
     
     @staticmethod
     def request_password_reset(identifier):
