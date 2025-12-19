@@ -9,6 +9,7 @@ from services.otp_service import mail
 from routes.auth_routes import auth_bp
 from routes.user_routes import user_bp
 from routes.bookmark_routes import bookmark_bp
+from routes.inbox_routes import inbox_bp
 
 def create_app():
     """Create and configure Flask application"""
@@ -31,6 +32,8 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(bookmark_bp)
+    app.register_blueprint(inbox_bp)  # NEW: Unified Learning Inbox routes
+
     
     # Serve static files
     @app.route('/')
