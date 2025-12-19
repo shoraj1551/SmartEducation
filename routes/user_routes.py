@@ -3,7 +3,7 @@ User routes for SmartEducation API - Activities and Preferences
 """
 from flask import Blueprint, request, jsonify, current_app
 from functools import wraps
-from models import db, User
+from models import User
 from services.auth_service import AuthService
 from services.activity_service import ActivityService
 
@@ -24,7 +24,7 @@ def token_required(f):
         if not user_id:
             return jsonify({'error': 'Token is invalid or expired'}), 401
             
-        current_user = User.query.get(user_id)
+        current_user = User.objects(id=user_id).first()
         if not current_user:
             return jsonify({'error': 'User not found'}), 401
             
@@ -64,10 +64,10 @@ def get_session_status(current_user):
     """Find the last significant activity to prompt for session resumption"""
     from models import Activity
     # Look for last activity that wasn't just a 'login'
-    last_activity = Activity.query.filter(
-        Activity.user_id == current_user.id,
-        Activity.activity_type != 'login'
-    ).order_by(Activity.created_at.desc()).first()
+    last_activity = Activity.objects(
+        user_id=current_user.id,
+        activity_type__ne='login'
+    ).order_by('-created_at').first()
     
     if last_activity:
         return jsonify({
@@ -76,3 +76,79 @@ def get_session_status(current_user):
         })
     
     return jsonify({'has_previous_session': False})
+
+@user_bp.route('/profile', methods=['GET'])
+@token_required
+def get_profile(current_user):
+    """Fetch full user profile"""
+    return jsonify(current_user.to_dict())
+
+@user_bp.route('/profile', methods=['PUT'])
+@token_required
+def update_profile(current_user):
+    """Update user profile fields"""
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+        
+    # List of allowed fields to update
+    updatable_fields = [
+        'name', 'job_title', 'bio', 'profile_picture', 
+        'education_info', 'linkedin_url', 'github_url', 'website_url'
+    ]
+    
+    for field in updatable_fields:
+        if field in data:
+            setattr(current_user, field, data[field])
+            
+    try:
+        current_user.save()
+        return jsonify({
+            'message': 'Profile updated successfully',
+            'user': current_user.to_dict()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@user_bp.route('/preferences', methods=['GET'])
+@token_required
+def get_preferences(current_user):
+    """Fetch user preferences"""
+    return jsonify({
+        'theme_preference': current_user.theme_preference,
+        'email_notifications': current_user.email_notifications,
+        'mobile_notifications': current_user.mobile_notifications,
+        'marketing_emails': current_user.marketing_emails
+    })
+
+@user_bp.route('/preferences', methods=['PUT'])
+@token_required
+def update_preferences(current_user):
+    """Update user preferences"""
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+        
+    # Allowed preference fields
+    pref_fields = [
+        'theme_preference', 'email_notifications', 
+        'mobile_notifications', 'marketing_emails'
+    ]
+    
+    for field in pref_fields:
+        if field in data:
+            setattr(current_user, field, data[field])
+            
+    try:
+        current_user.save()
+        return jsonify({
+            'message': 'Preferences updated successfully',
+            'preferences': {
+                'theme_preference': current_user.theme_preference,
+                'email_notifications': current_user.email_notifications,
+                'mobile_notifications': current_user.mobile_notifications,
+                'marketing_emails': current_user.marketing_emails
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

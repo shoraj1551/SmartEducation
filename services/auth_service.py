@@ -4,7 +4,8 @@ Authentication service for user management
 import jwt
 from datetime import datetime, timedelta
 from flask import current_app
-from models import db, User
+from mongoengine.queryset.visitor import Q
+from models import User
 from services.otp_service import OTPService
 
 class AuthService:
@@ -78,9 +79,7 @@ class AuthService:
             return None, "Session expired"
             
         # Check if user already exists (unverified)
-        user = User.query.filter_by(email=pending_user['email']).first()
-        if not user:
-            user = User.query.filter_by(mobile=pending_user['mobile']).first()
+        user = User.objects(Q(email=pending_user['email']) | Q(mobile=pending_user['mobile'])).first()
             
         if user:
             # Update existing unverified user
@@ -100,8 +99,7 @@ class AuthService:
             )
             user.password_hash = pending_user['password_hash']
         
-        db.session.add(user)
-        db.session.commit()
+        user.save()
         
         # Clear session
         session.pop('pending_user', None)
@@ -117,12 +115,10 @@ class AuthService:
         import secrets
         
         # Check if verified user already exists
-        existing_user = User.query.filter_by(email=email, is_verified=True).first()
-        if existing_user:
+        if User.objects(email=email, is_verified=True).first():
             return None, "Email already registered"
         
-        existing_mobile = User.query.filter_by(mobile=mobile, is_verified=True).first()
-        if existing_mobile:
+        if User.objects(mobile=mobile, is_verified=True).first():
             return None, "Mobile number already registered"
             
         # Check if we have a valid pre-verified session
@@ -194,9 +190,7 @@ class AuthService:
         # Both OTPs verified - now create or update the user in database
         
         # Check if user already exists (unverified)
-        user = User.query.filter_by(email=pending_user['email']).first()
-        if not user:
-            user = User.query.filter_by(mobile=pending_user['mobile']).first()
+        user = User.objects(Q(email=pending_user['email']) | Q(mobile=pending_user['mobile'])).first()
             
         if user:
             # Update existing unverified user
@@ -231,9 +225,7 @@ class AuthService:
     def login_user(identifier, password):
         """Login user with email/mobile and password"""
         # Check if identifier is email or mobile
-        user = User.query.filter(
-            (User.email == identifier) | (User.mobile == identifier)
-        ).first()
+        user = User.objects(Q(email=identifier) | Q(mobile=identifier)).first()
         
         if not user:
             return None, "Invalid credentials"
@@ -253,16 +245,14 @@ class AuthService:
     def request_password_reset(identifier):
         """Request password reset via email or mobile"""
         # Find user by email or mobile
-        user = User.query.filter(
-            (User.email == identifier) | (User.mobile == identifier)
-        ).first()
+        user = User.objects(Q(email=identifier) | Q(mobile=identifier)).first()
         
         if not user:
             return None, "User not found"
         
         # Generate and send OTPs
-        email_otp = OTPService.create_otp(user.id, 'email', 'reset')
-        mobile_otp = OTPService.create_otp(user.id, 'mobile', 'reset')
+        email_otp = OTPService.create_otp(str(user.id), 'email', 'reset')
+        mobile_otp = OTPService.create_otp(str(user.id), 'mobile', 'reset')
         
         OTPService.send_email_otp(user.email, email_otp.otp_code, 'password reset')
         OTPService.send_sms_otp(user.mobile, mobile_otp.otp_code, 'password reset')
@@ -272,7 +262,7 @@ class AuthService:
     @staticmethod
     def reset_password(user_id, email_otp, mobile_otp, new_password):
         """Reset password with OTP verification"""
-        user = User.query.get(user_id)
+        user = User.objects(id=user_id).first()
         if not user:
             return False, "User not found"
         
@@ -288,14 +278,14 @@ class AuthService:
         
         # Update password
         user.set_password(new_password)
-        db.session.commit()
+        user.save()
         
         return True, "Password reset successfully"
     
     @staticmethod
     def resend_otp(user_id, otp_type, purpose):
         """Resend OTP"""
-        user = User.query.get(user_id)
+        user = User.objects(id=user_id).first()
         if not user:
             return False, "User not found"
         
@@ -314,7 +304,7 @@ class AuthService:
     def generate_token(user_id):
         """Generate JWT token"""
         payload = {
-            'user_id': user_id,
+            'user_id': str(user_id),
             'exp': datetime.utcnow() + current_app.config['JWT_ACCESS_TOKEN_EXPIRES']
         }
         return jwt.encode(payload, current_app.config['JWT_SECRET_KEY'], algorithm='HS256')

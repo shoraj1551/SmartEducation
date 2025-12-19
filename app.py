@@ -4,8 +4,9 @@ SmartEducation - Flask Application
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from config import Config
-from models import db
+from models import User
 from services.otp_service import mail
+from routes.auth_routes import auth_bp
 from routes.user_routes import user_bp
 from routes.bookmark_routes import bookmark_bp
 
@@ -19,11 +20,15 @@ def create_app():
     app.config['SESSION_PERMANENT'] = False
     
     # Initialize extensions
-    db.init_app(app)
     mail.init_app(app)
     CORS(app, supports_credentials=True)
     
+    # MongoDB handles collection creation automatically
+    from mongoengine import connect
+    connect(host=app.config['MONGODB_SETTINGS']['host'])
+    
     # Register blueprints
+    app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(bookmark_bp)
     
@@ -36,9 +41,7 @@ def create_app():
     def serve_static(path):
         return send_from_directory('.', path)
     
-    # Create database tables
-    with app.app_context():
-        db.create_all()
+    # MongoDB handles collection creation automatically
     
     return app
 

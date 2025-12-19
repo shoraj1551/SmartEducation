@@ -3,7 +3,7 @@ Bookmark service for managing and filtering educational resources
 """
 import re
 import json
-from models import db, Bookmark, User
+from models import Bookmark, User
 from datetime import datetime
 
 class BookmarkService:
@@ -86,27 +86,20 @@ class BookmarkService:
                 tags=tags
             )
             
-            # 3. Calculate initial relevance if goals exist
-            user = User.query.get(user_id)
-            # Assuming user preferences are stored in a way we can access
-            # For now, we'll leave it at default and update later
-            
-            db.session.add(bookmark)
-            db.session.commit()
+            bookmark.save()
             return bookmark, "Bookmark added successfully"
         except Exception as e:
-            db.session.rollback()
             return None, str(e)
 
     @staticmethod
     def get_bookmarks(user_email, page=1, per_page=20):
         """Fetch paginated bookmarks for a user by email"""
-        user = User.query.filter_by(email=user_email).first()
+        user = User.objects(email=user_email).first()
         if not user:
             return [], 0
             
-        pagination = Bookmark.query.filter_by(user_id=user.id)\
-            .order_by(Bookmark.relevance_score.desc(), Bookmark.created_at.desc())\
-            .paginate(page=page, per_page=per_page, error_out=False)
+        query = Bookmark.objects(user_id=user.id).order_by('-relevance_score', '-created_at')
+        total = query.count()
+        items = query.skip((page - 1) * per_page).limit(per_page)
             
-        return pagination.items, pagination.total
+        return list(items), total

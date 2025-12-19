@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - SmartEducation</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            background: #0f172a;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .profile-container {
+            max-width: 1000px;
+            margin: 4rem auto;
+            padding: 2rem;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .profile-pic-large {
+            width: 120px;
+            height: 120px;
+            border-radius: 30px;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 800;
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
+        }
+
+        .profile-title h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: -1px;
+        }
+
+        .profile-title p {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1.1rem;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.65);
+            margin-left: 0.5rem;
+        }
+
+        input,
+        textarea {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input:focus,
+        textarea:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(124, 58, 237, 0.2);
+        }
+
+        textarea {
+            resize: none;
+            height: 120px;
+        }
+
+        .input-icon-wrapper {
+            position: relative;
+        }
+
+        .input-icon-wrapper i {
+            position: absolute;
+            left: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .input-icon-wrapper input {
+            padding-left: 3.5rem;
+            width: 100%;
+        }
+
+        .actions {
+            margin-top: 3rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1.5rem;
+        }
+
+        .nav-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-back:hover {
+            color: white;
+            transform: translateX(-5px);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="profile-container">
+        <a href="dashboard.html" class="nav-back">
+            <i class="fas fa-arrow-left"></i>
+            Back to Dashboard
+        </a>
+
+        <div class="profile-header">
+            <div class="profile-pic-large" id="profileInitials">U</div>
+            <div class="profile-title">
+                <h1 id="profileNameDisplay">Your Profile</h1>
+                <p id="profileEmailDisplay">user@example.com</p>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <form id="profileForm" class="form-grid">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="name" placeholder="E.g. John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label>Job Title</label>
+                    <input type="text" id="job_title" placeholder="E.g. Senior Software Engineer">
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Bio</label>
+                    <textarea id="bio" placeholder="Tell the world about yourself..."></textarea>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Education</label>
+                    <textarea id="education_info" placeholder="E.g. Computer Science at Stanford University"
+                        style="height: 80px;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>LinkedIn Profile</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fab fa-linkedin"></i>
+                        <input type="url" id="linkedin_url" placeholder="https://linkedin.com/in/username">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>GitHub Profile</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fab fa-github"></i>
+                        <input type="url" id="github_url" placeholder="https://github.com/username">
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Personal Website</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fas fa-globe"></i>
+                        <input type="url" id="website_url" placeholder="https://yourwebsite.com">
+                    </div>
+                </div>
+
+                <div class="actions full-width">
+                    <button type="button" class="nav-btn secondary-btn"
+                        onclick="window.location.href='dashboard.html'">Cancel</button>
+                    <button type="submit" class="primary-btn nav-btn" style="padding: 1rem 2.5rem;">
+                        <i class="fas fa-save" style="margin-right: 0.5rem;"></i> Save Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="profile.js"></script>
+</body>
+
+</html>

@@ -16,8 +16,13 @@ class Config:
     DEBUG = os.getenv('DEBUG', 'True') == 'True'
     
     # Database
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///smarteducation.db')
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    db_url = os.getenv('DATABASE_URL', 'mongodb://localhost:27017/SmartEducation')
+    # MongoDB Settings for Flask-MongoEngine
+    MONGODB_SETTINGS = {
+        'host': db_url
+    }
+    # No longer needed for Mongo
+    # SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Mail Configuration (Mailtrap for development)
     MAIL_SERVER = os.getenv('MAIL_SERVER', 'sandbox.smtp.mailtrap.io')

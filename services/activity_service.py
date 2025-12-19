@@ -1,7 +1,7 @@
 """
 Activity service for tracking user actions
 """
-from models import db, Activity
+from models import Activity
 import json
 
 class ActivityService:
@@ -17,15 +17,13 @@ class ActivityService:
                 description=description,
                 metadata_json=json.dumps(metadata) if metadata else None
             )
-            db.session.add(activity)
-            db.session.commit()
+            activity.save()
             return True
         except Exception as e:
             print(f"Error logging activity: {str(e)}")
-            db.session.rollback()
             return False
 
     @staticmethod
     def get_user_activities(user_id, limit=20):
         """Get recent activities for a user"""
-        return Activity.query.filter_by(user_id=user_id).order_by(Activity.created_at.desc()).limit(limit).all()
+        return Activity.objects(user_id=user_id).order_by('-created_at').limit(limit)

@@ -2,7 +2,7 @@
 Authentication routes for SmartEducation API
 """
 from flask import Blueprint, request, jsonify
-from models import db, User
+from models import User
 from services.auth_service import AuthService
 from services.activity_service import ActivityService
 
@@ -282,7 +282,7 @@ def verify_token():
         if not user_id:
             return jsonify({'error': 'Invalid or expired token'}), 401
         
-        user = User.query.get(user_id)
+        user = User.objects(id=user_id).first()
         
         return jsonify({
             'valid': True,

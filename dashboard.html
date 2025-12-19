@@ -431,7 +431,7 @@
     <div class="dashboard-layout">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="logo-container">
+            <div class="logo-container" onclick="window.location.href='dashboard.html'" style="cursor: pointer;">
                 <div class="logo-icon">
                     <i class="fas fa-graduation-cap"></i>
                 </div>
@@ -439,11 +439,11 @@
             </div>
 
             <nav class="nav-menu">
-                <a href="#" class="nav-item active">
+                <a href="dashboard.html" class="nav-item active">
                     <i class="fas fa-th-large"></i>
                     Dashboard
                 </a>
-                <a href="#" class="nav-item">
+                <a href="#bookmarkContainer" class="nav-item">
                     <i class="fas fa-bookmark"></i>
                     Bookmarks
                 </a>
@@ -455,7 +455,7 @@
                     <i class="fas fa-calendar-alt"></i>
                     Schedule
                 </a>
-                <a href="#" class="nav-item">
+                <a href="settings.html" class="nav-item">
                     <i class="fas fa-cog"></i>
                     Settings
                 </a>
@@ -478,7 +478,7 @@
                 </div>
 
                 <div class="user-menu-container">
-                    <div class="user-trigger" id="userMenuTrigger">
+                    <div class="user-trigger" id="userMenuTrigger" onclick="window.location.href='profile.html'">
                         <div class="user-avatar" id="avatarInitials">U</div>
                         <div class="user-info-brief">
                             <span class="user-name" id="userNameBrief">User Name</span>
@@ -487,15 +487,15 @@
                     </div>
 
                     <div class="user-dropdown" id="userDropdown">
-                        <a href="#" class="dropdown-item">
+                        <a href="profile.html" class="dropdown-item">
                             <i class="fas fa-user-circle"></i>
                             My Profile
                         </a>
-                        <a href="#" class="dropdown-item">
+                        <a href="settings.html" class="dropdown-item">
                             <i class="fas fa-sliders-h"></i>
                             Preferences
                         </a>
-                        <a href="#" class="dropdown-item">
+                        <a href="settings.html" class="dropdown-item">
                             <i class="fas fa-shield-alt"></i>
                             Security
                         </a>

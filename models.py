@@ -1,28 +1,41 @@
 """
-Database models for SmartEducation
+Database models for SmartEducation (MongoDB)
 """
 from datetime import datetime
-from flask_sqlalchemy import SQLAlchemy
+from mongoengine import (
+    Document, StringField, BooleanField, DateTimeField, 
+    IntField, ReferenceField, FloatField
+)
 import bcrypt
 
-db = SQLAlchemy()
+# We will initialize connection in app.py
 
-class User(db.Model):
+class User(Document):
     """User model for authentication"""
-    __tablename__ = 'users'
+    meta = {'collection': 'users'}
     
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    mobile = db.Column(db.String(15), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(255), nullable=False)
-    is_verified = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    name = StringField(max_length=100, required=True)
+    email = StringField(max_length=120, required=True, unique=True)
+    mobile = StringField(max_length=15, required=True, unique=True)
+    password_hash = StringField(max_length=255, required=True)
+    is_verified = BooleanField(default=False)
+    created_at = DateTimeField(default=datetime.utcnow)
+    updated_at = DateTimeField(default=datetime.utcnow)
     
-    # Relationships
-    # otps relationship removed because OTP.user_id is a String (for temp IDs) and has no foreign key
-
+    # Profile Fields
+    job_title = StringField(max_length=100)
+    bio = StringField()
+    profile_picture = StringField(max_length=255)
+    education_info = StringField()
+    linkedin_url = StringField(max_length=255)
+    github_url = StringField(max_length=255)
+    website_url = StringField(max_length=255)
+    
+    # Settings & Preferences
+    theme_preference = StringField(max_length=20, default='dark')
+    email_notifications = BooleanField(default=True)
+    mobile_notifications = BooleanField(default=True)
+    marketing_emails = BooleanField(default=False)
     
     def set_password(self, password):
         """Hash and set password"""
@@ -35,28 +48,38 @@ class User(db.Model):
     def to_dict(self):
         """Convert user to dictionary"""
         return {
-            'id': self.id,
+            'id': str(self.id),
             'name': self.name,
             'email': self.email,
             'mobile': self.mobile,
             'is_verified': self.is_verified,
+            'job_title': self.job_title,
+            'bio': self.bio,
+            'profile_picture': self.profile_picture,
+            'education_info': self.education_info,
+            'linkedin_url': self.linkedin_url,
+            'github_url': self.github_url,
+            'website_url': self.website_url,
+            'theme_preference': self.theme_preference,
+            'email_notifications': self.email_notifications,
+            'mobile_notifications': self.mobile_notifications,
+            'marketing_emails': self.marketing_emails,
             'created_at': self.created_at.isoformat()
         }
 
 
-class OTP(db.Model):
+class OTP(Document):
     """OTP model for verification"""
-    __tablename__ = 'otps'
+    meta = {'collection': 'otps'}
     
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(100), nullable=False, index=True)  # Changed to String to support temp user IDs
-    otp_code = db.Column(db.String(6), nullable=False)
-    otp_type = db.Column(db.String(10), nullable=False)  # 'email' or 'mobile'
-    purpose = db.Column(db.String(20), nullable=False)  # 'registration' or 'reset'
-    attempts = db.Column(db.Integer, default=0)
-    expires_at = db.Column(db.DateTime, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    is_used = db.Column(db.Boolean, default=False)
+    user_id = StringField(max_length=100, required=True)
+    otp_code = StringField(max_length=6, required=True)
+    otp_type = StringField(max_length=10, required=True)
+    purpose = StringField(max_length=20, required=True)
+    attempts = IntField(default=0)
+    expires_at = DateTimeField(required=True)
+    created_at = DateTimeField(default=datetime.utcnow)
+    is_used = BooleanField(default=False)
     
     def is_expired(self):
         """Check if OTP is expired"""
@@ -66,53 +89,47 @@ class OTP(db.Model):
         """Check if OTP is still valid"""
         return not self.is_expired() and not self.is_used and self.attempts < 3
 
-class Activity(db.Model):
+
+class Activity(Document):
     """Activity model for tracking user actions"""
-    __tablename__ = 'activities'
+    meta = {'collection': 'activities'}
     
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    activity_type = db.Column(db.String(50), nullable=False)  # 'login', 'course_start', 'survey_complete', etc.
-    description = db.Column(db.String(255))
-    metadata_json = db.Column(db.Text)  # Additional data in JSON format
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationship
-    user = db.relationship('User', backref=db.backref('activities', lazy=True))
+    user_id = ReferenceField(User, required=True)
+    activity_type = StringField(max_length=50, required=True)
+    description = StringField(max_length=255)
+    metadata_json = StringField()
+    created_at = DateTimeField(default=datetime.utcnow)
     
     def to_dict(self):
         """Convert activity to dictionary"""
         return {
-            'id': self.id,
-            'user_id': self.user_id,
+            'id': str(self.id),
+            'user_id': str(self.user_id.id),
             'activity_type': self.activity_type,
             'description': self.description,
             'metadata': self.metadata_json,
             'created_at': self.created_at.isoformat()
         }
 
-class Bookmark(db.Model):
+
+class Bookmark(Document):
     """Bookmark model for tracking educational resources"""
-    __tablename__ = 'bookmarks'
+    meta = {'collection': 'bookmarks'}
     
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    url = db.Column(db.String(500), nullable=False)
-    title = db.Column(db.String(255))
-    description = db.Column(db.Text)
-    is_educational = db.Column(db.Boolean, default=False)
-    category = db.Column(db.String(50))  # 'video', 'article', 'course', etc.
-    tags = db.Column(db.String(255))
-    relevance_score = db.Column(db.Float, default=0.0)  # Calculated based on user goals
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationship
-    user = db.relationship('User', backref=db.backref('bookmarks', lazy=True))
+    user_id = ReferenceField(User, required=True)
+    url = StringField(max_length=500, required=True)
+    title = StringField(max_length=255)
+    description = StringField()
+    is_educational = BooleanField(default=False)
+    category = StringField(max_length=50)
+    tags = StringField(max_length=255)
+    relevance_score = FloatField(default=0.0)
+    created_at = DateTimeField(default=datetime.utcnow)
     
     def to_dict(self):
         """Convert bookmark to dictionary"""
         return {
-            'id': self.id,
+            'id': str(self.id),
             'url': self.url,
             'title': self.title,
             'description': self.description,

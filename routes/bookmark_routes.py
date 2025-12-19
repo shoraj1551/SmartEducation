@@ -4,7 +4,7 @@ Bookmark API routes for SmartEducation
 from flask import Blueprint, request, jsonify
 from routes.user_routes import token_required
 from services.bookmark_service import BookmarkService
-from models import db, Bookmark
+from models import Bookmark
 
 bookmark_bp = Blueprint('bookmark', __name__, url_prefix='/api/bookmarks')
 
@@ -47,14 +47,13 @@ def get_bookmarks(current_user):
         'per_page': per_page
     }), 200
 
-@bookmark_bp.route('/<int:bookmark_id>', methods=['DELETE'])
+@bookmark_bp.route('/<string:bookmark_id>', methods=['DELETE'])
 @token_required
 def delete_bookmark(current_user, bookmark_id):
     """Delete a bookmark"""
-    bookmark = Bookmark.query.filter_by(id=bookmark_id, user_id=current_user.id).first()
+    bookmark = Bookmark.objects(id=bookmark_id, user_id=current_user.id).first()
     if not bookmark:
         return jsonify({'error': 'Bookmark not found'}), 404
         
-    db.session.delete(bookmark)
-    db.session.commit()
+    bookmark.delete()
     return jsonify({'message': 'Bookmark deleted successfully'}), 200

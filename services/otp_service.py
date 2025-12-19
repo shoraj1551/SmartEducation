@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from flask import current_app
 from flask_mail import Mail, Message
 from twilio.rest import Client
-from models import db, OTP
+from models import OTP
 
 mail = Mail()
 
@@ -24,7 +24,7 @@ class OTPService:
     def create_otp(user_id, otp_type, purpose):
         """Create and store OTP in database"""
         # Delete any existing OTPs for this user, type, and purpose
-        OTP.query.filter_by(
+        OTP.objects(
             user_id=user_id,
             otp_type=otp_type,
             purpose=purpose,
@@ -46,8 +46,7 @@ class OTPService:
             expires_at=expires_at
         )
         
-        db.session.add(otp)
-        db.session.commit()
+        otp.save()
         
         return otp
     
@@ -113,12 +112,12 @@ class OTPService:
     @staticmethod
     def verify_otp(user_id, otp_code, otp_type, purpose):
         """Verify OTP code"""
-        otp = OTP.query.filter_by(
+        otp = OTP.objects(
             user_id=user_id,
             otp_type=otp_type,
             purpose=purpose,
             is_used=False
-        ).order_by(OTP.created_at.desc()).first()
+        ).order_by('-created_at').first()
         
         if not otp:
             return False, "OTP not found"
@@ -133,12 +132,12 @@ class OTPService:
         otp.attempts += 1
         
         if otp.otp_code != otp_code:
-            db.session.commit()
+            otp.save()
             return False, f"Invalid OTP. {current_app.config['OTP_MAX_ATTEMPTS'] - otp.attempts} attempts remaining"
         
         # Mark as used
         otp.is_used = True
-        db.session.commit()
+        otp.save()
         
         return True, "OTP verified successfully"
     
@@ -146,8 +145,7 @@ class OTPService:
     def delete_user_otps(user_id):
         """Delete all OTP records for a user (used after registration completion)"""
         try:
-            OTP.query.filter_by(user_id=user_id).delete()
-            db.session.commit()
+            OTP.objects(user_id=user_id).delete()
             return True
         except Exception as e:
             print(f"Error deleting OTPs: {str(e)}")
