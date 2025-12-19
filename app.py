@@ -16,6 +16,9 @@ from routes.priority_routes import priority_bp
 from routes.focus_routes import focus_bp
 from routes.reality_routes import reality_bp
 from routes.video_guard_routes import video_guard_bp
+from routes.weekly_review_routes import weekly_review_bp
+from routes.burnout_routes import burnout_bp
+from routes.proof_routes import proof_bp
 
 def create_app():
     """Create and configure Flask application"""
@@ -45,6 +48,9 @@ def create_app():
     app.register_blueprint(focus_bp)  # NEW: Focus mode routes
     app.register_blueprint(reality_bp)  # NEW: Reality metrics routes
     app.register_blueprint(video_guard_bp)  # NEW: Video guard routes
+    app.register_blueprint(weekly_review_bp)  # NEW: Weekly review routes
+    app.register_blueprint(burnout_bp)  # NEW: Burnout detection routes
+    app.register_blueprint(proof_bp)  # NEW: Proof-of-learning routes
 
     
     # Serve static files

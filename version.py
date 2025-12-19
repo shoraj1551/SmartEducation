@@ -2,7 +2,7 @@
 SmartEducation Application Version
 """
 
-__version__ = "1.1.0"
+__version__ = "2.1.0"
 
 # Version History:
 # 0.1.0 - Initial release with authentication and basic dashboard
@@ -16,3 +16,7 @@ __version__ = "1.1.0"
 # 0.9.0 - Feature 5 Complete: Single Focus Learning Mode with distraction prevention
 # 1.0.0 - Feature 6 Complete: Reality-Driven Progress Visualization - MAJOR MILESTONE!
 # 1.1.0 - Feature 7 Complete: Anti-Distraction Video Learning Guard
+# 1.2.0 - Feature 8 Complete: Weekly Review Assistant
+# 1.3.0 - Feature 9 Complete: Burnout-Aware Adaptive Scheduling
+# 2.0.0 - Feature 10 Complete: Proof-of-Learning System - ALL 10 FEATURES COMPLETE! 🎉
+# 2.1.0 - UAT Release with all 10 advanced learning features
