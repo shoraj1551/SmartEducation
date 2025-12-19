@@ -2,7 +2,7 @@
 SmartEducation Application Version
 """
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 # Version History:
 # 0.1.0 - Initial release with authentication and basic dashboard
@@ -11,3 +11,4 @@ __version__ = "0.6.0"
 # 0.4.0 - Feature 1 Phase 3 & 4: Inbox frontend UI and platform integrations
 # 0.5.0 - Feature 2 Phase 1: Auto course breakdown - Task generation engine
 # 0.6.0 - Feature 2 Complete: Scheduling intelligence, Today's view, Plan visualization
+# 0.7.0 - Feature 3 Complete: Hard Commitment Mode with discipline enforcement

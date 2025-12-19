@@ -11,6 +11,7 @@ from routes.user_routes import user_bp
 from routes.bookmark_routes import bookmark_bp
 from routes.inbox_routes import inbox_bp
 from routes.task_routes import tasks_bp
+from routes.commitment_routes import commitments_bp
 
 def create_app():
     """Create and configure Flask application"""
@@ -35,6 +36,7 @@ def create_app():
     app.register_blueprint(bookmark_bp)
     app.register_blueprint(inbox_bp)  # NEW: Unified Learning Inbox routes
     app.register_blueprint(tasks_bp)  # NEW: Task generation routes
+    app.register_blueprint(commitments_bp)  # NEW: Commitment routes
 
     
     # Serve static files

@@ -487,3 +487,142 @@ class DailyTask(Document):
         plan.completed_tasks += 1
         plan.save()
 
+
+# ============================================================================
+# FEATURE 3: HARD COMMITMENT MODE (DISCIPLINE ENFORCEMENT)
+# ============================================================================
+
+class Commitment(Document):
+    """Locked commitment/promise for a learning item"""
+    meta = {'collection': 'commitments'}
+    
+    learning_item_id = ReferenceField(LearningItem, required=True)
+    user_id = ReferenceField(User, required=True)
+    
+    # Commitment Details
+    target_completion_date = DateTimeField(required=True)
+    daily_study_minutes = IntField(required=True)  # Committed daily study time
+    study_days_per_week = IntField(default=5)  # How many days per week
+    
+    # Lock Settings
+    is_locked = BooleanField(default=True)  # Once locked, cannot be easily modified
+    locked_at = DateTimeField()
+    modification_count = IntField(default=0)  # Track how many times modified
+    max_modifications = IntField(default=2)  # Maximum allowed modifications
+    
+    # Status
+    status = StringField(max_length=20, default='active')  # active, completed, broken, cancelled
+    created_at = DateTimeField(default=datetime.utcnow)
+    completed_at = DateTimeField()
+    broken_at = DateTimeField()
+    
+    # Streak Tracking
+    current_streak = IntField(default=0)  # Consecutive days of completion
+    longest_streak = IntField(default=0)
+    last_check_in = DateTimeField()
+    
+    # Accountability
+    has_accountability_partner = BooleanField(default=False)
+    accountability_partner_email = StringField()
+    
+    # Metadata
+    commitment_metadata = DictField()
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'learning_item_id': str(self.learning_item_id.id),
+            'user_id': str(self.user_id.id),
+            'target_completion_date': self.target_completion_date.isoformat() if self.target_completion_date else None,
+            'daily_study_minutes': self.daily_study_minutes,
+            'study_days_per_week': self.study_days_per_week,
+            'is_locked': self.is_locked,
+            'modification_count': self.modification_count,
+            'max_modifications': self.max_modifications,
+            'status': self.status,
+            'current_streak': self.current_streak,
+            'longest_streak': self.longest_streak,
+            'last_check_in': self.last_check_in.isoformat() if self.last_check_in else None,
+            'has_accountability_partner': self.has_accountability_partner,
+            'can_modify': self.modification_count < self.max_modifications
+        }
+    
+    def lock(self):
+        """Lock the commitment"""
+        self.is_locked = True
+        self.locked_at = datetime.utcnow()
+        self.save()
+
+
+class CommitmentViolation(Document):
+    """Tracks broken commitments and violations"""
+    meta = {'collection': 'commitment_violations'}
+    
+    commitment_id = ReferenceField(Commitment, required=True)
+    user_id = ReferenceField(User, required=True)
+    
+    # Violation Details
+    violation_type = StringField(max_length=50, required=True)  # missed_session, late_start, incomplete_duration
+    violation_date = DateTimeField(default=datetime.utcnow)
+    
+    # Severity
+    severity_level = IntField(default=1)  # 1-5 (1=warning, 5=critical)
+    
+    # Consequence Applied
+    consequence_applied = StringField(max_length=100)  # warning, streak_reset, content_lockout, etc.
+    consequence_duration_hours = IntField(default=0)
+    
+    # Grace Period
+    is_grace_period = BooleanField(default=False)  # First violation gets grace
+    
+    # Resolution
+    is_resolved = BooleanField(default=False)
+    resolved_at = DateTimeField()
+    resolution_note = StringField()
+    
+    # Metadata
+    violation_metadata = DictField()
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'commitment_id': str(self.commitment_id.id),
+            'user_id': str(self.user_id.id),
+            'violation_type': self.violation_type,
+            'violation_date': self.violation_date.isoformat() if self.violation_date else None,
+            'severity_level': self.severity_level,
+            'consequence_applied': self.consequence_applied,
+            'consequence_duration_hours': self.consequence_duration_hours,
+            'is_grace_period': self.is_grace_period,
+            'is_resolved': self.is_resolved
+        }
+
+
+class AccountabilityPartner(Document):
+    """Optional peer accountability system"""
+    meta = {'collection': 'accountability_partners'}
+    
+    user_id = ReferenceField(User, required=True)
+    partner_email = StringField(required=True)
+    partner_name = StringField()
+    
+    # Status
+    status = StringField(max_length=20, default='pending')  # pending, active, inactive
+    invited_at = DateTimeField(default=datetime.utcnow)
+    accepted_at = DateTimeField()
+    
+    # Notification Settings
+    notify_on_violations = BooleanField(default=True)
+    notify_on_milestones = BooleanField(default=True)
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'user_id': str(self.user_id.id),
+            'partner_email': self.partner_email,
+            'partner_name': self.partner_name,
+            'status': self.status,
+            'invited_at': self.invited_at.isoformat() if self.invited_at else None,
+            'notify_on_violations': self.notify_on_violations
+        }
+
