@@ -22,6 +22,17 @@ def achievements():
 def schedule():
     return render_template('schedule.html')
 
+@main_bp.route('/flashcards')
+@main_bp.route('/flashcards')
+def flashcards():
+    return render_template('flashcards.html')
+
+@main_bp.route('/pods')
+@main_bp.route('/pods')
+def pods():
+    return render_template('pods.html')
+
+@main_bp.route('/settings')
 @main_bp.route('/settings')
 def settings():
     return render_template('settings.html')

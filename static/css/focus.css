@@ -1,0 +1,410 @@
+/* Intelligence Engine: Focus Section */
+.focus-section {
+    margin-bottom: 2.5rem;
+    animation: fadeInDown 0.6s ease;
+}
+
+.focus-card {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 2.5rem;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Glass/Glow Effect */
+.focus-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #7c3aed, #ec4899);
+}
+
+.focus-card.urgent::before {
+    background: linear-gradient(90deg, #ef4444, #f59e0b);
+}
+
+.focus-header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.focus-badge {
+    background: rgba(124, 58, 237, 0.2);
+    color: #a78bfa;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.focus-card.urgent .focus-badge {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+.focus-duration {
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
+}
+
+.focus-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(to right, #fff, #cbd5e1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.focus-subtitle {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    max-width: 600px;
+}
+
+.focus-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.focus-actions .btn-lg {
+    padding: 0.8rem 2rem;
+    font-size: 1.1rem;
+}
+
+.focus-empty-state {
+    text-align: center;
+    padding: 3rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+/* Reality Engine Styles */
+#realityContainer {
+    animation: fadeIn 0.8s ease;
+}
+
+.reality-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    backdrop-filter: blur(10px);
+}
+
+.reality-card.danger {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.2));
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.1);
+}
+
+.reality-card.success {
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), rgba(6, 95, 70, 0.2));
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+}
+
+.reality-icon {
+    font-size: 2rem;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.reality-card.danger .reality-icon {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.2);
+}
+
+.reality-card.success .reality-icon {
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.2);
+}
+
+.reality-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.reality-info p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.velocity-stat {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: 'Inter', monospace;
+}
+
+/* Gap List */
+.reality-gap-list {
+    margin-top: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.gap-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.gap-item:last-child {
+    border-bottom: none;
+}
+
+.gap-title {
+    font-weight: 500;
+}
+
+.gap-warning {
+    color: #f87171;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* Wellness Engines */
+.burnout-alert {
+    background: #ef4444;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    animation: slideDown 0.5s ease;
+}
+
+.burnout-alert i {
+    font-size: 1.5rem;
+}
+
+.burnout-alert.moderate {
+    background: #f59e0b;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+}
+
+.review-card {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+/* Review Modal Specifics */
+.review-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.r-stat {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.r-stat .val {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.r-stat .label {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+}
+
+.review-insight {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Gamification Badge */
+.level-badge-container {
+    display: flex;
+    align-items: center;
+    margin-right: 1rem;
+}
+
+.level-pill {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
+    padding: 0.4rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    position: relative;
+    overflow: hidden;
+    cursor: help;
+}
+
+.lvl-num {
+    color: #fca5a5;
+    font-weight: 800;
+    font-size: 0.9rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.lvl-title {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.xp-bar-mini {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.xp-fill {
+    height: 100%;
+    background: #fca5a5;
+    transition: width 0.5s ease;
+}
+
+/* Notification System */
+.icon-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.icon-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ef4444;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    border: 2px solid #0f172a;
+    font-weight: 700;
+}
+
+.notif-dropdown {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    width: 320px;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    overflow: hidden;
+    animation: slideDown 0.2s ease;
+}
+
+.notif-header {
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.notif-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.notif-item {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.notif-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.notif-item.unread {
+    border-left: 3px solid #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.notif-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+    display: block;
+}
+
+.notif-body {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.empty-notif {
+    padding: 2rem;
+    text-align: center;
+    opacity: 0.5;
+    font-style: italic;
+}

@@ -379,6 +379,39 @@
         </div>
     </div>
 
+    <!-- OTP Verification Modal -->
+    <div id="otpModal" class="modal" style="z-index: 3000;">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem; color: #ef4444;">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h2>Secure Deletion</h2>
+            <p class="modal-subtitle" style="margin-bottom: 1.5rem;">To permanently delete this resource, please enter
+                the OTP sent to your email.</p>
+
+            <div id="otpSentMsg"
+                style="display: none; background: rgba(34, 197, 94, 0.1); color: #22c55e; padding: 0.5rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem;">
+                <i class="fas fa-check-circle"></i> OTP Sent Successfully
+            </div>
+
+            <form id="otpForm" class="auth-form">
+                <input type="hidden" id="otpResourceId">
+                <div class="form-group">
+                    <label style="text-align: left;">One-Time Password (OTP)</label>
+                    <input type="text" id="otpInput" placeholder="Enter 6-digit code" maxlength="6"
+                        style="text-align: center; letter-spacing: 5px; font-size: 1.2rem; font-weight: bold;" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full" style="background: #ef4444; border: none;">
+                    Confirm Deletion
+                </button>
+                <button type="button" class="btn btn-secondary btn-full" onclick="closeOtpModal()"
+                    style="margin-top: 0.5rem; background: transparent; border: 1px solid rgba(255,255,255,0.1);">
+                    Cancel
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Sync Loading Overlay -->
     <div id="syncOverlay"
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 14, 39, 0.95); z-index: 2000; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
@@ -400,10 +433,63 @@
     </div>
 
     <style>
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 2;
+            backdrop-filter: blur(5px);
+        }
+
+        .status-not_started {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .status-in_progress {
+            background: rgba(59, 130, 246, 0.8);
+            color: white;
+        }
+
+        .status-completed {
+            background: rgba(34, 197, 94, 0.8);
+            color: white;
+        }
+
+        .progress-bar-container {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 0.8rem;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
         @keyframes spin {
             100% {
                 transform: rotate(360deg);
             }
         }
+    </style>
 
-        </style <script src="/static/js/common.js"></script><script src="/static/js/bookmarks.js"></script></body></html>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/bookmarks.js"></script>
+    <!-- Include Iron Contract Modal -->
+    {% include 'components/commitment_modal.html' %}
+</body>
+
+</html>

@@ -1,0 +1,398 @@
+<!-- Iron Contract Modal -->
+<div id="commitmentModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content iron-theme">
+        <div class="modal-header">
+            <h2><i class="fas fa-scroll"></i> Iron Commitment Contract</h2>
+            <button class="close-btn" onclick="closeCommitmentModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="contract-intro">
+                <p>You are about to enter a binding agreement with yourself.</p>
+                <div class="item-preview">
+                    <span class="label">Course:</span>
+                    <strong id="contractItemTitle">Loading...</strong>
+                </div>
+            </div>
+
+            <!-- Parameters Section -->
+            <div class="contract-form">
+                <input type="hidden" id="contractItemId">
+
+                <div class="form-group">
+                    <label>When will you finish this?</label>
+                    <input type="date" id="contractTargetDate" class="iron-input" onchange="runRealityCheck()">
+                </div>
+
+                <div class="form-group">
+                    <label>Daily Commitment</label>
+                    <div class="range-container">
+                        <input type="range" id="contractDailyMinutes" min="15" max="240" step="15" value="45"
+                            oninput="updateMinutesDisplay(this.value); runRealityCheck()">
+                        <span class="range-value"><span id="minutesDisplay">45</span> mins/day</span>
+                    </div>
+                </div>
+
+                <!-- Reality Check Feedback -->
+                <div id="realityCheckFeedback" class="reality-feedback">
+                    <div class="reality-spinner" style="display: none;">
+                        <i class="fas fa-circle-notch fa-spin"></i> Analyzing Feasibility...
+                    </div>
+                    <div id="realityMessage" class="feedback-message"></div>
+                </div>
+            </div>
+
+            <!-- Signature Section -->
+            <div class="signature-section">
+                <p class="legal-text">
+                    By signing below, I solemnly promise to adhere to this schedule.
+                    I understand that breaking this promise will result in a streak reset
+                    and potential lockout from new content.
+                </p>
+                <div class="signature-pad">
+                    <canvas id="signatureCanvas" width="400" height="100"></canvas>
+                    <div class="sig-placeholder">Sign Here</div>
+                    <button class="clear-sig" onclick="clearSignature()">Clear</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeCommitmentModal()">Cancel</button>
+            <button id="sealContractBtn" class="btn btn-primary iron-btn" onclick="sealContract()" disabled>
+                <i class="fas fa-file-signature"></i> Seal the Contract
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Iron Theme Styles */
+    .iron-theme {
+        background: linear-gradient(145deg, #1a1c23, #111);
+        border: 1px solid #444;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+        max-width: 500px;
+    }
+
+    .iron-theme h2 {
+        color: #e2e8f0;
+        font-family: 'Cinzel', serif;
+        /* Optional: Serious font */
+        border-bottom: 2px solid #333;
+        padding-bottom: 10px;
+    }
+
+    .contract-intro {
+        margin-bottom: 20px;
+        color: #94a3b8;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+    .iron-input {
+        background: #0f172a;
+        border: 1px solid #334155;
+        color: white;
+        padding: 10px;
+        border-radius: 6px;
+        width: 100%;
+    }
+
+    .reality-feedback {
+        margin: 15px 0;
+        min-height: 40px;
+        padding: 10px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.2);
+        font-size: 0.9em;
+    }
+
+    .reality-feedback.valid {
+        border-left: 3px solid #10b981;
+        color: #10b981;
+    }
+
+    .reality-feedback.invalid {
+        border-left: 3px solid #ef4444;
+        color: #ef4444;
+    }
+
+    .signature-pad {
+        position: relative;
+        background: #fff;
+        border-radius: 8px;
+        margin-top: 10px;
+        cursor: crosshair;
+    }
+
+    .signature-pad canvas {
+        width: 100%;
+        height: 100px;
+        border-radius: 8px;
+    }
+
+    .sig-placeholder {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #ddd;
+        font-size: 2rem;
+        pointer-events: none;
+        font-family: 'Cursive', serif;
+    }
+
+    .clear-sig {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        background: transparent;
+        border: none;
+        color: #666;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    .iron-btn {
+        background: linear-gradient(to right, #d97706, #b45309);
+        /* Amber/Gold */
+        border: none;
+        color: white;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .iron-btn:disabled {
+        background: #333;
+        color: #555;
+        cursor: not-allowed;
+    }
+
+    .legal-text {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 20px;
+        font-style: italic;
+    }
+
+    .item-preview .label {
+        color: #64748b;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+</style>
+
+<script>
+    let signaturePad = null;
+    let isSigning = false;
+    let hasSigned = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initCanvas();
+        // Set default date to today + 30 days
+        const dateInput = document.getElementById('contractTargetDate');
+        if (dateInput) {
+            const future = new Date();
+            future.setDate(future.getDate() + 30);
+            dateInput.valueAsDate = future;
+        }
+    });
+
+    function initCanvas() {
+        const canvas = document.getElementById('signatureCanvas');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch support
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent("mousedown", {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent("mousemove", {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            const mouseEvent = new MouseEvent("mouseup", {});
+            canvas.dispatchEvent(mouseEvent);
+        });
+    }
+
+    function startDrawing(e) {
+        isSigning = true;
+        const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        const rect = canvas.getBoundingClientRect();
+        ctx.beginPath();
+        ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+
+        // Hide placeholder
+        document.querySelector('.sig-placeholder').style.display = 'none';
+    }
+
+    function draw(e) {
+        if (!isSigning) return;
+        const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        const rect = canvas.getBoundingClientRect();
+        ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+        ctx.stroke();
+        hasSigned = true;
+        checkCanSeal();
+    }
+
+    function stopDrawing() {
+        isSigning = false;
+    }
+
+    function clearSignature() {
+        const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        document.querySelector('.sig-placeholder').style.display = 'block';
+        hasSigned = false;
+        checkCanSeal();
+    }
+
+    function updateMinutesDisplay(val) {
+        document.getElementById('minutesDisplay').textContent = val;
+    }
+
+    let searchTimer;
+    function runRealityCheck() {
+        clearTimeout(searchTimer);
+        const feedback = document.getElementById('realityCheckFeedback');
+        const msg = document.getElementById('realityMessage');
+        const spinner = document.querySelector('.reality-spinner');
+        const sealBtn = document.getElementById('sealContractBtn');
+
+        feedback.className = 'reality-feedback';
+        msg.textContent = '';
+        spinner.style.display = 'block';
+        sealBtn.disabled = true;
+
+        searchTimer = setTimeout(async () => {
+            const itemId = document.getElementById('contractItemId').value;
+            const date = document.getElementById('contractTargetDate').value;
+            const minutes = document.getElementById('contractDailyMinutes').value;
+
+            if (!date || !minutes) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/commitment/validate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        learning_item_id: itemId,
+                        target_completion_date: date,
+                        daily_study_minutes: parseInt(minutes)
+                    })
+                });
+
+                const result = await response.json();
+                spinner.style.display = 'none';
+
+                if (result.is_feasible) {
+                    feedback.className = 'reality-feedback valid';
+                    feedback.innerHTML = `<i class="fas fa-check-circle"></i> ${result.message}`;
+                    // Enable seal button only if feasible AND signed (handled in checkCanSeal)
+                    checkCanSeal(true);
+                } else {
+                    feedback.className = 'reality-feedback invalid';
+                    feedback.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${result.message}`;
+                    sealBtn.disabled = true;
+                }
+            } catch (err) {
+                console.error(err);
+                spinner.style.display = 'none';
+                msg.textContent = 'Error checking feasibility';
+            }
+        }, 800); // Debounce
+    }
+
+    let isPlanFeasible = false;
+    function checkCanSeal(feasibleState = null) {
+        if (feasibleState !== null) isPlanFeasible = feasibleState;
+
+        const btn = document.getElementById('sealContractBtn');
+        if (isPlanFeasible && hasSigned) {
+            btn.disabled = false;
+        } else {
+            btn.disabled = true;
+        }
+    }
+
+    function openCommitmentModal(itemId, itemTitle) {
+        document.getElementById('commitmentModal').style.display = 'flex';
+        document.getElementById('contractItemId').value = itemId;
+        document.getElementById('contractItemTitle').textContent = itemTitle;
+        runRealityCheck(); // Run initial check with defaults
+    }
+
+    function closeCommitmentModal() {
+        document.getElementById('commitmentModal').style.display = 'none';
+    }
+
+    async function sealContract() {
+        const itemId = document.getElementById('contractItemId').value;
+        const date = document.getElementById('contractTargetDate').value;
+        const minutes = document.getElementById('contractDailyMinutes').value;
+        const token = localStorage.getItem('token');
+
+        try {
+            const response = await fetch('/api/commitment/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    learning_item_id: itemId,
+                    target_completion_date: date,
+                    daily_study_minutes: parseInt(minutes)
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Commitment Sealed! Your journey begins.');
+                closeCommitmentModal();
+                // Optionally refresh grid to show locked status
+                if (window.loadBookmarks) window.loadBookmarks();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        } catch (err) {
+            alert('Failed to seal contract');
+        }
+    }
+</script>

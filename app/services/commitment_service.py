@@ -53,14 +53,33 @@ class CommitmentService:
         # Validate commitment is realistic
         target_date = commitment_data.get('target_completion_date')
         daily_minutes = commitment_data.get('daily_study_minutes')
+        study_days = commitment_data.get('study_days_per_week', 5)
         
         if not target_date or not daily_minutes:
             raise ValueError("target_completion_date and daily_study_minutes are required")
         
         # Check if target date is realistic
+        if isinstance(target_date, str):
+             # Handle string date format if coming from JSON
+             try:
+                 target_date = datetime.fromisoformat(target_date.replace('Z', '+00:00'))
+             except:
+                 pass # Let downstream handle or fail if object
+
         days_available = (target_date - datetime.utcnow()).days
         if days_available < 1:
             raise ValueError("Target date must be in the future")
+            
+        # ---------------------------------------------------------
+        # REALITY CHECK (Feature 3 Enhancement)
+        # ---------------------------------------------------------
+        from app.services.reality_service import RealityService
+        reality_check = RealityService.check_feasibility(
+            user, item.id, target_date, daily_minutes, study_days
+        )
+        
+        if not reality_check['is_feasible']:
+             raise ValueError(f"Reality Check Failed: {reality_check['message']}")
         
         # Create commitment
         commitment = Commitment(
@@ -68,12 +87,24 @@ class CommitmentService:
             learning_item_id=item,
             target_completion_date=target_date,
             daily_study_minutes=daily_minutes,
-            study_days_per_week=commitment_data.get('study_days_per_week', 5),
+            study_days_per_week=study_days,
             has_accountability_partner=commitment_data.get('has_accountability_partner', False),
             accountability_partner_email=commitment_data.get('accountability_partner_email', '')
         )
         
         commitment.lock()
+        
+        # ---------------------------------------------------------
+        # AUTO-BREAKDOWN (Feature 4 Enhancement)
+        # ---------------------------------------------------------
+        # Automatically generate daily tasks for this commitment
+        try:
+            from app.services.breakdown_service import AutoBreakdownService
+            AutoBreakdownService.generate_daily_tasks(commitment.id)
+        except Exception as e:
+            # Non-blocking error logging (Plan generation shouldn't fail commitment creation)
+            print(f"Stats generation failed: {e}")
+
         return commitment
     
     @staticmethod

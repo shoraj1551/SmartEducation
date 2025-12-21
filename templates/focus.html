@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Focus Mode</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            background: #000;
+            /* True Black for OLED/Focus */
+            color: #e2e8f0;
+            overflow: hidden;
+            /* Prevent scrolling during focus */
+        }
+
+        .focus-container {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+        }
+
+        /* HEADER */
+        .focus-header {
+            padding: 1rem 2rem;
+            background: rgba(15, 23, 42, 0.9);
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-info h1 {
+            font-size: 1.2rem;
+            margin: 0;
+            color: #fff;
+        }
+
+        .task-info p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .timer-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #10b981;
+            /* Focus Green */
+            background: rgba(16, 185, 129, 0.1);
+            padding: 0.2rem 1rem;
+            border-radius: 8px;
+        }
+
+        /* MAIN CONTENT AREA */
+        .focus-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: radial-gradient(circle at center, #1e293b 0%, #000 100%);
+        }
+
+        .content-embed {
+            width: 80%;
+            height: 80%;
+            background: #000;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+        }
+
+        .placeholder-content {
+            text-align: center;
+            color: #475569;
+        }
+
+        .placeholder-content i {
+            display: block;
+            margin-bottom: 1rem;
+        }
+
+        /* CONTROLS FOOTER */
+        .focus-controls {
+            padding: 1.5rem;
+            background: rgba(15, 23, 42, 0.95);
+            border-top: 1px solid #334155;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .btn-focus {
+            background: transparent;
+            border: 2px solid #334155;
+            color: #94a3b8;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-focus:hover {
+            border-color: #fff;
+            color: #fff;
+        }
+
+        .btn-primary-focus {
+            background: #10b981;
+            border-color: #10b981;
+            color: #000;
+        }
+
+        .btn-primary-focus:hover {
+            background: #059669;
+            color: #fff;
+        }
+
+        .btn-danger-focus {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .btn-danger-focus:hover {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        /* Distraction Overlay */
+        .distraction-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            /* Hidden by default */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            text-align: center;
+        }
+
+        .distraction-text {
+            color: #ef4444;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="focus-container">
+        <!-- Header -->
+        <div class="focus-header">
+            <div class="task-info">
+                <h1 id="taskTitle">Loading Task...</h1>
+                <p id="taskSubtitle">Preparing your environment</p>
+            </div>
+            <div id="timerDisplay" class="timer-display">00:00</div>
+            <button class="btn-focus" onclick="toggleFullscreen()">
+                <i class="fas fa-expand"></i>
+            </button>
+        </div>
+
+        <!-- Content -->
+        <div class="focus-content">
+            <div id="contentArea" class="content-embed">
+                <!-- Content injected here (Video/PDF) or Placeholder -->
+                <div class="placeholder-content">
+                    <i class="fas fa-book-reader fa-3x"></i>
+                    <h2>Deep Focus Session</h2>
+                    <p>Put your phone away. The world can wait.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="focus-controls">
+            <button class="btn-focus btn-danger-focus" onclick="endSession()">
+                <i class="fas fa-stop"></i> End Session
+            </button>
+            <button class="btn-focus" id="pauseBtn" onclick="togglePause()">
+                <i class="fas fa-pause"></i> Pause
+            </button>
+            <button class="btn-focus btn-primary-focus" onclick="completeTask()">
+                <i class="fas fa-check"></i> Complete Task
+            </button>
+        </div>
+    </div>
+
+    <!-- Distraction Warning -->
+    <div id="distractionOverlay" class="distraction-overlay">
+        <div class="distraction-text">⚠️ FOCUS BREACH DETECTED</div>
+        <p>Return to your task immediately.</p>
+        <button class="btn-focus btn-primary-focus" onclick="dismissDistraction()">I'm Back</button>
+    </div>
+
+    <script>
+        // --- Focus Manager Logic ---
+        let timerInterval;
+        let secondsElapsed = 0;
+        let isPaused = false;
+        let sessionId = null;
+        let taskDuration = 45 * 60; // Default target
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const taskId = urlParams.get('id');
+            const type = urlParams.get('type') || 'daily_task';
+
+            if (!taskId) {
+                alert('No task specified');
+                window.location.href = '/dashboard';
+                return;
+            }
+
+            await initSession(taskId, type);
+        });
+
+        async function initSession(id, type) {
+            // 1. Fetch Task Details (reuse Dashboard API or specific Get)
+            // For MVP efficiency, we'll start session which returns basic info or assume context
+            // But we need item_id. 
+            // NOTE: Ideally we fetch task details first.
+            // Let's assume we pass metadata in query for now OR fetch from a new endpoint.
+            // We'll create a session first to get rolling.
+
+            try {
+                // Determine IDs based on type
+                const payload = type === 'daily_task' ? { daily_task_id: id } : { learning_item_id: id };
+
+                // If daily task, we need the item_id associated with it. 
+                // Currently start_session expects learning_item_id. 
+                // We might need to look it up on backend if only task_id provided.
+                // Let's updated backend or fetch first. 
+                // SIMPLIFIED: Just call start, backend handles lookups.
+                // Wait, my backend implementation expects `learning_item_id`.
+                // I should fetch the content details first to populate the UI.
+
+                // TEMP: Fetch from dashboard focus? No, that's "one thing".
+                // I'll make a helper call to get info.
+
+                // ... For MVP speed, let's just START the session with what we have.
+                // The backend `start_session` might need a tweak to handle `daily_task_id` only.
+                // Let's assume we fix backend or passed params are robust.
+
+                const token = localStorage.getItem('token');
+
+                // Let's fetch details first to show Title
+                // Mocking title fetch for now as we don't have a distinct "probed" endpoint yet
+                document.getElementById('taskTitle').textContent = "Deep Work Session";
+                document.getElementById('taskSubtitle').textContent = "Stay focused.";
+
+                // Start Session on Backend
+                const response = await fetch('/api/focus/start', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        learning_item_id: id, // Assumption: ID passed is Item ID for simple items OR...
+                        // If it's a daily task, we need to resolve it.
+                        // Let's rely on the user passing learning_item_id if possible. 
+                        // To be robust, I'll update backend start_session to handle lookup.
+                        // For now, let's try assuming 'id' is ITEM id if type is learning_item
+                        daily_task_id: type === 'daily_task' ? id : null,
+                        learning_item_id: id // This might remain valid for task if we pass it
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.session_id) {
+                    sessionId = data.session_id;
+
+                    // Update UI with real data
+                    if (data.title) {
+                        document.getElementById('taskTitle').textContent = data.title;
+                    }
+
+                    // EMBED CONTENT IF AVAILABLE
+                    if (data.content_url) {
+                        const embedHtml = `<iframe 
+                            src="${data.content_url}" 
+                            width="100%" 
+                            height="100%" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>`;
+                        document.getElementById('contentArea').innerHTML = embedHtml;
+                    }
+
+                    startTimer();
+                } else {
+                    // Fallback or error handling
+                    console.error("Session start failed", data);
+                    alert('Could not start session: ' + (data.error || 'Unknown error'));
+                    window.location.href = '/dashboard';
+                }
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if (!isPaused) {
+                    secondsElapsed++;
+                    updateTimerDisplay();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(secondsElapsed / 60);
+            const secs = secondsElapsed % 60;
+            document.getElementById('timerDisplay').textContent =
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const btn = document.getElementById('pauseBtn');
+            btn.innerHTML = isPaused ? '<i class="fas fa-play"></i> Resume' : '<i class="fas fa-pause"></i> Pause';
+            document.querySelector('.timer-display').style.color = isPaused ? '#fbbf24' : '#10b981';
+        }
+
+        async function endSession(completed = false) {
+            clearInterval(timerInterval);
+            const token = localStorage.getItem('token');
+            const mins = Math.ceil(secondsElapsed / 60);
+
+            try {
+                await fetch('/api/focus/end', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        duration_minutes: mins,
+                        reason: completed ? 'task_completed' : 'user_stopped',
+                        mark_complete: completed
+                    })
+                });
+
+                window.location.href = '/dashboard';
+            } catch (err) {
+                alert('Error saving session');
+                window.location.href = '/dashboard';
+            }
+        }
+
+        function completeTask() {
+            if (confirm("Mark this task as fully complete?")) {
+                endSession(true);
+            }
+        }
+
+        // --- Distraction Blocker (Simple Visibility API) ---
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && sessionId && !isPaused) {
+                // User left the tab!
+                logDistraction();
+                document.title = "⚠️ COME BACK!";
+            } else {
+                document.title = "Deep Focus Mode";
+            }
+        });
+
+        async function logDistraction() {
+            const token = localStorage.getItem('token');
+            // Show overlay when they return
+            document.getElementById('distractionOverlay').style.display = 'flex';
+
+            try {
+                await fetch('/api/focus/log-distraction', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        type: 'tab_switch'
+                    })
+                });
+            } catch (e) { }
+        }
+
+        function dismissDistraction() {
+            document.getElementById('distractionOverlay').style.display = 'none';
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

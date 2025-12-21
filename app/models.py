@@ -26,6 +26,7 @@ class User(Document):
     # Gamification
     xp_total = IntField(default=0)
     level = IntField(default=1)
+    badges = ListField(StringField(), default=list) # e.g. ["First Blood", "Night Owl"]
     
     # Onboarding / Learning Context (OLD - kept for backward compatibility)
     learning_goal = StringField(max_length=50) # upskill, switch, academic, hobby
@@ -201,6 +202,13 @@ class Bookmark(Document):
     topic = StringField(max_length=100) # Python, System Design, etc.
     is_uploaded = BooleanField(default=False)
 
+    # Realism & Tracking Fields
+    status = StringField(max_length=20, default='not_started') # not_started, in_progress, completed
+    progress = IntField(default=0) # 0-100 percentage
+    author = StringField(max_length=100)
+    platform = StringField(max_length=100) # e.g. "Udemy", "O'Reilly"
+    meta_data = DictField() # Renamed from metadata to avoid collision with Document.metadata if safe, or just use content_metadata
+
     def to_dict(self):
         return {
             'id': str(self.id),
@@ -215,7 +223,13 @@ class Bookmark(Document):
             'source': self.source,
             'resource_type': self.resource_type,
             'topic': self.topic,
-            'is_uploaded': self.is_uploaded
+            'is_uploaded': self.is_uploaded,
+            # New fields
+            'status': self.status,
+            'progress': self.progress,
+            'author': self.author,
+            'platform': self.platform,
+            'meta_data': self.meta_data
         }
 
 
@@ -471,7 +485,8 @@ class DailyTask(Document):
     """Individual daily task generated from a learning plan"""
     meta = {'collection': 'daily_tasks'}
     
-    learning_plan_id = ReferenceField(LearningPlan, required=True)
+    learning_plan_id = ReferenceField(LearningPlan, required=False)  # Optional now
+    commitment_id = ReferenceField('Commitment', required=False)     # New link to Feature 3
     learning_item_id = ReferenceField(LearningItem, required=True)
     user_id = ReferenceField(User, required=True)
     
@@ -670,6 +685,168 @@ class CommitmentViolation(Document):
         }
 
 
+class LearningItem(Document):
+    meta = {
+        'collection': 'learning_items',
+        'indexes': [
+            {'fields': ['$title', '$description', '$tags'],
+             'default_language': 'english',
+             'weights': {'title': 10, 'description': 5, 'tags': 5}}
+        ]
+    }
+    
+    title = StringField(required=True)
+    description = StringField()
+    tags = ListField(StringField())
+    
+    # Core Metadata
+    source_url = StringField()
+    content_type = StringField(choices=('video', 'article', 'book', 'podcast', 'other'))
+    estimated_duration = IntField(default=0) # Minutes
+    
+    # Status
+    status = StringField(default='pending') # pending, in_progress, completed
+    priority_score = FloatField(default=0.0) # Calculated by AI
+    
+    # Dates
+    added_at = DateTimeField(default=datetime.utcnow)
+    completed_at = DateTimeField()
+    
+    # Priority Metadata
+    target_completion_date = DateTimeField() 
+    priority_level = StringField(default='medium') 
+    
+    # VideoGuard Metadata
+    original_video_url = StringField() 
+    sanitized_video_url = StringField() 
+    thumbnail_url = StringField()
+    
+    user_id = ReferenceField(User, required=True)
+
+class DailyTask(Document):
+    meta = {
+        'collection': 'daily_tasks',
+        'indexes': [
+            {'fields': ['$title'],
+             'default_language': 'english',
+             'weights': {'title': 10}}
+        ]
+    }
+    
+    learning_plan_id = ReferenceField(LearningPlan) # Optional now for Hard Mode tasks? Or stick to required?
+    # Actually, for MVP let's keep it simple. If failure, we can adjust.
+    # Wait, simple text search requires 'indexes'.
+    
+    learning_item_id = ReferenceField(LearningItem, required=True)
+    user_id = ReferenceField(User, required=True)
+    
+    title = StringField(required=True)
+    scheduled_date = DateTimeField(required=True)
+    duration_minutes = IntField(required=True)
+    
+    status = StringField(default='pending') # pending, completed, skipped
+    completed_at = DateTimeField()
+    
+    # Priority Snapshot
+    priority_score_at_scheduling = FloatField()
+    
+    # Gamification
+    xp_reward = IntField(default=0)
+
+    # Commitment Link
+    commitment_id = ReferenceField('Commitment')
+
+
+# ============================================================================
+# FEATURE 12: ACTIVE RECALL ENGINE (FLASHCARDS)
+# ============================================================================
+
+class Flashcard(Document):
+    """Spaced Repetition Flashcard"""
+    meta = {
+        'collection': 'flashcards',
+        'indexes': [
+            {'fields': ['$front', '$back'],
+             'default_language': 'english',
+             'weights': {'front': 10, 'back': 5}}
+        ]
+    }
+    
+    user_id = ReferenceField(User, required=True)
+    learning_item_id = ReferenceField(LearningItem, required=True)
+    
+    # Content
+    front = StringField(required=True) # Question / Trigger
+    back = StringField(required=True)  # Answer / Content
+    
+    # SRS Metadata (SuperMemo-2)
+    easiness_factor = FloatField(default=2.5) # EF
+    interval = IntField(default=0) # Days until next review
+    repetitions = IntField(default=0) # Consecutive successful reviews
+    
+    # Scheduling
+    created_at = DateTimeField(default=datetime.utcnow)
+    last_reviewed_at = DateTimeField()
+    next_review_date = DateTimeField(default=datetime.utcnow) # Due date
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'front': self.front,
+            'back': self.back,
+            'next_review': self.next_review_date.isoformat(),
+            'interval': self.interval
+        }
+
+
+
+# ============================================================================
+# FEATURE 11: CONTEXT-AWARE TRIGGER ENGINE
+# ============================================================================
+
+class TriggerRule(Document):
+    meta = {'collection': 'trigger_rules'}
+    
+    name = StringField(required=True, unique=True)
+    description = StringField()
+    
+    # Condition
+    condition_type = StringField(required=True) # e.g. time_of_day, streak_risk
+    condition_params = DictField() # e.g. {'hour': 20}
+    
+    # Action
+    action_type = StringField(default='notification')
+    action_message_template = StringField(required=True)
+    
+    # State
+    is_active = BooleanField(default=True)
+    created_at = DateTimeField(default=datetime.utcnow)
+
+class Notification(Document):
+    meta = {'collection': 'notifications'}
+    
+    user_id = ReferenceField(User, required=True)
+    title = StringField(required=True)
+    message = StringField(required=True)
+    notification_type = StringField(default='info') # info, warning, success, error
+    
+    is_read = BooleanField(default=False)
+    created_at = DateTimeField(default=datetime.utcnow)
+    
+    # Metadata for linking (e.g. link to a task)
+    action_link = StringField()
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'title': self.title,
+            'message': self.message,
+            'type': self.notification_type,
+            'is_read': self.is_read,
+            'created_at': self.created_at.isoformat(),
+            'action_link': self.action_link
+        }
+
 class AccountabilityPartner(Document):
     """Optional peer accountability system"""
     meta = {'collection': 'accountability_partners'}
@@ -677,6 +854,7 @@ class AccountabilityPartner(Document):
     user_id = ReferenceField(User, required=True)
     partner_email = StringField(required=True)
     partner_name = StringField()
+    partner_user_id = ReferenceField(User) # Linked after acceptance
     
     # Status
     status = StringField(max_length=20, default='pending')  # pending, active, inactive

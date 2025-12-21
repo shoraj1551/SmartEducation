@@ -57,8 +57,289 @@ class DashboardManager {
         // 6. Attach Listeners
         this.attachListeners();
 
-        // 7. Setup Idle Detection
+        // 7. Load Focus Task (Feature 2 & 4)
+        this.loadFocusTask();
+
+        // 8. Load Reality Metrics (Feature 6)
+        this.loadRealityMetrics();
+
+        // 9. Load Wellness Status (Feature 8)
+        this.loadWellnessStatus();
+
+        // 10. Load Gamification (Feature 9)
+        this.loadGamification();
+
+        // 11. Setup Idle Detection
         this.setupIdleTimer();
+
+        // 12. Load Notifications (Feature 11)
+        this.loadNotifications();
+    }
+
+    async loadFocusTask() {
+        try {
+            const container = document.getElementById('focusTaskContainer');
+            if (!container) return; // Only if element exists
+
+            container.innerHTML = '<div class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i> Finding your focus...</div>';
+
+            const response = await fetch('/api/dashboard/focus', {
+                headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+            const task = await response.json();
+
+            if (!response.ok) throw new Error(task.error);
+
+            if (task.type === 'empty') {
+                container.innerHTML = `
+                    <div class="focus-empty-state">
+                        <i class="fas fa-check-circle" style="font-size: 2rem; color: #10b981; margin-bottom: 10px;"></i>
+                        <h3>All Caught Up!</h3>
+                        <p>Relax or explore the library.</p>
+                        <a href="/bookmarks" class="btn btn-primary">Browse Library</a>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="focus-card ${task.reason === 'Catch Up (High Priority)' ? 'urgent' : ''}">
+                        <div class="focus-header">
+                            <span class="focus-badge"><i class="fas fa-bullseye"></i> ${task.reason}</span>
+                            <span class="focus-duration"><i class="far fa-clock"></i> ${task.duration}m</span>
+                        </div>
+                        <h2 class="focus-title">${task.title}</h2>
+                        <p class="focus-subtitle">${task.subtitle}</p>
+                        
+                        <div class="focus-actions">
+                            <button class="btn btn-primary btn-lg" onclick="window.location.href='/focus?id=${task.id}&type=${task.type}'">
+                                <i class="fas fa-play"></i> Start Focusing
+                            </button>
+                            ${task.type === 'daily_task' ? `<button class="btn btn-secondary" onclick="skipTask('${task.id}')">Skip</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+        } catch (err) {
+            console.error('Focus load error:', err);
+            const container = document.getElementById('focusTaskContainer');
+            if (container) container.innerHTML = '<div class="error-state">Could not load focus task.</div>';
+        }
+    }
+
+    async loadRealityMetrics() {
+        try {
+            const container = document.getElementById('realityContainer');
+            if (!container) return;
+
+            const response = await fetch('/api/reality/metrics', {
+                headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+
+            if (!response.ok) return;
+
+            const data = await response.json();
+
+            // Only show if there's significant data (e.g. at least some history or active commitments)
+            // Or always show to establish the habit. Let's always show if enabled.
+            container.style.display = 'block';
+
+            let html = '';
+
+            // 1. Days Wasted Card
+            if (data.days_wasted > 0) {
+                html += `
+                    <div class="reality-card danger">
+                        <div class="reality-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="reality-info">
+                            <h3>The Harsh Truth</h3>
+                            <p>You have wasted <strong>${data.days_wasted} days</strong> in the last 30 days.</p>
+                            <div class="velocity-stat">
+                                <span>Actual Velocity: ${data.actual_velocity} min/day</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="reality-card success">
+                        <div class="reality-icon"><i class="fas fa-check-double"></i></div>
+                        <div class="reality-info">
+                            <h3>Total Discipline</h3>
+                            <p>Zero days wasted recently. You are a machine.</p>
+                            <div class="velocity-stat">
+                                <span>Velocity: ${data.actual_velocity} min/day</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 2. Projections (If any are delayed)
+            if (data.projections && data.projections.length > 0) {
+                const delayed = data.projections.filter(p => p.gap_days > 0);
+                if (delayed.length > 0) {
+                    html += `<div class="reality-gap-list">`;
+                    delayed.forEach(p => {
+                        html += `
+                            <div class="gap-item">
+                                <span class="gap-title">${p.title}</span>
+                                <span class="gap-warning">+${p.gap_days} DAYS LATE</span>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                }
+            }
+
+            container.innerHTML = html;
+
+        } catch (err) {
+            console.error('Reality load error:', err);
+        }
+    }
+
+    async loadWellnessStatus() {
+        try {
+            // 1. Check Burnout
+            const burnoutRes = await fetch('/api/wellness/burnout', {
+                headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+            if (burnoutRes.ok) {
+                const bData = await burnoutRes.json();
+                const bContainer = document.getElementById('burnoutContainer');
+                if (bData.level === 'high' || bData.level === 'moderate') {
+                    bContainer.style.display = 'block';
+                    bContainer.innerHTML = `
+                        <div class="burnout-alert ${bData.level}">
+                            <i class="fas fa-biohazard"></i>
+                            <div class="alert-content">
+                                <strong>${bData.message}</strong>
+                                <span>High intensity streak: ${bData.details.high_intensity_streak} days. Rest is productive.</span>
+                            </div>
+                        </div>
+                     `;
+                }
+            }
+
+            // 2. Check Weekly Review
+            // Only fetch if it's Sunday or Monday? For now, always fetch to see if we have data.
+            const reviewRes = await fetch('/api/wellness/review', {
+                headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+            if (reviewRes.ok) {
+                const rData = await reviewRes.json();
+                // If we have substantial data (e.g. > 1 task or hour), offer review
+                if (rData.tasks_completed > 0 || rData.total_hours > 0) {
+                    this.renderReviewTrigger(rData);
+                }
+            }
+        } catch (err) {
+            console.error('Wellness check failed', err);
+        }
+    }
+
+    renderReviewTrigger(data) {
+        // We'll append a "Review Card" to the Reality Container for high visibility
+        const container = document.getElementById('realityContainer');
+        if (container) {
+            container.style.display = 'block'; // Ensure visible
+            // Create a wrapper if needed or just append
+            const div = document.createElement('div');
+            div.className = 'reality-card review-card';
+            div.innerHTML = `
+                <div class="reality-icon" style="background: rgba(139, 92, 246, 0.2); color: #a78bfa;">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="reality-info">
+                    <h3>Weekly Report Ready</h3>
+                    <p>${data.total_hours} hours logged. Most productive on ${data.most_productive_day}.</p>
+                </div>
+                <button class="btn btn-sm btn-primary" onclick="openReviewModal()">View</button>
+            `;
+            container.appendChild(div);
+
+            // Store data for modal
+            window.weeklyReviewData = data;
+        }
+    }
+
+    async loadGamification() {
+        try {
+            const res = await fetch('/api/gamification/progress', {
+                headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const container = document.getElementById('gamificationContainer');
+
+                if (container) {
+                    container.style.display = 'flex';
+                    container.innerHTML = `
+                        <div class="level-pill" title="${data.current_level_xp}/${data.next_level_xp_target} XP to next level">
+                            <span class="lvl-num">LVL ${data.level}</span>
+                            <span class="lvl-title">${data.title}</span>
+                            <div class="xp-bar-mini">
+                                <div class="xp-fill" style="width: ${data.percent}%"></div>
+                            </div>
+                        </div>
+                     `;
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    window.toggleNotifications = function () {
+        const d = document.getElementById('notifDropdown');
+        if (d) d.style.display = d.style.display === 'none' ? 'block' : 'none';
+    };
+
+window.markNotifRead = async function (id, link) {
+        // Optimistic remove
+        // Call API
+        try {
+            await fetch(`/api/notifications/${id}/read`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            // Reload to update badge
+            /* In a real app we'd just update DOM, but for MVP reload or fetching again is safer */
+            window.location.reload();
+            if (link && link !== 'null') window.location.href = link;
+        } catch (e) { console.error(e); }
+    };
+
+    // --- NOTIFICATIONS ---
+    async loadNotifications() {
+        try {
+            const res = await fetch('/api/notifications', {
+                headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+            if (res.ok) {
+                const list = await res.json();
+                this.renderNotifications(list);
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    renderNotifications(list) {
+        const badge = document.getElementById('notifBadge');
+        const container = document.getElementById('notifList');
+
+        if (list.length > 0) {
+            badge.style.display = 'block';
+            badge.innerText = list.length;
+
+            container.innerHTML = list.map(n => `
+                <div class="notif-item ${!n.is_read ? 'unread' : ''}" onclick="markNotifRead('${n.id}', '${n.action_link || ''}')">
+                    <span class="notif-title">${n.title}</span>
+                    <span class="notif-body">${n.message}</span>
+                </div>
+            `).join('');
+        } else {
+            badge.style.display = 'none';
+            container.innerHTML = '<div class="empty-notif">No new notifications</div>';
+        }
     }
 
     async fetchFullProfile() {
@@ -101,7 +382,7 @@ class DashboardManager {
         if (greetingEl) {
             greetingEl.innerHTML = `Welcome back, ${name}! <span style="font-size: 1rem; color: rgba(255,255,255,0.4); display: block; margin-top: 0.5rem; font-weight: 400;">You're ${phrase}.</span>`;
         } else {
-            // If there's no H1, insert one at the top of main content
+            // If there's no H1, insert one at
             const topNav = document.querySelector('.top-nav');
             const h1 = document.createElement('h1');
             h1.style.marginBottom = '2rem';
@@ -427,33 +708,135 @@ class DashboardManager {
         return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     }
 
-    formatTime(dateStr) {
-        const date = new Date(dateStr);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' - ' + date.toLocaleDateString();
-    }
+    this.resumeModal.style.opacity = '0';
+setTimeout(() => {
+    this.resumeModal.style.display = 'none';
+    this.resumeModal.style.opacity = '1';
+}, 300);
+}
 
-    closeModal() {
-        this.resumeModal.style.opacity = '0';
-        setTimeout(() => {
-            this.resumeModal.style.display = 'none';
-            this.resumeModal.style.opacity = '1';
-        }, 300);
-    }
+closeBookmarkModal() {
+    this.bookmarkModal.style.display = 'none';
+}
 
-    closeBookmarkModal() {
-        this.bookmarkModal.style.display = 'none';
-    }
-
-    handleLogout() {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        window.location.href = '/';
-    }
+handleLogout() {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    window.location.href = '/';
+}
 }
 
 // Global Modal Toggles
 function openBookmarkModal() { window.dashboard.bookmarkModal.style.display = 'flex'; }
 function closeBookmarkModal() { window.dashboard.closeBookmarkModal(); }
+
+// --- SEARCH ENGINE (Feature 15) ---
+function getGreeting() {
+    const hr = new Date().getHours();
+    if (hr < 12) return 'Good morning';
+    if (hr < 18) return 'Good afternoon';
+    return 'Good evening';
+}
+
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        toggleSearch();
+    }
+    if (e.key === 'Escape') {
+        const m = document.getElementById('searchModal');
+        if (m) {
+            m.style.display = 'none';
+            document.getElementById('searchInput').value = '';
+        }
+    }
+});
+
+function toggleSearch() {
+    const modal = document.getElementById('searchModal');
+    const input = document.getElementById('searchInput');
+    if (!modal) return;
+
+    if (modal.style.display === 'none') {
+        modal.style.display = 'flex';
+        input.focus();
+    } else {
+        modal.style.display = 'none';
+        input.value = '';
+    }
+}
+
+let searchDebounce;
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchDebounce);
+        const query = e.target.value.trim();
+
+        if (!query) {
+            document.getElementById('searchResults').innerHTML = '<div class="search-placeholder">Type to search...</div>';
+            return;
+        }
+
+        searchDebounce = setTimeout(() => performSearch(query), 300);
+    });
+}
+
+async function performSearch(query) {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            renderSearchResults(data);
+        }
+    } catch (e) { console.error(e); }
+}
+
+function renderSearchResults(data) {
+    const container = document.getElementById('searchResults');
+    let html = '';
+
+    if (data.tasks.length === 0 && data.library.length === 0 && data.flashcards.length === 0) {
+        container.innerHTML = '<div class="search-placeholder">No results found.</div>';
+        return;
+    }
+
+    // Helper to render sections
+    const renderSection = (title, items) => {
+        if (items.length === 0) return '';
+        return `<div class="search-group-title">${title}</div>` + items.map(i => renderResultItem(i)).join('');
+    };
+
+    html += renderSection('Tasks', data.tasks);
+    html += renderSection('Library', data.library);
+    html += renderSection('Flashcards', data.flashcards);
+
+    container.innerHTML = html;
+}
+
+function renderResultItem(item) {
+    return `
+        <div class="result-item" onclick="window.location.href='${item.link}'">
+            <div class="result-icon"><i class="fas ${item.icon}"></i></div>
+            <div class="result-content">
+                <span class="result-title">${item.title}</span>
+                <span class="result-sub">${item.subtitle}</span>
+            </div>
+            <i class="fas fa-arrow-right" style="opacity:0.3; font-size:0.8rem;"></i>
+        </div>
+    `;
+}
+
+// Close search if clicking outside box
+const searchModal = document.getElementById('searchModal');
+if (searchModal) {
+    searchModal.addEventListener('click', (e) => {
+        if (e.target.id === 'searchModal') toggleSearch();
+    });
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {

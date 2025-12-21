@@ -1,150 +1,160 @@
+
 """
-Focus Mode Routes for Feature 5: Single Focus Learning Mode
-API endpoints for focus mode management
+Focus Routes (Feature 5: Deep Focus Mode)
+API endpoints for managing focus sessions, timer logic, and distraction logging.
 """
-from flask import Blueprint, request, jsonify
-from app.services.focus_service import FocusModeService
+from flask import Blueprint, jsonify, request, render_template
 from app.services.auth_service import AuthService
-from functools import wraps
+from app.models import FocusSession, DailyTask, LearningItem
+from datetime import datetime
 
-focus_bp = Blueprint('focus', __name__, url_prefix='/api/focus')
+focus_bp = Blueprint('focus', __name__) # Prefix is handled in registration or here? 
+# Note: Main routes usually handle HTML rendering at root/subpath, while api routes are at /api/.
+# I will separate: 
+# 1. HTML route: /focus (renders the player)
+# 2. API route: /api/focus/* (handles data)
 
+# --- HTML Routes ---
+@focus_bp.route('/focus')
+def focus_player():
+    """Render the Focus Mode Player"""
+    return render_template('focus.html')
 
-def token_required(f):
-    """Decorator to require JWT token for protected routes"""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = request.headers.get('Authorization')
-        if not token:
-            return jsonify({'error': 'Token is missing'}), 401
-        
-        try:
-            if token.startswith('Bearer '):
-                token = token[7:]
-            
-            user_data = AuthService.verify_token(token)
-            if not user_data:
-                return jsonify({'error': 'Invalid token'}), 401
-            
-            kwargs['user_id'] = user_data['user_id']
-            return f(*args, **kwargs)
-        except Exception as e:
-            return jsonify({'error': 'Token verification failed'}), 401
-    
-    return decorated
-
-
-@focus_bp.route('/activate', methods=['POST'])
-@token_required
-def activate_focus(user_id):
-    """Start focus mode for an item"""
+# --- API Routes ---
+@focus_bp.route('/api/focus/start', methods=['POST'])
+def start_session():
+    """Start a new focus session"""
     try:
+        token = request.headers.get('Authorization', '').replace('Bearer ', '')
+        user_id = AuthService.verify_token(token)
+        if not user_id: return jsonify({'error': 'Unauthorized'}), 401
+        
         data = request.get_json()
+        item_id = data.get('learning_item_id')
+        task_id = data.get('daily_task_id') # Optional
         
-        if not data or 'learning_item_id' not in data:
+        # Auto-resolve item_id from task_id if missing
+        if not item_id and task_id:
+            try:
+                task = DailyTask.objects.get(id=task_id)
+                item_id = task.learning_item_id.id
+            except Exception:
+                return jsonify({'error': 'Invalid daily_task_id'}), 400
+
+        if not item_id:
             return jsonify({'error': 'learning_item_id is required'}), 400
+            
+        # Close any existing active sessions for this user? (Optional cleanup)
         
-        session = FocusModeService.activate_focus_mode(
+        session = FocusSession(
             user_id=user_id,
-            learning_item_id=data['learning_item_id'],
-            daily_task_id=data.get('daily_task_id')
+            learning_item_id=item_id,
+            daily_task_id=task_id,
+            started_at=datetime.utcnow(),
+            is_active=True
         )
+        session.save()
         
+            
+        # If daily task, update status to in_progress
+        if task_id:
+            task = DailyTask.objects.get(id=task_id)
+            task.status = 'in_progress'
+            if not task.started_at:
+                task.started_at = datetime.utcnow()
+            task.save()
+            
+        # Get Item URL and Sanitize
+        from app.services.video_guard_service import VideoGuardService
+        item = LearningItem.objects.get(id=item_id)
+        sanitized_url = VideoGuardService.sanitize_url(item.url) if item.url else None
+
         return jsonify({
-            'message': 'Focus mode activated',
-            'session': session.to_dict()
+            'message': 'Focus session started',
+            'session_id': str(session.id),
+            'content_url': sanitized_url,
+            'title': item.title
         }), 201
-    
-    except ValueError as e:
-        return jsonify({'error': str(e)}), 400
+        
     except Exception as e:
-        return jsonify({'error': f'Failed to activate focus mode: {str(e)}'}), 500
+        return jsonify({'error': str(e)}), 500
 
-
-@focus_bp.route('/deactivate', methods=['POST'])
-@token_required
-def deactivate_focus(user_id):
-    """End focus mode"""
+@focus_bp.route('/api/focus/end', methods=['POST'])
+def end_session():
+    """End a focus session"""
     try:
-        data = request.get_json() or {}
+        token = request.headers.get('Authorization', '').replace('Bearer ', '')
+        user_id = AuthService.verify_token(token)
+        if not user_id: return jsonify({'error': 'Unauthorized'}), 401
+        
+        data = request.get_json()
         session_id = data.get('session_id')
-        reason = data.get('reason', 'completed')
+        duration_minutes = data.get('duration_minutes') # Trusted client duration or calc server side?
         
         if not session_id:
-            # Try to get active session
-            active_session = FocusModeService.get_active_session(user_id)
-            if not active_session:
-                return jsonify({'error': 'No active focus session'}), 404
-            session_id = str(active_session.id)
+            return jsonify({'error': 'session_id is required'}), 400
+            
+        session = FocusSession.objects.get(id=session_id, user_id=user_id)
+        session.ended_at = datetime.utcnow()
+        session.is_active = False
+        session.exit_reason = data.get('reason', 'completed')
         
-        session = FocusModeService.deactivate_focus_mode(session_id, reason)
+        # Calculate duration if not provided or double check
+        # server_duration = (session.ended_at - session.started_at).total_seconds() / 60
+        if duration_minutes:
+            session.duration_minutes = int(duration_minutes)
+            
+        session.save()
         
+        # Update Item Progress
+        item = session.learning_item_id
+        item.completed_duration += session.duration_minutes
+        item.update_progress()
+        item.last_accessed_at = datetime.utcnow()
+        item.save()
+        
+        # Update Task if exists
+        if session.daily_task_id:
+            task = session.daily_task_id
+            task.actual_duration_minutes += session.duration_minutes
+            if data.get('mark_complete', False):
+                task.mark_complete(task.actual_duration_minutes)
+            task.save()
+            
+        # --- GAMIFICATION: AWARD XP ---
+        from app.services.gamification_service import GamificationService
+        xp_amount = int(session.duration_minutes * 10) # 10 XP per minute
+        if data.get('mark_complete', False):
+            xp_amount += 500 # Bonus for finishing task
+            
+        gamification_result = GamificationService.award_xp(user_id, xp_amount, "Focus Session")
+            
         return jsonify({
-            'message': 'Focus mode deactivated',
-            'session': session.to_dict()
+            'message': 'Session ended successfully',
+            'duration_minutes': session.duration_minutes,
+            'gamification': gamification_result
         }), 200
-    
-    except ValueError as e:
-        return jsonify({'error': str(e)}), 404
-    except Exception as e:
-        return jsonify({'error': f'Failed to deactivate focus mode: {str(e)}'}), 500
-
-
-@focus_bp.route('/current', methods=['GET'])
-@token_required
-def get_current_session(user_id):
-    """Get current active focus session"""
-    try:
-        session = FocusModeService.get_active_session(user_id)
         
-        if not session:
-            return jsonify({'active': False, 'session': None}), 200
-        
-        return jsonify({
-            'active': True,
-            'session': session.to_dict()
-        }), 200
-    
     except Exception as e:
-        return jsonify({'error': f'Failed to get current session: {str(e)}'}), 500
+        return jsonify({'error': str(e)}), 500
 
-
-@focus_bp.route('/stats', methods=['GET'])
-@token_required
-def get_focus_stats(user_id):
-    """Get focus mode analytics"""
-    try:
-        days = request.args.get('days', default=30, type=int)
-        stats = FocusModeService.get_focus_stats(user_id, days)
-        
-        return jsonify({'stats': stats}), 200
-    
-    except Exception as e:
-        return jsonify({'error': f'Failed to get stats: {str(e)}'}), 500
-
-
-@focus_bp.route('/distraction', methods=['POST'])
-@token_required
-def log_distraction(user_id):
+@focus_bp.route('/api/focus/log-distraction', methods=['POST'])
+def log_distraction():
     """Log a distraction attempt"""
     try:
+        token = request.headers.get('Authorization', '').replace('Bearer ', '')
+        user_id = AuthService.verify_token(token)
+        if not user_id: return jsonify({'error': 'Unauthorized'}), 401
+
         data = request.get_json()
+        session_id = data.get('session_id')
+        distraction_type = data.get('type', 'tab_switch')
         
-        if not data or 'session_id' not in data:
-            return jsonify({'error': 'session_id is required'}), 400
+        if not session_id: return jsonify({'error': 'session_id required'}), 400
         
-        session = FocusModeService.log_distraction_attempt(
-            session_id=data['session_id'],
-            distraction_type=data.get('distraction_type', 'navigation'),
-            details=data.get('details')
-        )
+        session = FocusSession.objects.get(id=session_id)
+        session.log_distraction(distraction_type)
         
-        return jsonify({
-            'message': 'Distraction logged',
-            'distraction_count': session.distraction_attempts
-        }), 200
-    
-    except ValueError as e:
-        return jsonify({'error': str(e)}), 404
+        return jsonify({'message': 'Distraction logged'}), 200
     except Exception as e:
-        return jsonify({'error': f'Failed to log distraction: {str(e)}'}), 500
+        return jsonify({'error': str(e)}), 500

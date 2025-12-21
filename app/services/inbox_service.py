@@ -60,6 +60,45 @@ class InboxService:
         valid_source_types = ['course', 'video', 'pdf', 'bookmark', 'playlist', 'article']
         if item_data['source_type'] not in valid_source_types:
             raise ValueError(f"Invalid source_type. Must be one of: {', '.join(valid_source_types)}")
+
+        # ---------------------------------------------------------
+        # Adapter Integration: Auto-Fetch Metadata
+        # ---------------------------------------------------------
+        from app.services.adapters.factory import AdapterFactory
+        
+        # If we have a URL but missing details (title/duration), try to fetch them
+        if 'source_url' in item_data and item_data['source_url']:
+            adapter = AdapterFactory.get_adapter(item_data['source_url'])
+            if adapter:
+                try:
+                    metadata = adapter.fetch_metadata(item_data['source_url'])
+                    
+                    # Auto-fill missing fields
+                    if 'title' not in item_data or not item_data['title']:
+                        item_data['title'] = metadata.get('title', 'Untitled Content')
+                    
+                    if 'description' not in item_data:
+                        item_data['description'] = metadata.get('description', '')
+                        
+                    if 'total_duration' not in item_data or item_data['total_duration'] == 0:
+                        item_data['total_duration'] = metadata.get('duration_minutes', 0)
+                        
+                    # Merge metadata
+                    if 'metadata' not in item_data:
+                        item_data['metadata'] = {}
+                    item_data['metadata'].update(metadata.get('platform_metadata', {}))
+                    
+                    # Set thumbnail if available (storing in metadata for now)
+                    if 'thumbnail_url' in metadata:
+                        item_data['metadata']['thumbnail_url'] = metadata['thumbnail_url']
+                        
+                except Exception as e:
+                    # Don't fail the creation, just log/ignore and proceed with defaults
+                    print(f"Metadata fetch failed: {e}")
+
+        # Final check for Title (in case adapter failed and user didn't provide one)
+        if 'title' not in item_data or not item_data['title']:
+             raise ValueError("Title is required (could not be auto-fetched)")
         
         # Create the learning item
         learning_item = LearningItem(
@@ -525,4 +564,67 @@ class InboxService:
         
         validation_result['can_proceed'] = validation_result['is_valid']
         return validation_result
+
+    @staticmethod
+    def import_from_bookmark(user_id, bookmark_id):
+        """
+        Promote a Library Bookmark to an Active Inbox Item
+        
+        Args:
+            user_id: User ID
+            bookmark_id: Bookmark ID
+            
+        Returns:
+            Created LearningItem
+        """
+        from app.models import Bookmark
+        
+        # 1. Verify User and Bookmark
+        try:
+            if isinstance(user_id, str):
+                user = User.objects.get(id=user_id)
+            else:
+                user = user_id
+                
+            bookmark = Bookmark.objects.get(id=bookmark_id, user=user)
+        except DoesNotExist:
+            raise ValueError("Bookmark not found or access denied")
+
+        # 2. Check Capacity (Strict Mode)
+        capacity = InboxService.check_can_add_item(user)
+        if not capacity['can_add']:
+             raise ValueError(capacity['message'])
+
+        # 3. Check if already imported (prevent duplicates)
+        # We check if an active item has the same source URL
+        existing = LearningItem.objects(
+            user_id=user, 
+            source_url=bookmark.url, 
+            status__ne='dropped'
+        ).first()
+        
+        if existing:
+             raise ValueError(f"This item is already in your inbox as '{existing.title}' ({existing.status})")
+
+        # 4. Create Learning Item
+        item = LearningItem(
+            user_id=user,
+            title=bookmark.title,
+            description=bookmark.description,
+            source_type=bookmark.resource_type or 'bookmark',
+            source_url=bookmark.url,
+            platform=bookmark.source,
+            status='active',
+            priority_score=bookmark.relevance_score,
+            tags=bookmark.tags,
+            category=bookmark.category,
+            metadata=bookmark.meta_data or {}
+        )
+        item.save()
+        
+        # 5. Update Bookmark Status
+        bookmark.status = 'in_progress'
+        bookmark.save()
+        
+        return item
 
