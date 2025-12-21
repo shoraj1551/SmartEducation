@@ -5,8 +5,9 @@ Tests CRUD operations, validation logic, and business rules
 import unittest
 from datetime import datetime, timedelta
 from mongoengine import connect, disconnect
-from models import User, LearningItem
-from services.inbox_service import InboxService
+import mongomock
+from app.models import User, LearningItem
+from app.services.inbox_service import InboxService
 
 
 class TestInboxService(unittest.TestCase):
@@ -15,7 +16,7 @@ class TestInboxService(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Set up test database connection"""
-        connect('mongoenginetest', host='mongomock://localhost')
+        connect('mongoenginetest', mongo_client_class=mongomock.MongoClient)
     
     @classmethod
     def tearDownClass(cls):

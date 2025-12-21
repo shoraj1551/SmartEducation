@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Preferences - SmartEducation</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        .settings-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .settings-header {
+            margin-bottom: 3rem;
+        }
+
+        .settings-header h1 {
+            font-size: 2.5rem;
+            letter-spacing: -1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .settings-header p {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .settings-section {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Time Selection */
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .time-option {
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .time-option:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .time-option.active {
+            border-color: var(--primary);
+            background: rgba(124, 58, 237, 0.1);
+        }
+
+        .time-option i {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .time-option span {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Setting Rows */
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info h4 {
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+        }
+
+        .setting-info p {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Switch UI */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background: var(--primary-gradient);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Unified Dashboard Layout */
+        :root {
+            --sidebar-width: 280px;
+        }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem 3.5rem;
+            max-width: 1500px;
+            position: relative;
+        }
+    </style>
+</head>
+
+<body class="dashboard-body">
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="logo-container"
+                style="display: flex; align-items: center; gap: 1rem; margin-bottom: 3.5rem; padding: 0 0.5rem;">
+                <div class="logo-icon"
+                    style="width: 42px; height: 42px; background: var(--primary-gradient); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <span class="logo-text"
+                    style="font-weight: 800; font-size: 1.35rem; letter-spacing: -0.5px; color: white;">SmartEdu</span>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="/dashboard" class="nav-item">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </a>
+                <a href="/inbox" class="nav-item">
+                    <i class="fas fa-inbox"></i> Learning Inbox
+                </a>
+                <a href="/bookmarks" class="nav-item">
+                    <i class="fas fa-bookmark"></i> Library
+                </a>
+                <a href="/achievements" class="nav-item">
+                    <i class="fas fa-star"></i> Achievements
+                </a>
+                <a href="/schedule" class="nav-item">
+                    <i class="fas fa-calendar-alt"></i> Schedule
+                </a>
+                <a href="/preferences" class="nav-item active">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+            </nav>
+            <div class="sidebar-footer"
+                style="padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: 2rem;">
+                <div class="nav-item logout-item" id="sidebarLogout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-nav"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+                <div class="search-container" style="position: relative; width: 400px;">
+                    <i class="fas fa-search"
+                        style="position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, 0.3);"></i>
+                    <input type="text" class="search-input" placeholder="Search settings..."
+                        style="width: 100%; padding: 0.9rem 1rem 0.9rem 3rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; color: white; outline: none; transition: all 0.3s ease;">
+                </div>
+
+                <div class="user-menu-container" style="position: relative;">
+                    <div class="user-trigger" id="userMenuTrigger"
+                        style="display: flex; align-items: center; gap: 1rem; padding: 0.6rem 1.25rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 50px; cursor: pointer; transition: all 0.3s ease;">
+                        <div class="user-avatar" id="avatarInitials"
+                            style="width: 36px; height: 36px; background: var(--primary-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);">
+                            U</div>
+                        <div class="user-info-brief" style="display: flex; flex-direction: column;">
+                            <span class="user-name" id="userNameBrief" style="font-size: 0.9rem; font-weight: 600;">User
+                                Name</span>
+                        </div>
+                        <i class="fas fa-chevron-down" style="font-size: 0.8rem; opacity: 0.5;"></i>
+                    </div>
+
+                    <div class="user-dropdown" id="userDropdown"
+                        style="position: absolute; top: 130%; right: 0; width: 240px; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 1rem; display: none; flex-direction: column; gap: 0.4rem; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); z-index: 1000;">
+                        <a href="/profile" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i> My Profile
+                        </a>
+                        <a href="/preferences" class="dropdown-item">
+                            <i class="fas fa-sliders-h"></i> Preferences
+                        </a>
+                        <a href="/security" class="dropdown-item">
+                            <i class="fas fa-shield-alt"></i> Security
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item logout-item" id="dropdownLogout">
+                            <i class="fas fa-sign-out-alt"></i> Log Out
+                        </a>
+                    </div>
+                </div>
+            </header>
+
+            <div class="settings-container">
+                <div class="settings-header">
+                    <h1>Learning Preferences</h1>
+                    <p>Tailor the SmartEdu experience to your learning style.</p>
+                </div>
+
+                <div class="settings-section">
+                    <div class="section-title">
+                        <i class="fas fa-clock"></i>
+                        Preferred Learning Time
+                    </div>
+                    <div class="time-grid">
+                        <div class="time-option" data-time="Morning">
+                            <i class="fas fa-sun"></i>
+                            <span>Morning Owl</span>
+                        </div>
+                        <div class="time-option" data-time="Afternoon">
+                            <i class="fas fa-cloud-sun"></i>
+                            <span>Deep Focus</span>
+                        </div>
+                        <div class="time-option" data-time="Night">
+                            <i class="fas fa-moon"></i>
+                            <span>Night Owl</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="section-title">
+                        <i class="fas fa-brain"></i>
+                        Engagement Depth
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h4>Daily Reminders</h4>
+                            <p>Stay on track with personalized learning pings.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="daily_reminders">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h4>AI Insight Summaries</h4>
+                            <p>Get automated summaries of your weekly progress.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="ai_insights">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h4>Community Milestones</h4>
+                            <p>See how you compare with other learners.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="community_milestones">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="section-title">
+                        <i class="fas fa-universal-access"></i>
+                        Interface Style
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h4>Reduced Motion</h4>
+                            <p>Disable complex animations for better focus.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="reduced_motion">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h4>High Contrast UI</h4>
+                            <p>Improve visibility with increased color depth.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="high_contrast">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+                    <button class="primary-btn nav-btn" id="savePrefs" style="padding: 1rem 2.5rem;">
+                        <i class="fas fa-sync-alt"></i> Sync Preferences
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/preferences.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - SmartEducation</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <!-- Animated Background -->
+    <div class="background-animation">
+        <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+            <div class="shape shape-4"></div>
+            <div class="shape shape-5"></div>
+            <div class="shape shape-6"></div>
+        </div>
+        <div class="particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+    </div>
+
+    <!-- Success Overlay -->
+    <div id="success-overlay" class="success-overlay">
+        <div class="success-content">
+            <div class="checkmark-circle">
+                <div class="checkmark draw"></div>
+            </div>
+            <h1 class="fade-in">Registration Successful!</h1>
+            <p class="fade-in delay-1">Welcome aboard, <span id="user-display-name">Learner</span>!</p>
+            <p class="fade-in delay-2">Let's personalize your experience...</p>
+        </div>
+    </div>
+
+    <div class="welcome-container">
+        <div class="survey-card glass">
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+                <div class="progress-text" id="progress-text">Step 1 of 6</div>
+            </div>
+
+            <div class="survey-steps" id="survey-steps">
+                <!-- Step 1: User Role -->
+                <div class="survey-step active" data-step="1" data-type="single">
+                    <h2 class="step-title">Who best describes you right now?</h2>
+                    <p class="step-desc">Help us understand your current situation (Select one)</p>
+                    <div class="options-grid">
+                        <div class="option-card" data-value="school">
+                            <div class="option-icon">🏫</div>
+                            <div class="option-info">
+                                <h3>School student</h3>
+                                <p>K-12 education</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="college">
+                            <div class="option-icon">🎓</div>
+                            <div class="option-info">
+                                <h3>College / University student</h3>
+                                <p>Higher education</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="professional">
+                            <div class="option-icon">💼</div>
+                            <div class="option-info">
+                                <h3>Working professional</h3>
+                                <p>Corporate employee</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="freelancer">
+                            <div class="option-icon">🧑‍💻</div>
+                            <div class="option-info">
+                                <h3>Freelancer / Self-employed</h3>
+                                <p>Independent work</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="career_switcher">
+                            <div class="option-icon">🔁</div>
+                            <div class="option-info">
+                                <h3>Career switcher</h3>
+                                <p>Transitioning roles</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="other">
+                            <div class="option-icon">📚</div>
+                            <div class="option-info">
+                                <h3>Other</h3>
+                                <p>Something else</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Learning Goals (Multi-select) -->
+                <div class="survey-step" data-step="2" data-type="multi">
+                    <h2 class="step-title">What is your primary goal for learning right now?</h2>
+                    <p class="step-desc">Choose as many as you like</p>
+                    <div class="options-grid">
+                        <div class="option-card" data-value="upskilling">
+                            <div class="option-icon">📈</div>
+                            <div class="option-info">
+                                <h3>Upskilling for my current job</h3>
+                                <p>Improve current skills</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="career_switch">
+                            <div class="option-icon">🔄</div>
+                            <div class="option-info">
+                                <h3>Switching careers / roles</h3>
+                                <p>New career path</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="exams">
+                            <div class="option-icon">📝</div>
+                            <div class="option-info">
+                                <h3>Preparing for exams or certifications</h3>
+                                <p>Test preparation</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="academic">
+                            <div class="option-icon">🎓</div>
+                            <div class="option-info">
+                                <h3>Academic learning</h3>
+                                <p>School/college studies</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="personal">
+                            <div class="option-icon">🚀</div>
+                            <div class="option-info">
+                                <h3>Personal interest / curiosity</h3>
+                                <p>Learning for fun</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="salary_growth">
+                            <div class="option-icon">💰</div>
+                            <div class="option-info">
+                                <h3>Salary growth / promotion</h3>
+                                <p>Career advancement</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Learning Type -->
+                <div class="survey-step" data-step="3" data-type="single">
+                    <h2 class="step-title">What type of learning are you mainly focused on?</h2>
+                    <p class="step-desc">Select one that best fits</p>
+                    <div class="options-grid">
+                        <div class="option-card" data-value="competitive_exams">
+                            <div class="option-icon">🎯</div>
+                            <div class="option-info">
+                                <h3>Competitive / entrance exams</h3>
+                                <p>JEE, NEET, UPSC, etc.</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="structured_courses">
+                            <div class="option-icon">🧠</div>
+                            <div class="option-info">
+                                <h3>Structured courses</h3>
+                                <p>Certifications, degrees</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="skill_based">
+                            <div class="option-icon">🛠</div>
+                            <div class="option-info">
+                                <h3>Skill-based learning</h3>
+                                <p>Tech, tools, soft skills</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="general_knowledge">
+                            <div class="option-icon">📖</div>
+                            <div class="option-info">
+                                <h3>General knowledge / exploration</h3>
+                                <p>Broad learning</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="not_sure">
+                            <div class="option-icon">🤔</div>
+                            <div class="option-info">
+                                <h3>Not sure yet</h3>
+                                <p>Still exploring</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Deadline Type -->
+                <div class="survey-step" data-step="4" data-type="single">
+                    <h2 class="step-title">Do you have a fixed deadline or timeline?</h2>
+                    <p class="step-desc">This helps us set the right pace</p>
+                    <div class="options-grid">
+                        <div class="option-card" data-value="hard_deadline">
+                            <div class="option-icon">⏰</div>
+                            <div class="option-info">
+                                <h3>Yes — hard deadline</h3>
+                                <p>Exam / interview / review</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="soft_deadline">
+                            <div class="option-icon">📅</div>
+                            <div class="option-info">
+                                <h3>Yes — soft target date</h3>
+                                <p>Flexible timeline</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="consistency">
+                            <div class="option-icon">🧘</div>
+                            <div class="option-info">
+                                <h3>No deadline, but I want consistency</h3>
+                                <p>Steady progress</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="not_sure">
+                            <div class="option-icon">❓</div>
+                            <div class="option-info">
+                                <h3>Not sure yet</h3>
+                                <p>Still figuring out</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5: Time Commitment -->
+                <div class="survey-step" data-step="5" data-type="single">
+                    <h2 class="step-title">How much time can you realistically spend learning on most days?</h2>
+                    <p class="step-desc">Be honest — we'll adapt to your schedule</p>
+                    <div class="options-grid">
+                        <div class="option-card" data-value="15_30_min">
+                            <div class="option-icon">⏱</div>
+                            <div class="option-info">
+                                <h3>15–30 minutes</h3>
+                                <p>Quick daily sessions</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="30_60_min">
+                            <div class="option-icon">⏳</div>
+                            <div class="option-info">
+                                <h3>30–60 minutes</h3>
+                                <p>Balanced learning</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="1_2_hours">
+                            <div class="option-icon">🕐</div>
+                            <div class="option-info">
+                                <h3>1–2 hours</h3>
+                                <p>Deep focus time</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="2plus_hours">
+                            <div class="option-icon">🔥</div>
+                            <div class="option-info">
+                                <h3>More than 2 hours</h3>
+                                <p>Intensive learning</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="weekends_only">
+                            <div class="option-icon">📆</div>
+                            <div class="option-info">
+                                <h3>Only on weekends</h3>
+                                <p>Weekend warrior</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 6: Learning Blockers (BONUS - Optional, Multi-select) -->
+                <div class="survey-step" data-step="6" data-type="multi">
+                    <h2 class="step-title">What usually stops you from finishing courses?</h2>
+                    <p class="step-desc">Optional — helps us support you better (Choose all that apply)</p>
+                    <div class="options-grid">
+                        <div class="option-card" data-value="lack_of_time">
+                            <div class="option-icon">😵</div>
+                            <div class="option-info">
+                                <h3>Lack of time</h3>
+                                <p>Too busy</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="too_many_resources">
+                            <div class="option-icon">🔀</div>
+                            <div class="option-info">
+                                <h3>Too many resources</h3>
+                                <p>Information overload</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="lose_motivation">
+                            <div class="option-icon">📉</div>
+                            <div class="option-info">
+                                <h3>Lose motivation midway</h3>
+                                <p>Hard to stay consistent</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="overwhelming">
+                            <div class="option-icon">😕</div>
+                            <div class="option-info">
+                                <h3>Content feels overwhelming</h3>
+                                <p>Too complex</p>
+                            </div>
+                        </div>
+                        <div class="option-card" data-value="no_plan">
+                            <div class="option-icon">❌</div>
+                            <div class="option-info">
+                                <h3>No clear plan</h3>
+                                <p>Lack of structure</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skip Option (Only visible on Step 6) -->
+            <div class="skip-container" id="skip-container" style="display: none;">
+                <button id="skip-btn" class="nav-btn text-btn">Skip this question</button>
+            </div>
+
+            <!-- Navigation Controls -->
+            <div class="survey-controls">
+                <button id="prev-btn" class="nav-btn secondary-btn" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <div class="control-spacer"></div>
+                <button id="next-btn" class="nav-btn primary-btn">
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Footer Dots -->
+            <div class="step-dots" id="step-dots">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final All Set Overlay (Enhanced - BUG-006) -->
+    <div id="all-set-overlay" class="success-overlay" style="display: none;">
+        <div class="success-content">
+            <!-- Animated Confetti -->
+            <div class="confetti-container" id="confetti-container"></div>
+
+            <!-- Floating Motivation Bubbles -->
+            <div class="motivation-bubbles">
+                <div class="bubble bubble-1">🎯</div>
+                <div class="bubble bubble-2">📚</div>
+                <div class="bubble bubble-3">⭐</div>
+                <div class="bubble bubble-4">🚀</div>
+                <div class="bubble bubble-5">💡</div>
+                <div class="bubble bubble-6">🏆</div>
+            </div>
+
+            <!-- Success Checkmark -->
+            <div class="checkmark-circle">
+                <div class="checkmark draw"></div>
+            </div>
+
+            <!-- Welcome Message -->
+            <h1 class="fade-in" id="welcome-title">Welcome to SmartEducation!</h1>
+            <p class="fade-in delay-1" id="welcome-subtitle">Your profile is all set up.</p>
+
+            <!-- Motivational Quote (Dynamic based on user role) -->
+            <div class="motivational-quote fade-in delay-2">
+                <div class="quote-icon">✨</div>
+                <p class="quote-text" id="motivational-text">
+                    "The journey of a thousand miles begins with a single step."
+                </p>
+                <p class="quote-author" id="quote-author">- Lao Tzu</p>
+            </div>
+
+            <!-- Login Prompt -->
+            <p class="fade-in delay-3 login-prompt">Please log in to access your personalized dashboard...</p>
+        </div>
+    </div>
+
+    <!-- Load new script -->
+    <script src="/static/js/welcome.js"></script>
+</body>
+
+</html>
