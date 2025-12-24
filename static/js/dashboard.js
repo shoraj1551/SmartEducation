@@ -31,6 +31,10 @@ class DashboardManager {
         this.lastAction = Date.now();
 
         this.init();
+
+        // Expose helpers for HTML onclicks
+        window.toggleNotifications = this.toggleNotifications.bind(this);
+        window.markNotifRead = this.markNotifRead.bind(this);
     }
 
     async init() {
@@ -289,25 +293,23 @@ class DashboardManager {
         }
     }
 
-    window.toggleNotifications = function () {
+    toggleNotifications() {
         const d = document.getElementById('notifDropdown');
         if (d) d.style.display = d.style.display === 'none' ? 'block' : 'none';
-    };
+    }
 
-window.markNotifRead = async function (id, link) {
+    async markNotifRead(id, link) {
         // Optimistic remove
-        // Call API
         try {
             await fetch(`/api/notifications/${id}/read`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
             // Reload to update badge
-            /* In a real app we'd just update DOM, but for MVP reload or fetching again is safer */
             window.location.reload();
             if (link && link !== 'null') window.location.href = link;
         } catch (e) { console.error(e); }
-    };
+    }
 
     // --- NOTIFICATIONS ---
     async loadNotifications() {
@@ -708,22 +710,23 @@ window.markNotifRead = async function (id, link) {
         return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     }
 
-    this.resumeModal.style.opacity = '0';
-setTimeout(() => {
-    this.resumeModal.style.display = 'none';
-    this.resumeModal.style.opacity = '1';
-}, 300);
-}
+    closeModal() {
+        this.resumeModal.style.opacity = '0';
+        setTimeout(() => {
+            this.resumeModal.style.display = 'none';
+            this.resumeModal.style.opacity = '1';
+        }, 300);
+    }
 
-closeBookmarkModal() {
-    this.bookmarkModal.style.display = 'none';
-}
+    closeBookmarkModal() {
+        this.bookmarkModal.style.display = 'none';
+    }
 
-handleLogout() {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    window.location.href = '/';
-}
+    handleLogout() {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        window.location.href = '/';
+    }
 }
 
 // Global Modal Toggles
