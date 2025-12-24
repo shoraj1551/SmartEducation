@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About SmartEducation</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        /* Specific overrides for Learn More to keep it calm/minimal */
+        .learn-page {
+            padding-top: 80px;
+            padding-bottom: 80px;
+        }
+
+        .section-block {
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .narrow-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .intro-heading {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 1.5rem;
+        }
+
+        .intro-text {
+            font-size: 1.15rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        .problem-list {
+            text-align: left;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .problem-list li {
+            margin-bottom: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            list-style: none;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .problem-icon {
+            color: #ef4444;
+        }
+
+        .philosophy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .philo-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: left;
+        }
+
+        .philo-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #a78bfa;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-row {
+            display: flex;
+            text-align: left;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            align-items: flex-start;
+        }
+
+        .step-num {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.1);
+            min-width: 40px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+            text-align: left;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .comparison-table th {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .check {
+            color: #10b981;
+        }
+
+        .cross {
+            color: #ef4444;
+        }
+
+        .soft-cta {
+            margin-top: 4rem;
+            padding: 3rem;
+            background: rgba(124, 58, 237, 0.1);
+            border-radius: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Reuse Background Animation -->
+    <div class="background-animation">
+        <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+    </div>
+
+    <!-- Header (Matching Index) -->
+    <div class="container">
+        <nav class="navbar">
+            <a href="/" class="logo"
+                style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 10px;">
+                <span class="logo-icon">📚</span>
+                <span class="logo-text">SmartEducation</span>
+            </a>
+            <div class="nav-buttons">
+                <!-- Direct links to standalone auth pages -->
+                <a href="/login" class="btn btn-secondary">Sign In</a>
+                <a href="/register" class="btn btn-primary">Sign Up</a>
+            </div>
+        </nav>
+
+        <main class="learn-page narrow-content">
+
+            <!-- 1. Intro -->
+            <section class="section-block">
+                <h1 class="intro-heading">A different way to finish what you start.</h1>
+                <p class="intro-text">
+                    SmartEducation isn't about giving you more courses. It's about helping you actually finish the ones
+                    you already have. We built a system for discipline, not just content.
+                </p>
+            </section>
+
+            <!-- 2. The Problem -->
+            <section class="section-block">
+                <h2 style="font-size: 1.5rem;">Why learning feels hard right now</h2>
+                <ul class="problem-list">
+                    <li><span class="problem-icon">✖</span> <strong>The Collector's Trap:</strong> Buying courses feels
+                        like progress, but it's often just collecting.</li>
+                    <li><span class="problem-icon">✖</span> <strong>The Motivation Myth:</strong> We rely on "feeling
+                        like it," but motivation always fades after a few days.</li>
+                    <li><span class="problem-icon">✖</span> <strong>Distraction Overload:</strong> Too many open tabs
+                        and no clear "next step" leads to paralysis.</li>
+                </ul>
+            </section>
+
+            <!-- 3. Our Philosophy -->
+            <section class="section-block">
+                <h2 style="font-size: 1.5rem;">Our Philosophy</h2>
+                <div class="philosophy-grid">
+                    <div class="philo-card">
+                        <div class="philo-title">1. Focus First</div>
+                        <p style="font-size: 0.9rem; color: #ccc;">One active commitment at a time. Finish it before
+                            starting the next.</p>
+                    </div>
+                    <div class="philo-card">
+                        <div class="philo-title">2. Small Steps</div>
+                        <p style="font-size: 0.9rem; color: #ccc;">Consistency beats intensity. 20 minutes daily is
+                            better than 5 hours once a week.</p>
+                    </div>
+                    <div class="philo-card">
+                        <div class="philo-title">3. Face Reality</div>
+                        <p style="font-size: 0.9rem; color: #ccc;">We track "days wasted" not to shame you, but to help
+                            you improve your velocity.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. How It Works -->
+            <section class="section-block" style="text-align: left;">
+                <h2 style="font-size: 1.5rem; text-align: center; margin-bottom: 2rem;">How It Works</h2>
+                <div class="step-row">
+                    <div class="step-num">01</div>
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem;">Bring Your Content</h4>
+                        <p style="color: #bbb;">Import your existing YouTube playlists, PDF books, or course links into
+                            one unified inbox.</p>
+                    </div>
+                </div>
+                <div class="step-row">
+                    <div class="step-num">02</div>
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem;">Set a Commitment</h4>
+                        <p style="color: #bbb;">Choose a realistic deadline and a daily time purpose. Sign the contract.
+                        </p>
+                    </div>
+                </div>
+                <div class="step-row">
+                    <div class="step-num">03</div>
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem;">Enter the Focus Room</h4>
+                        <p style="color: #bbb;">Launch sessions with our distraction-free player. Auto-generate stats.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. Comparison -->
+            <section class="section-block">
+                <h2 style="font-size: 1.5rem;">What We Are</h2>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>SmartEducation</th>
+                            <th>Traditional Platforms</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="check">✔</span> <strong>Finishing</strong> Engine</td>
+                            <td><span class="problem-icon">✖</span> <strong>Selling</strong> Engine</td>
+                        </tr>
+                        <tr>
+                            <td><span class="check">✔</span> Builds <strong>Discipline</strong></td>
+                            <td><span class="problem-icon">✖</span> Relies on <strong>Motivation</strong></td>
+                        </tr>
+                        <tr>
+                            <td><span class="check">✔</span> Works with <strong>Any</strong> Content</td>
+                            <td><span class="problem-icon">✖</span> Only <strong>Their</strong> Content</td>
+                        </tr>
+                        <tr>
+                            <td><span class="check">✔</span> <strong>Guilt-Free</strong> Recovery</td>
+                            <td><span class="problem-icon">✖</span> Streak-based Anxiety</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- 6. CTA -->
+            <section class="soft-cta">
+                <h2 style="font-size: 1.8rem; margin-bottom: 1rem;">Ready to build a better learning habit?</h2>
+                <p style="margin-bottom: 2rem; color: rgba(255,255,255,0.6);">No credit card required. Just focus.</p>
+                <a href="/register" class="btn btn-primary btn-large">Create an account to get started</a>
+            </section>
+
+        </main>
+
+        <footer style="text-align: center; color: rgba(255,255,255,0.3); padding: 2rem; font-size: 0.9rem;">
+            &copy; 2025 SmartEducation. All rights reserved.
+        </footer>
+    </div>
+
+</body>
+
+</html>

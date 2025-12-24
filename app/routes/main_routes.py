@@ -56,3 +56,19 @@ def inbox():
 @main_bp.route('/welcome')
 def welcome():
     return render_template('welcome.html')
+
+@main_bp.route('/product')
+def product():
+    return render_template('product.html')
+
+@main_bp.route('/learn-more')
+def learn_more():
+    return render_template('learn_more.html')
+
+@main_bp.route('/login')
+def login():
+    return render_template('login.html')
+
+@main_bp.route('/register')
+def register():
+    return render_template('register.html')

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - SmartEducation</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: #0f172a;
+        }
+
+        .auth-container {
+            max-width: 400px;
+            margin: 4rem auto;
+            padding: 2rem;
+            background: #1e293b;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar" style="padding: 1rem 2rem;">
+        <a href="/" class="logo-text">
+            <span>📚</span> SmartEducation
+        </a>
+        <div class="nav-buttons">
+            <a href="/register" class="btn btn-primary">Sign Up</a>
+        </div>
+    </nav>
+
+    <div class="auth-container">
+        <div class="auth-header">
+            <h2>Welcome Back!</h2>
+            <p style="color: #94a3b8; margin-top: 0.5rem;">Sign in to continue learning</p>
+        </div>
+
+        <form class="auth-form" id="signInForm">
+            <div class="form-group">
+                <label for="signInIdentifier">Email or Mobile Number</label>
+                <input type="text" id="signInIdentifier" placeholder="Enter your email or mobile" required
+                    style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #fff;">
+            </div>
+            <div class="form-group">
+                <label for="signInPassword">Password</label>
+                <input type="password" id="signInPassword" placeholder="Enter your password" required
+                    style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #fff;">
+            </div>
+            <button type="submit" class="btn btn-primary btn-full"
+                style="width: 100%; padding: 0.75rem; margin-top: 1rem;">Sign In</button>
+            <p class="form-footer" style="text-align: center; margin-top: 1.5rem; color: #94a3b8; font-size: 0.9rem;">
+                Don't have an account? <a href="/register" style="color: #a78bfa; text-decoration: none;">Sign up</a>
+            </p>
+        </form>
+    </div>
+
+    <!-- Modals needed for script.js to not crash, or we patch script.js. 
+         Ideally we patch script.js. But for now, let's include hidden placeholders if we don't fix script yet?
+         No, I will fix script.js. 
+    -->
+    <script src="/static/js/script.js?v=4"></script>
+</body>
+
+</html>

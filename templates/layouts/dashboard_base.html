@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SmartEducation{% endblock %}</title>
+    <!-- GLOBAL CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/focus.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    {% block extra_css %}{% endblock %}
+
+    <style>
+        :root {
+            --sidebar-width: 280px;
+        }
+
+        body {
+            background: #0f172a;
+            color: white;
+            overflow-x: hidden;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            min-height: 100vh;
+        }
+
+        /* Re-asserting sidebar styles just in case styles.css is missing them or they were local to dashboard.html */
+        .sidebar {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .main-content-wrapper {
+            padding: 2rem 3rem;
+            max-width: 1400px;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body class="dashboard-body">
+    <!-- Background Animation (Optional, stripped down for performance or keep consistent) -->
+    <div class="background-animation">
+        <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+    </div>
+
+    <div class="dashboard-layout">
+        <!-- Persistent Sidebar -->
+        {% include 'components/sidebar.html' %}
+
+        <!-- Main Content Area -->
+        <main class="main-content-wrapper">
+            <!-- Persistent Header -->
+            {% include 'components/header.html' %}
+
+            <!-- Page Specific Content -->
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+
+    <!-- Common Modals (Search, etc.) -->
+    {% include 'components/commitment_modal.html' ignore missing %}
+
+    <!-- Scripts -->
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/script.js?v=layout"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

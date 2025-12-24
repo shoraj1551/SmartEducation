@@ -33,10 +33,12 @@ def create_app():
     # from .routes.task_routes import tasks_bp
     from .routes.commitment_routes import commitment_bp
     from .routes.priority_routes import priority_bp
+    from .routes.dashboard_routes import dashboard_bp
     from .routes.focus_routes import focus_bp
     from .routes.reality_routes import reality_bp
     from .routes.wellness_routes import wellness_bp
     from .routes.gamification_routes import gamification_bp
+    from .routes.security_routes import security_bp
     from .routes.recall_routes import recall_bp
     from .routes.trigger_routes import trigger_bp
     from .routes.social_routes import social_bp
@@ -46,7 +48,6 @@ def create_app():
     # from .routes.burnout_routes import burnout_bp
     # from .routes.proof_routes import proof_bp
     from .routes.main_routes import main_bp
-    from .routes.dashboard_routes import dashboard_bp
     # from .routes.admin_routes import admin_bp
     # from .routes.category_routes import category_bp
     # from .routes.learning_routes import learning_bp
@@ -63,6 +64,7 @@ def create_app():
     app.register_blueprint(reality_bp)
     app.register_blueprint(wellness_bp)
     app.register_blueprint(gamification_bp)
+    app.register_blueprint(security_bp)
     app.register_blueprint(recall_bp)
     app.register_blueprint(trigger_bp)
     app.register_blueprint(social_bp)

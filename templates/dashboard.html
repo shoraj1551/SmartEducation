@@ -1,431 +1,611 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "layouts/dashboard_base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - SmartEducation</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <link rel="stylesheet" href="/static/css/focus.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
-    <style>
-        :root {
-            --sidebar-width: 280px;
+{% block title %}Dashboard - SmartEducation{% endblock %}
+
+{% block content %}
+<!-- wrapper removed -->
+<!-- WELLNESS ENGINE: BURNOUT ALERT -->
+<div id="burnoutContainer" style="display: none; margin-bottom: 1.5rem;">
+    <!-- Injected by JS -->
+</div>
+
+<header class="section-header">
+    <div class="header-left">
+        <h1>Welcome back, <span id="userNameBrief">Scholar</span></h1>
+        <p class="subtitle">Ready to continue your journey?</p>
+    </div>
+
+    <div class="header-actions">
+        <!-- GAMIFICATION BADGE -->
+        <div id="gamificationContainer" style="display: none;" class="level-badge-container">
+            <!-- Injected by JS -->
+        </div>
+
+        <!-- NOTIFICATIONS -->
+        <div class="notification-wrapper" style="position: relative; margin-right: 1.5rem;">
+            <div class="icon-btn" onclick="toggleNotifications()">
+                <i class="fas fa-bell"></i>
+                <span class="badge" id="notifBadge" style="display:none;">0</span>
+            </div>
+            <div class="notif-dropdown" id="notifDropdown" style="display:none;">
+                <div class="notif-header">Notifications</div>
+                <div id="notifList" class="notif-list">
+                    <div class="empty-notif">No new notifications</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="streak-badge">
+            <i class="fas fa-fire"></i>
+            <span id="streakCount">0</span> Days
+        </div>
+    </div>
+</header>
+
+<!-- INTELLIGENCE ENGINE: FOCUS SECTION -->
+<section id="focusTaskContainer" class="focus-section">
+    <!-- Javascript will inject the One Single Task here -->
+    <div class="loading-placeholder" style="height: 200px; background: rgba(255,255,255,0.05); border-radius: 20px;">
+    </div>
+</section>
+
+<div class="dashboard-grid">
+    <!-- Progress Overview -->
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fas fa-hourglass-half"></i></div>
+            <div class="stat-info">
+                <h4>Hours Spent</h4>
+                <p id="hoursSpent">0.0</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon purple"><i class="fas fa-tasks"></i></div>
+            <div class="stat-info">
+                <h4>Completed</h4>
+                <p id="completionRate">0%</p>
+            </div>
+        </div>
+        <div class="stat-card"
+            style="grid-column: span 2; display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; width: 100%;">
+                <h4 style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase;">
+                    Weekly Commitment</h4>
+                <span id="commitmentLabel" style="font-size: 0.85rem; color: var(--primary);">Moderate
+                    (0/5h)</span>
+            </div>
+            <div
+                style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                <div id="commitmentBar"
+                    style="width: 0%; height: 100%; background: var(--primary-gradient); transition: width 0.5s ease;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REALITY ENGINE: THE TRUTH -->
+    <div id="realityContainer" style="margin-bottom: 2rem; display: none;">
+        <!-- Injected by JS -->
+    </div>
+
+    <!-- AI Recommendations -->
+    <div id="recommendationArea" style="margin-bottom: 3rem; display: none;">
+        <div class="section-header">
+            <h2>Recommended for your <span id="interestPathLabel" style="color: var(--primary);">Path</span>
+            </h2>
+        </div>
+        <div class="stats-grid" id="recommendationGrid" style="grid-template-columns: repeat(3, 1fr);">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Dashboard Sections -->
+    <div class="dashboard-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <!-- Bookmark Section -->
+        <div class="main-section">
+            <div class="section-header">
+                <h2>My Bookmarks</h2>
+                <button class="primary-btn" onclick="openBookmarkModal()"
+                    style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">
+                    <i class="fas fa-plus"></i> Add Bookmark
+                </button>
+            </div>
+
+            <div class="activity-card" id="bookmarkContainer">
+                <div class="activity-list" id="bookmarkList">
+                    <!-- Populated by JS -->
+                    <div class="activity-item">
+                        <p style="color: rgba(255,255,255,0.4);">Loading bookmarks...</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-container" id="bookmarkPagination"
+                    style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Feed -->
+        <div class="activity-section">
+            <div class="section-header">
+                <h2>Recent Activity</h2>
+            </div>
+
+            <div class="activity-card">
+                <div class="activity-list" id="activityFeed">
+                    <!-- Populated by JS -->
+                    <div class="activity-item">
+                        <p style="color: rgba(255,255,255,0.4);">Loading activities...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- wrapper removed end -->
+
+<!-- Page Specific Modals -->
+<!-- Add Bookmark Modal -->
+<div class="resume-modal" id="bookmarkModal">
+    <div class="modal-card" style="max-width: 600px; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h3 style="margin: 0;">Add Educational Bookmark</h3>
+            <button onclick="closeBookmarkModal()"
+                style="background: none; border: none; color: white; cursor: pointer; font-size: 1.5rem;">&times;</button>
+        </div>
+
+        <form id="addBookmarkForm" class="auth-form">
+            <div class="form-group slide-up" style="--delay: 1">
+                <label>Resource URL</label>
+                <input type="url" id="bmUrl" placeholder="https://youtube.com/watch?v=..." required
+                    style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+            </div>
+            <div class="form-group slide-up" style="--delay: 2">
+                <label>Title (Optional)</label>
+                <input type="text" id="bmTitle" placeholder="Tutorial Name"
+                    style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+            </div>
+            <div class="form-group slide-up" style="--delay: 3">
+                <label>Description (Optional)</label>
+                <textarea id="bmDesc" placeholder="What will you learn?" rows="3"
+                    style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; resize: none;"></textarea>
+            </div>
+
+            <button type="submit" class="primary-btn nav-btn" style="width: 100%; margin-top: 1rem;">
+                <i class="fas fa-magic"></i> Add with AI Identification
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - SmartEducation</title>
+<link rel="stylesheet" href="/static/css/styles.css">
+<link rel="stylesheet" href="/static/css/focus.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --sidebar-width: 280px;
+    }
+
+    body {
+        background: #0f172a;
+        color: white;
+        overflow-x: hidden;
+    }
+
+    .dashboard-layout {
+        display: grid;
+        grid-template-columns: var(--sidebar-width) 1fr;
+        min-height: 100vh;
+    }
+
+    /* Glass Sidebar */
+    .sidebar {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 2rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+    }
+
+    .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 3rem;
+        padding: 0 0.5rem;
+    }
+
+    .logo-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--primary-gradient);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+    }
+
+    .logo-text {
+        font-weight: 800;
+        font-size: 1.2rem;
+        letter-spacing: -0.5px;
+    }
+
+    .nav-menu {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 12px;
+        color: rgba(255, 255, 255, 0.6);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .nav-item:hover,
+    .nav-item.active {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+
+    .nav-item.active {
+        background: rgba(124, 58, 237, 0.1);
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    /* Main Content */
+    .main-content {
+        padding: 2rem 3rem;
+        max-width: 1400px;
+    }
+
+    .top-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 3rem;
+    }
+
+    .search-container {
+        position: relative;
+        width: 400px;
+    }
+
+    .search-container i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.8rem 1rem 0.8rem 2.8rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        color: white;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--primary);
+    }
+
+    /* User Profile Dropdown */
+    .user-menu-container {
+        position: relative;
+    }
+
+    .user-trigger {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .user-trigger:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .user-avatar {
+        width: 35px;
+        height: 35px;
+        background: var(--primary-gradient);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    .user-info-brief {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .user-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .user-dropdown {
+        position: absolute;
+        top: 120%;
+        right: 0;
+        width: 220px;
+        background: rgba(30, 41, 59, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 0.75rem;
+        display: none;
+        flex-direction: column;
+        gap: 0.25rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        animation: slideInUp 0.3s ease;
+    }
+
+    .user-dropdown.active {
+        display: flex;
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-size: 0.95rem;
+    }
+
+    .dropdown-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+
+    .dropdown-divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+        margin: 0.5rem;
+    }
+
+    .logout-item {
+        color: #ef4444;
+    }
+
+    .logout-item:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 1.5rem;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .blue {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .purple {
+        background: rgba(124, 58, 237, 0.1);
+        color: #7c3aed;
+    }
+
+    .green {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .orange {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+
+    .stat-info h4 {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-info p {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    /* Recent Activity */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .activity-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 24px;
+        padding: 2rem;
+    }
+
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .activity-item {
+        display: flex;
+        gap: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .activity-marker {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .activity-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--primary);
+        box-shadow: 0 0 10px var(--primary);
+    }
+
+    .activity-line {
+        width: 2px;
+        flex: 1;
+        background: rgba(255, 255, 255, 0.1);
+        margin-top: 5px;
+    }
+
+    .activity-content h5 {
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-content p {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.9rem;
+    }
+
+    .activity-time {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.3);
+        margin-top: 0.5rem;
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
         }
 
-        body {
-            background: #0f172a;
-            color: white;
-            overflow-x: hidden;
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
+    }
 
-        .dashboard-layout {
-            display: grid;
-            grid-template-columns: var(--sidebar-width) 1fr;
-            min-height: 100vh;
-        }
+    /* Resume Modal */
+    .resume-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+    }
 
-        /* Glass Sidebar */
-        .sidebar {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 2rem 1.5rem;
-            display: flex;
-            flex-direction: column;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-        }
+    .modal-card {
+        background: rgba(30, 41, 59, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 3rem;
+        max-width: 500px;
+        text-align: center;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
 
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 3rem;
-            padding: 0 0.5rem;
-        }
+    .modal-icon {
+        font-size: 3rem;
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+    }
 
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--primary-gradient);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
-        }
+    .modal-card h3 {
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+    }
 
-        .logo-text {
-            font-weight: 800;
-            font-size: 1.2rem;
-            letter-spacing: -0.5px;
-        }
+    .modal-card p {
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
 
-        .nav-menu {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            flex: 1;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            border-radius: 12px;
-            color: rgba(255, 255, 255, 0.6);
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .nav-item:hover,
-        .nav-item.active {
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
-        }
-
-        .nav-item.active {
-            background: rgba(124, 58, 237, 0.1);
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        /* Main Content */
-        .main-content {
-            padding: 2rem 3rem;
-            max-width: 1400px;
-        }
-
-        .top-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 3rem;
-        }
-
-        .search-container {
-            position: relative;
-            width: 400px;
-        }
-
-        .search-container i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 0.8rem 1rem 0.8rem 2.8rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            color: white;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-
-        .search-input:focus {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--primary);
-        }
-
-        /* User Profile Dropdown */
-        .user-menu-container {
-            position: relative;
-        }
-
-        .user-trigger {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.5rem 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .user-trigger:hover {
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .user-avatar {
-            width: 35px;
-            height: 35px;
-            background: var(--primary-gradient);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.9rem;
-        }
-
-        .user-info-brief {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .user-name {
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .user-dropdown {
-            position: absolute;
-            top: 120%;
-            right: 0;
-            width: 220px;
-            background: rgba(30, 41, 59, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 0.75rem;
-            display: none;
-            flex-direction: column;
-            gap: 0.25rem;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            animation: slideInUp 0.3s ease;
-        }
-
-        .user-dropdown.active {
-            display: flex;
-        }
-
-        .dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.75rem 1rem;
-            border-radius: 10px;
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
-            transition: all 0.2s ease;
-            font-size: 0.95rem;
-        }
-
-        .dropdown-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
-        }
-
-        .dropdown-divider {
-            height: 1px;
-            background: rgba(255, 255, 255, 0.1);
-            margin: 0.5rem;
-        }
-
-        .logout-item {
-            color: #ef4444;
-        }
-
-        .logout-item:hover {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-        }
-
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 1.5rem;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 1.25rem;
-        }
-
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-
-        .blue {
-            background: rgba(59, 130, 246, 0.1);
-            color: #3b82f6;
-        }
-
-        .purple {
-            background: rgba(124, 58, 237, 0.1);
-            color: #7c3aed;
-        }
-
-        .green {
-            background: rgba(16, 185, 129, 0.1);
-            color: #10b981;
-        }
-
-        .orange {
-            background: rgba(245, 158, 11, 0.1);
-            color: #f59e0b;
-        }
-
-        .stat-info h4 {
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.5);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.25rem;
-        }
-
-        .stat-info p {
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        /* Recent Activity */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .activity-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 24px;
-            padding: 2rem;
-        }
-
-        .activity-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .activity-item {
-            display: flex;
-            gap: 1.5rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .activity-item:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-
-        .activity-marker {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .activity-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--primary);
-            box-shadow: 0 0 10px var(--primary);
-        }
-
-        .activity-line {
-            width: 2px;
-            flex: 1;
-            background: rgba(255, 255, 255, 0.1);
-            margin-top: 5px;
-        }
-
-        .activity-content h5 {
-            font-size: 1rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .activity-content p {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.9rem;
-        }
-
-        .activity-time {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.3);
-            margin-top: 0.5rem;
-        }
-
-        @keyframes slideInUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Resume Modal */
-        .resume-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(8px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-        }
-
-        .modal-card {
-            background: rgba(30, 41, 59, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 3rem;
-            max-width: 500px;
-            text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-icon {
-            font-size: 3rem;
-            color: var(--primary);
-            margin-bottom: 1.5rem;
-        }
-
-        .modal-card h3 {
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-        }
-
-        .modal-card p {
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 2rem;
-            line-height: 1.6;
-        }
-
-        .modal-btns {
-            display: flex;
-            gap: 1rem;
-        }
-    </style>
+    .modal-btns {
+        display: flex;
+        gap: 1rem;
+    }
+</style>
 </head>
 
 <body class="dashboard-body">

@@ -1,0 +1,41 @@
+<aside class="sidebar">
+    {% include 'components/brand.html' %}
+
+    <nav class="nav-menu">
+        <a href="/dashboard" class="nav-item {% if request.path == '/dashboard' %}active{% endif %}">
+            <i class="fas fa-th-large"></i>
+            Dashboard
+        </a>
+        <a href="/inbox" class="nav-item {% if request.path == '/inbox' %}active{% endif %}">
+            <i class="fas fa-inbox"></i>
+            Learning Inbox
+        </a>
+        <a href="/bookmarks" class="nav-item {% if request.path == '/bookmarks' %}active{% endif %}">
+            <i class="fas fa-bookmark"></i>
+            <span>Library</span>
+        </a>
+        <a href="/flashcards" class="nav-item {% if request.path == '/flashcards' %}active{% endif %}">
+            <i class="fas fa-layer-group"></i>
+            <span>Active Recall</span>
+        </a>
+        <a href="/pods" class="nav-item {% if request.path == '/pods' %}active{% endif %}">
+            <i class="fas fa-users"></i>
+            <span>Pods</span>
+        </a>
+        <a href="/schedule" class="nav-item {% if request.path == '/schedule' %}active{% endif %}">
+            <i class="fas fa-calendar-alt"></i>
+            Schedule
+        </a>
+        <a href="/settings" class="nav-item {% if request.path == '/settings' %}active{% endif %}">
+            <i class="fas fa-cog"></i>
+            Settings
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="nav-item logout-item" id="sidebarLogout" style="cursor: pointer;" onclick="handleLogout()">
+            <i class="fas fa-sign-out-alt"></i>
+            Logout
+        </div>
+    </div>
+</aside>

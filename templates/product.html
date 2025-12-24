@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusStream | Discipline Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/product.css') }}">
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <div class="logo">FOCUSSTREAM</div>
+        <div class="nav-links">
+            <a href="/login">Log In</a>
+            <a href="/register" class="btn-sm">Start</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <header class="hero">
+        <div class="container">
+            <h1>You don’t need more content.<br>You need to finish what you started.</h1>
+            <p class="sub-hero">FocusStream isn't a library. It’s a discipline engine for the courses, books, and
+                articles you already own but never finished.</p>
+
+            <div class="cta-group">
+                <a href="/register" class="btn-primary">[ Start Finishing Today ]</a>
+                <a href="#philosophy" class="link-secondary">Read the philosophy ↓</a>
+            </div>
+
+            <!-- Abstract Visual: Progress Bar Stalled then Moving -->
+            <div class="hero-visual">
+                <div class="visual-card">
+                    <div class="progress-label">Python Masterclass</div>
+                    <div class="progress-track">
+                        <div class="progress-fill stalled">12%</div>
+                    </div>
+                    <div class="status-text blink">STALLED (3 Months)</div>
+                </div>
+                <div class="arrow-down">↓</div>
+                <div class="visual-card active">
+                    <div class="progress-label">Python Masterclass</div>
+                    <div class="progress-track">
+                        <div class="progress-fill moving">100%</div>
+                    </div>
+                    <div class="status-text success">COMPLETED</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- PROBLEM -->
+    <section class="problem">
+        <div class="container narrow">
+            <h2>The "Someday" Archive.</h2>
+            <p>You bookmarked that article three months ago. You bought that Python course on sale last year. You have
+                45 tabs open "just in case."</p>
+            <p>It’s not a lack of time. It’s a lack of a system.</p>
+            <p class="highlight">Modern learning platforms profit when you <em>buy</em>, not when you <em>finish</em>.
+                We are optimizing for the wrong metric.</p>
+        </div>
+    </section>
+
+    <!-- PHILOSOPHY -->
+    <section class="philosophy" id="philosophy">
+        <div class="container">
+            <div class="grid-3">
+                <div class="card">
+                    <div class="icon">🎯</div>
+                    <h3>Active Focus</h3>
+                    <p><strong>One Thing at a Time.</strong> No multi-tasking. No minimalist "queues." You select one
+                        active focus. You don't start the next until this one is done.</p>
+                </div>
+                <div class="card">
+                    <div class="icon">🔒</div>
+                    <h3>Hard Contracts</h3>
+                    <p><strong>Discipline > Motivation.</strong> Motivation is fleeting. We use "Commitment Contracts"
+                        to lock you in. Sign the pact, set the date.</p>
+                </div>
+                <div class="card">
+                    <div class="icon">⚖️</div>
+                    <h3>Reality Checks</h3>
+                    <p><strong>Truth over Optimism.</strong> We track your "Actual Velocity." If you say you'll study 5
+                        hours but only do 1, we show you the red card.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="how-it-works">
+        <div class="container">
+            <h2>The System</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">01</div>
+                    <h4>Import</h4>
+                    <p>Bring your chaos. YouTube, PDFs, Links.</p>
+                </div>
+                <div class="step-line"></div>
+                <div class="step">
+                    <div class="step-num">02</div>
+                    <h4>Commit</h4>
+                    <p>Sign the contract. Set the deadline.</p>
+                </div>
+                <div class="step-line"></div>
+                <div class="step">
+                    <div class="step-num">03</div>
+                    <h4>Focus</h4>
+                    <p>Deep work sessions. Distractions blocked.</p>
+                </div>
+                <div class="step-line"></div>
+                <div class="step">
+                    <div class="step-num">04</div>
+                    <h4>Truth</h4>
+                    <p>Weekly brutal reviews. Guilt-free recovery.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features">
+        <div class="container">
+            <div class="grid-2">
+                <div class="feature-item">
+                    <h4>Context-Aware Triggers</h4>
+                    <p>Smart nudges that know when you're doom-scrolling and pull you back to your goal.</p>
+                </div>
+                <div class="feature-item">
+                    <h4>Active Recall Engine</h4>
+                    <p>Don't just watch. Generate flashcards automatically. Verify you actually learned it.</p>
+                </div>
+                <div class="feature-item">
+                    <h4>Accountability Pods</h4>
+                    <p>Join a pod of 3. If you miss a day, they know. Social pressure for the win.</p>
+                </div>
+                <div class="feature-item">
+                    <h4>Universal Search</h4>
+                    <p>Ctrl+K to find anything in your mess. One search bar to rule them all.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FILTER -->
+    <section class="filter">
+        <div class="container">
+            <div class="split-filter">
+                <div class="filter-col yes">
+                    <h3>✅ This is for you if:</h3>
+                    <ul>
+                        <li>You have bought courses you haven't opened in months.</li>
+                        <li>You feel anxious about your "learning backlog."</li>
+                        <li>You are willing to be uncomfortable to make progress.</li>
+                        <li>You value deep work over "skimming."</li>
+                    </ul>
+                </div>
+                <div class="filter-col no">
+                    <h3>❌ This is NOT for you if:</h3>
+                    <ul>
+                        <li>You want a "Netflix for Learning."</li>
+                        <li>You want gamified badges without real work.</li>
+                        <li>You are looking for new content to buy.</li>
+                        <li>You aren't ready to commit to a schedule.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PROMISE -->
+    <section class="promise">
+        <div class="container narrow">
+            <h2>We promise you one thing:</h2>
+            <h1 class="giant-text">YOU WILL STRUGGLE.</h1>
+            <p>Learning is hard. Finishing is harder.<br>FocusStream won't make it easy. It will make it
+                <em>possible</em>.</p>
+            <p class="final-line">Stop collecting. Start becoming.</p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="cta-footer">
+        <div class="container">
+            <h3>Your backlog isn't going anywhere. But your time is.</h3>
+            <a href="/register" class="btn-primary large">[ Join FocusStream ]</a>
+            <span>Free 14-day accountability challenge.</span>
+        </div>
+    </footer>
+
+</body>
+
+</html>

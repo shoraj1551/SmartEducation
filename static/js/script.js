@@ -180,8 +180,10 @@ function validatePasswordMatch() {
     }
 }
 
-signUpPassword.addEventListener('input', validatePasswordMatch);
-signUpConfirmPassword.addEventListener('input', validatePasswordMatch);
+if (signUpPassword && signUpConfirmPassword) {
+    signUpPassword.addEventListener('input', validatePasswordMatch);
+    signUpConfirmPassword.addEventListener('input', validatePasswordMatch);
+}
 
 // ===== Inline Email/Mobile Verification =====
 const signUpEmail = document.getElementById('signUpEmail');
@@ -195,481 +197,524 @@ const mobileVerificationStatus = document.getElementById('mobileVerificationStat
 
 
 // Enable verify buttons when input has value
-signUpEmail.addEventListener('input', () => {
-    verifyEmailBtn.disabled = !signUpEmail.value || emailVerified;
-});
+// Enable verify buttons when input has value
+if (signUpEmail && verifyEmailBtn) {
+    signUpEmail.addEventListener('input', () => {
+        verifyEmailBtn.disabled = !signUpEmail.value || emailVerified;
+    });
+}
 
-signUpMobile.addEventListener('input', () => {
-    verifyMobileBtn.disabled = !signUpMobile.value || mobileVerified;
-});
+if (signUpMobile && verifyMobileBtn) {
+    signUpMobile.addEventListener('input', () => {
+        verifyMobileBtn.disabled = !signUpMobile.value || mobileVerified;
+    });
+}
 
 // Email verification - Send OTP
-verifyEmailBtn.addEventListener('click', async () => {
-    const email = signUpEmail.value;
-    const name = document.getElementById('signUpName').value;
+// Email verification - Send OTP
+if (verifyEmailBtn) {
+    verifyEmailBtn.addEventListener('click', async () => {
+        const email = signUpEmail.value;
+        const name = document.getElementById('signUpName').value;
 
-    if (!email || !name) {
-        showMessage('Please enter your name and email first', 'error');
-        return;
-    }
+        if (!email || !name) {
+            showMessage('Please enter your name and email first', 'error');
+            return;
+        }
 
-    try {
-        // Send request to backend to generate and send email OTP
-        const response = await fetch(`${API_BASE_URL}/auth/send-verification-otp`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email,
-                name,
-                otp_type: 'email',
-                purpose: 'inline_verification'
-            }),
-            credentials: 'include'
-        });
+        try {
+            // Send request to backend to generate and send email OTP
+            const response = await fetch(`${API_BASE_URL}/auth/send-verification-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email,
+                    name,
+                    otp_type: 'email',
+                    purpose: 'inline_verification'
+                }),
+                credentials: 'include'
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (response.ok) {
-            tempUserId = data.temp_user_id;
+            if (response.ok) {
+                tempUserId = data.temp_user_id;
+                document.getElementById('emailToVerify').textContent = email;
+                showModal(emailOtpModal);
+            } else {
+                showMessage(data.error || 'Failed to send OTP', 'error');
+            }
+        } catch (error) {
+            showMessage('OTP sent! Please check your email.', 'success');
+            // For demo purposes, show modal anyway
             document.getElementById('emailToVerify').textContent = email;
             showModal(emailOtpModal);
-        } else {
-            showMessage(data.error || 'Failed to send OTP', 'error');
         }
-    } catch (error) {
-        showMessage('OTP sent! Please check your email.', 'success');
-        // For demo purposes, show modal anyway
-        document.getElementById('emailToVerify').textContent = email;
-        showModal(emailOtpModal);
-    }
-});
+    });
+}
 
 // Mobile verification - Send OTP
-verifyMobileBtn.addEventListener('click', async () => {
-    const mobile = signUpMobile.value;
-    const name = document.getElementById('signUpName').value;
+// Mobile verification - Send OTP
+if (verifyMobileBtn) {
+    verifyMobileBtn.addEventListener('click', async () => {
+        const mobile = signUpMobile.value;
+        const name = document.getElementById('signUpName').value;
 
-    if (!mobile || !name) {
-        showMessage('Please enter your name and mobile number first', 'error');
-        return;
-    }
+        if (!mobile || !name) {
+            showMessage('Please enter your name and mobile number first', 'error');
+            return;
+        }
 
-    try {
-        // Send request to backend to generate and send mobile OTP
-        const response = await fetch(`${API_BASE_URL}/auth/send-verification-otp`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                mobile,
-                name,
-                otp_type: 'mobile',
-                purpose: 'inline_verification'
-            }),
-            credentials: 'include'
-        });
+        try {
+            // Send request to backend to generate and send mobile OTP
+            const response = await fetch(`${API_BASE_URL}/auth/send-verification-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mobile,
+                    name,
+                    otp_type: 'mobile',
+                    purpose: 'inline_verification'
+                }),
+                credentials: 'include'
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (response.ok) {
-            tempUserId = data.temp_user_id;
+            if (response.ok) {
+                tempUserId = data.temp_user_id;
+                document.getElementById('mobileToVerify').textContent = mobile;
+                showModal(mobileOtpModal);
+            } else {
+                showMessage(data.error || 'Failed to send OTP', 'error');
+            }
+        } catch (error) {
+            showMessage('OTP sent! Please check your mobile.', 'success');
+            // For demo purposes, show modal anyway
             document.getElementById('mobileToVerify').textContent = mobile;
             showModal(mobileOtpModal);
-        } else {
-            showMessage(data.error || 'Failed to send OTP', 'error');
         }
-    } catch (error) {
-        showMessage('OTP sent! Please check your mobile.', 'success');
-        // For demo purposes, show modal anyway
-        document.getElementById('mobileToVerify').textContent = mobile;
-        showModal(mobileOtpModal);
-    }
-});
+    });
+}
 
 // Email OTP Form Submission
-emailOtpForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const otpCode = document.getElementById('emailOtpInput').value;
+// Email OTP Form Submission
+if (emailOtpForm) {
+    emailOtpForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const otpCode = document.getElementById('emailOtpInput').value;
 
-    if (otpCode.length !== 6) {
-        showMessage('Please enter a valid 6-digit OTP', 'error');
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/auth/verify-inline-otp`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                temp_user_id: tempUserId,
-                otp_type: 'email',
-                otp_code: otpCode
-            }),
-            credentials: 'include'
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            emailVerified = true;
-            verifyEmailBtn.classList.add('verified');
-            verifyEmailBtn.disabled = true;
-            emailVerificationStatus.textContent = '✓ Email verified';
-            emailVerificationStatus.className = 'verification-status verified';
-            signUpEmail.readOnly = true;
-            hideModal(emailOtpModal);
-            showMessage('Email verified successfully!', 'success');
-        } else {
-            showMessage(data.error || 'Invalid OTP', 'error');
+        if (otpCode.length !== 6) {
+            showMessage('Please enter a valid 6-digit OTP', 'error');
+            return;
         }
-    } catch (error) {
-        console.error('Error:', error);
-        // Fallback for demo if offline (should not happen in prod)
-        if (otpCode === '123456') {
-            emailVerified = true;
-            verifyEmailBtn.classList.add('verified');
-            verifyEmailBtn.disabled = true;
-            emailVerificationStatus.textContent = '✓ Email verified';
-            emailVerificationStatus.className = 'verification-status verified';
-            signUpEmail.readOnly = true;
-            hideModal(emailOtpModal);
-            showMessage('Email verified (Demo Mode)!', 'success');
-        } else {
-            showMessage('Verification failed', 'error');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/verify-inline-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    temp_user_id: tempUserId,
+                    otp_type: 'email',
+                    otp_code: otpCode
+                }),
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                emailVerified = true;
+                verifyEmailBtn.classList.add('verified');
+                verifyEmailBtn.disabled = true;
+                emailVerificationStatus.textContent = '✓ Email verified';
+                emailVerificationStatus.className = 'verification-status verified';
+                signUpEmail.readOnly = true;
+                hideModal(emailOtpModal);
+                showMessage('Email verified successfully!', 'success');
+            } else {
+                showMessage(data.error || 'Invalid OTP', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            // Fallback for demo if offline (should not happen in prod)
+            if (otpCode === '123456') {
+                emailVerified = true;
+                verifyEmailBtn.classList.add('verified');
+                verifyEmailBtn.disabled = true;
+                emailVerificationStatus.textContent = '✓ Email verified';
+                emailVerificationStatus.className = 'verification-status verified';
+                signUpEmail.readOnly = true;
+                hideModal(emailOtpModal);
+                showMessage('Email verified (Demo Mode)!', 'success');
+            } else {
+                showMessage('Verification failed', 'error');
+            }
         }
-    }
-});
+    });
+}
 
 // Mobile OTP Form Submission
-mobileOtpForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const otpCode = document.getElementById('mobileOtpInput').value;
+// Mobile OTP Form Submission
+if (mobileOtpForm) {
+    mobileOtpForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const otpCode = document.getElementById('mobileOtpInput').value;
 
-    if (otpCode.length !== 6) {
-        showMessage('Please enter a valid 6-digit OTP', 'error');
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/auth/verify-inline-otp`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                temp_user_id: tempUserId,
-                otp_type: 'mobile',
-                otp_code: otpCode
-            }),
-            credentials: 'include'
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            mobileVerified = true;
-            verifyMobileBtn.classList.add('verified');
-            verifyMobileBtn.disabled = true;
-            mobileVerificationStatus.textContent = '✓ Mobile verified';
-            mobileVerificationStatus.className = 'verification-status verified';
-            signUpMobile.readOnly = true;
-            hideModal(mobileOtpModal);
-            showMessage('Mobile verified successfully!', 'success');
-        } else {
-            showMessage(data.error || 'Invalid OTP', 'error');
+        if (otpCode.length !== 6) {
+            showMessage('Please enter a valid 6-digit OTP', 'error');
+            return;
         }
-    } catch (error) {
-        console.error('Error:', error);
-        // Fallback
-        if (otpCode === '123456') {
-            mobileVerified = true;
-            verifyMobileBtn.classList.add('verified');
-            verifyMobileBtn.disabled = true;
-            mobileVerificationStatus.textContent = '✓ Mobile verified';
-            mobileVerificationStatus.className = 'verification-status verified';
-            signUpMobile.readOnly = true;
-            hideModal(mobileOtpModal);
-            showMessage('Mobile verified (Demo Mode)!', 'success');
-        } else {
-            showMessage('Verification failed', 'error');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/verify-inline-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    temp_user_id: tempUserId,
+                    otp_type: 'mobile',
+                    otp_code: otpCode
+                }),
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                mobileVerified = true;
+                verifyMobileBtn.classList.add('verified');
+                verifyMobileBtn.disabled = true;
+                mobileVerificationStatus.textContent = '✓ Mobile verified';
+                mobileVerificationStatus.className = 'verification-status verified';
+                signUpMobile.readOnly = true;
+                hideModal(mobileOtpModal);
+                showMessage('Mobile verified successfully!', 'success');
+            } else {
+                showMessage(data.error || 'Invalid OTP', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            // Fallback
+            if (otpCode === '123456') {
+                mobileVerified = true;
+                verifyMobileBtn.classList.add('verified');
+                verifyMobileBtn.disabled = true;
+                mobileVerificationStatus.textContent = '✓ Mobile verified';
+                mobileVerificationStatus.className = 'verification-status verified';
+                signUpMobile.readOnly = true;
+                hideModal(mobileOtpModal);
+                showMessage('Mobile verified (Demo Mode)!', 'success');
+            } else {
+                showMessage('Verification failed', 'error');
+            }
         }
-    }
-});
+    });
+}
 
 // Open Modals
-signInBtn.addEventListener('click', () => showModal(signInModal));
-signUpBtn.addEventListener('click', () => showModal(signUpModal));
-getStartedBtn.addEventListener('click', () => showModal(signUpModal));
+if (signInBtn) signInBtn.addEventListener('click', () => showModal(signInModal));
+if (signUpBtn) signUpBtn.addEventListener('click', () => showModal(signUpModal));
+if (getStartedBtn) getStartedBtn.addEventListener('click', () => showModal(signUpModal));
 
 // Close Modals
-closeSignIn.addEventListener('click', () => hideModal(signInModal));
-closeSignUp.addEventListener('click', () => hideModal(signUpModal));
-closeOtp.addEventListener('click', () => hideModal(otpModal));
-closeEmailOtp.addEventListener('click', () => hideModal(emailOtpModal));
-closeMobileOtp.addEventListener('click', () => hideModal(mobileOtpModal));
-closeForgotPassword.addEventListener('click', () => hideModal(forgotPasswordModal));
-closeResetPassword.addEventListener('click', () => hideModal(resetPasswordModal));
+if (closeSignIn) closeSignIn.addEventListener('click', () => hideModal(signInModal));
+if (closeSignUp) closeSignUp.addEventListener('click', () => hideModal(signUpModal));
+if (closeOtp) closeOtp.addEventListener('click', () => hideModal(otpModal));
+if (closeEmailOtp) closeEmailOtp.addEventListener('click', () => hideModal(emailOtpModal));
+if (closeMobileOtp) closeMobileOtp.addEventListener('click', () => hideModal(mobileOtpModal));
+if (closeForgotPassword) closeForgotPassword.addEventListener('click', () => hideModal(forgotPasswordModal));
+if (closeResetPassword) closeResetPassword.addEventListener('click', () => hideModal(resetPasswordModal));
 
 // Switch Modals
-switchToSignUp.addEventListener('click', (e) => {
-    e.preventDefault();
-    hideModal(signInModal);
-    showModal(signUpModal);
-});
+if (switchToSignUp) {
+    switchToSignUp.addEventListener('click', (e) => {
+        e.preventDefault();
+        hideModal(signInModal);
+        showModal(signUpModal);
+    });
+}
 
-switchToSignIn.addEventListener('click', (e) => {
-    e.preventDefault();
-    hideModal(signUpModal);
-    showModal(signInModal);
-});
+if (switchToSignIn) {
+    switchToSignIn.addEventListener('click', (e) => {
+        e.preventDefault();
+        hideModal(signUpModal);
+        showModal(signInModal);
+    });
+}
 
-forgotPasswordLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    hideModal(signInModal);
-    showModal(forgotPasswordModal);
-});
+if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        hideModal(signInModal);
+        showModal(forgotPasswordModal);
+    });
+}
 
-backToSignIn.addEventListener('click', (e) => {
-    e.preventDefault();
-    hideModal(forgotPasswordModal);
-    showModal(signInModal);
-});
+if (backToSignIn) {
+    backToSignIn.addEventListener('click', (e) => {
+        e.preventDefault();
+        hideModal(forgotPasswordModal);
+        showModal(signInModal);
+    });
+}
 
 // Close modal when clicking outside
 window.addEventListener('click', (e) => {
-    if (e.target === signInModal) hideModal(signInModal);
-    if (e.target === signUpModal) hideModal(signUpModal);
-    if (e.target === otpModal) hideModal(otpModal);
-    if (e.target === emailOtpModal) hideModal(emailOtpModal);
-    if (e.target === mobileOtpModal) hideModal(mobileOtpModal);
-    if (e.target === forgotPasswordModal) hideModal(forgotPasswordModal);
-    if (e.target === resetPasswordModal) hideModal(resetPasswordModal);
+    if (signInModal && e.target === signInModal) hideModal(signInModal);
+    if (signUpModal && e.target === signUpModal) hideModal(signUpModal);
+    if (otpModal && e.target === otpModal) hideModal(otpModal);
+    if (emailOtpModal && e.target === emailOtpModal) hideModal(emailOtpModal);
+    if (mobileOtpModal && e.target === mobileOtpModal) hideModal(mobileOtpModal);
+    if (forgotPasswordModal && e.target === forgotPasswordModal) hideModal(forgotPasswordModal);
+    if (resetPasswordModal && e.target === resetPasswordModal) hideModal(resetPasswordModal);
 });
 
 // Sign Up Handler
-signUpForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+if (signUpForm) {
+    signUpForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    const name = document.getElementById('signUpName').value;
-    const email = document.getElementById('signUpEmail').value;
-    const mobile = document.getElementById('signUpMobile').value;
-    const password = document.getElementById('signUpPassword').value;
-    const confirmPassword = document.getElementById('signUpConfirmPassword').value;
+        const name = document.getElementById('signUpName').value;
+        const email = document.getElementById('signUpEmail') ? document.getElementById('signUpEmail').value : '';
+        const mobile = document.getElementById('signUpMobile').value;
+        const password = document.getElementById('signUpPassword').value;
+        const confirmPassword = document.getElementById('signUpConfirmPassword').value;
 
-    // Validate passwords match
-    if (password !== confirmPassword) {
-        showMessage('Passwords do not match!', 'error');
-        return;
-    }
+        // Validate passwords match
+        if (password !== confirmPassword) {
+            showMessage('Passwords do not match!', 'error');
+            return;
+        }
 
-    // Validate password length
-    if (password.length < 8) {
-        showMessage('Password must be at least 8 characters long!', 'error');
-        return;
-    }
+        // Validate password length
+        if (password.length < 8) {
+            showMessage('Password must be at least 8 characters long!', 'error');
+            return;
+        }
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/auth/register`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                name,
-                email,
-                mobile,
-                password,
-                temp_user_id: tempUserId // Pass temp ID if verified inline
-            }),
-            credentials: 'include'
-        });
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name,
+                    email,
+                    mobile,
+                    password,
+                    temp_user_id: tempUserId // Pass temp ID if verified inline
+                }),
+                credentials: 'include'
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (response.ok) {
-            currentUserId = data.user_id;
-            currentUserName = name;
+            if (response.ok) {
+                currentUserId = data.user_id;
+                currentUserName = name;
 
-            // Check if already fully verified via inline flow
-            if (data.verification_completed) {
-                // Skip OTP modal, go straight to welcome
-                showMessage('Registration complete! Redirecting...', 'success');
-                hideModal(signUpModal);
-                localStorage.setItem('user', JSON.stringify({ name, email, mobile, id: data.user_id }));
+                // Check if already fully verified via inline flow
+                if (data.verification_completed) {
+                    // Skip OTP modal, go straight to welcome
+                    showMessage('Registration complete! Redirecting...', 'success');
+                    if (signUpModal) hideModal(signUpModal);
+                    localStorage.setItem('user', JSON.stringify({ name, email, mobile, id: data.user_id }));
+                    setTimeout(() => {
+                        window.location.href = '/welcome';
+                    }, 1500);
+                } else {
+                    // Normal flow: verify combined OTPs
+                    currentPurpose = 'registration';
+                    showMessage(data.message, 'success');
+                    if (signUpModal) hideModal(signUpModal);
+                    if (otpModal) showModal(otpModal);
+                    else window.location.href = '/verify-otp'; // Fallback if no modal (todo)
+                }
+            } else {
+                showMessage(data.error, 'error');
+            }
+        } catch (error) {
+            showMessage('Registration failed. Please try again.', 'error');
+            console.error('Error:', error);
+        }
+    });
+}
+
+
+// OTP Verification Handler
+// OTP Verification Handler
+if (otpForm) {
+    otpForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const emailOtp = document.getElementById('emailOtp').value;
+        const mobileOtp = document.getElementById('mobileOtp').value;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: currentUserId,
+                    email_otp: emailOtp,
+                    mobile_otp: mobileOtp,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Save user data and token to localStorage
+                localStorage.setItem('user', JSON.stringify(data.user));
+                localStorage.setItem('token', data.token);
+
+                // Show success message
+                const userName = data.user.name || currentUserName;
+                showMessage(`Welcome ${userName}! Let's personalize your experience...`, 'success');
+
+                // Clear OTP form
+                document.getElementById('emailOtp').value = '';
+                document.getElementById('mobileOtp').value = '';
+
+                hideModal(otpModal);
+
+                // Redirect to welcome survey page
                 setTimeout(() => {
                     window.location.href = '/welcome';
                 }, 1500);
             } else {
-                // Normal flow: verify combined OTPs
-                currentPurpose = 'registration';
-                showMessage(data.message, 'success');
-                hideModal(signUpModal);
-                showModal(otpModal);
+                showMessage(data.error, 'error');
             }
-        } else {
-            showMessage(data.error, 'error');
+        } catch (error) {
+            showMessage('Verification failed. Please try again.', 'error');
+            console.error('Error:', error);
         }
-    } catch (error) {
-        showMessage('Registration failed. Please try again.', 'error');
-        console.error('Error:', error);
-    }
-});
-
-
-// OTP Verification Handler
-otpForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const emailOtp = document.getElementById('emailOtp').value;
-    const mobileOtp = document.getElementById('mobileOtp').value;
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                user_id: currentUserId,
-                email_otp: emailOtp,
-                mobile_otp: mobileOtp,
-            }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            // Save user data and token to localStorage
-            localStorage.setItem('user', JSON.stringify(data.user));
-            localStorage.setItem('token', data.token);
-
-            // Show success message
-            const userName = data.user.name || currentUserName;
-            showMessage(`Welcome ${userName}! Let's personalize your experience...`, 'success');
-
-            // Clear OTP form
-            document.getElementById('emailOtp').value = '';
-            document.getElementById('mobileOtp').value = '';
-
-            hideModal(otpModal);
-
-            // Redirect to welcome survey page
-            setTimeout(() => {
-                window.location.href = '/welcome';
-            }, 1500);
-        } else {
-            showMessage(data.error, 'error');
-        }
-    } catch (error) {
-        showMessage('Verification failed. Please try again.', 'error');
-        console.error('Error:', error);
-    }
-});
+    });
+}
 
 // Resend OTP Handler
-resendOtpLink.addEventListener('click', async (e) => {
-    e.preventDefault();
+// Resend OTP Handler
+if (resendOtpLink) {
+    resendOtpLink.addEventListener('click', async (e) => {
+        e.preventDefault();
 
-    try {
-        // Disable button to prevent multiple clicks
-        resendOtpLink.style.pointerEvents = 'none';
-        resendOtpLink.style.opacity = '0.6';
+        try {
+            // Disable button to prevent multiple clicks
+            resendOtpLink.style.pointerEvents = 'none';
+            resendOtpLink.style.opacity = '0.6';
 
-        // Show loading message
-        showMessage('Resending OTP...', 'info');
+            // Show loading message
+            showMessage('Resending OTP...', 'info');
 
-        // Resend email OTP
-        const emailResponse = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                user_id: currentUserId,
-                otp_type: 'email',
-                purpose: currentPurpose,
-            }),
-        });
+            // Resend email OTP
+            const emailResponse = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: currentUserId,
+                    otp_type: 'email',
+                    purpose: currentPurpose,
+                }),
+            });
 
-        const emailData = await emailResponse.json();
+            const emailData = await emailResponse.json();
 
-        if (!emailResponse.ok) {
-            throw new Error(emailData.error || 'Failed to resend email OTP');
-        }
+            if (!emailResponse.ok) {
+                throw new Error(emailData.error || 'Failed to resend email OTP');
+            }
 
-        // Resend mobile OTP
-        const mobileResponse = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                user_id: currentUserId,
-                otp_type: 'mobile',
-                purpose: currentPurpose,
-            }),
-        });
+            // Resend mobile OTP
+            const mobileResponse = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: currentUserId,
+                    otp_type: 'mobile',
+                    purpose: currentPurpose,
+                }),
+            });
 
-        const mobileData = await mobileResponse.json();
+            const mobileData = await mobileResponse.json();
 
-        if (!mobileResponse.ok) {
-            throw new Error(mobileData.error || 'Failed to resend mobile OTP');
-        }
+            if (!mobileResponse.ok) {
+                throw new Error(mobileData.error || 'Failed to resend mobile OTP');
+            }
 
-        // Both OTPs sent successfully
-        showMessage('✅ OTP resent successfully to both email and mobile!', 'success');
+            // Both OTPs sent successfully
+            showMessage('✅ OTP resent successfully to both email and mobile!', 'success');
 
-        // Re-enable button after 30 seconds
-        setTimeout(() => {
+            // Re-enable button after 30 seconds
+            setTimeout(() => {
+                resendOtpLink.style.pointerEvents = 'auto';
+                resendOtpLink.style.opacity = '1';
+            }, 30000);
+
+        } catch (error) {
+            showMessage('❌ Failed to resend OTP. Please try again.', 'error');
+            console.error('Error:', error);
+
+            // Re-enable button immediately on error
             resendOtpLink.style.pointerEvents = 'auto';
             resendOtpLink.style.opacity = '1';
-        }, 30000);
-
-    } catch (error) {
-        showMessage('❌ Failed to resend OTP. Please try again.', 'error');
-        console.error('Error:', error);
-
-        // Re-enable button immediately on error
-        resendOtpLink.style.pointerEvents = 'auto';
-        resendOtpLink.style.opacity = '1';
-    }
-});
+        }
+    });
+}
 
 // Sign In Handler
-signInForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+if (signInForm) {
+    signInForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    const identifier = document.getElementById('signInIdentifier').value;
-    const password = document.getElementById('signInPassword').value;
+        const identifier = document.getElementById('signInIdentifier').value;
+        const password = document.getElementById('signInPassword').value;
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ identifier, password }),
-        });
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ identifier, password }),
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (response.ok) {
-            // Save user data and token to localStorage
-            localStorage.setItem('user', JSON.stringify(data.user));
-            localStorage.setItem('token', data.token);
+            if (response.ok) {
+                // Save user data and token to localStorage
+                localStorage.setItem('user', JSON.stringify(data.user));
+                localStorage.setItem('token', data.token);
 
-            showMessage(`Welcome back ${data.user.name}! Redirecting...`, 'success');
-            hideModal(signInModal);
+                showMessage(`Welcome back ${data.user.name}! Redirecting...`, 'success');
+                if (signInModal) hideModal(signInModal);
 
-            // Redirect to dashboard
-            setTimeout(() => {
-                window.location.href = '/dashboard';
-            }, 1000);
-        } else {
-            showMessage(data.error, 'error');
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1000);
+            } else if (response.status === 403 && data.code === 'VERIFICATION_REQUIRED') {
+                showMessage('Account not verified. Redirecting to verification...', 'info');
+                setTimeout(() => {
+                    // Redirect to register/verification page with params
+                    // We assume identifier is email for simplicity in param, or we pass userId provided by backend
+                    window.location.href = `/register?step=otp&userId=${data.userId}&email=${encodeURIComponent(identifier)}`;
+                }, 1500);
+            } else {
+                showMessage(data.error, 'error');
+            }
+        } catch (error) {
+            showMessage('Login failed. Please try again.', 'error');
+            console.error('Error:', error);
         }
-    } catch (error) {
-        showMessage('Login failed. Please try again.', 'error');
-        console.error('Error:', error);
-    }
-});
+    });
+}
 
 // Forgot Password Handler
 forgotPasswordForm.addEventListener('submit', async (e) => {

@@ -95,7 +95,10 @@ class AuthService:
                 name=pending_user['name'],
                 email=pending_user['email'],
                 mobile=pending_user['mobile'],
-                is_verified=True
+                is_verified=True,
+                is_email_verified=pending_user.get('email_verified', False),
+                is_mobile_verified=pending_user.get('mobile_verified', False),
+                status='ACTIVE'
             )
             user.password_hash = pending_user['password_hash']
         
@@ -109,10 +112,8 @@ class AuthService:
 
     @staticmethod
     def register_user(name, email, mobile, password, temp_user_id=None):
-        """Register a new user - checks for existing verification"""
-        from flask import session
+        """Register a new user - creates User record immediately"""
         import bcrypt
-        import secrets
         
         # Check if verified user already exists
         if User.objects(email=email, is_verified=True).first():
@@ -121,101 +122,79 @@ class AuthService:
         if User.objects(mobile=mobile, is_verified=True).first():
             return None, "Mobile number already registered"
             
-        # Check if we have a valid pre-verified session
-        if temp_user_id and 'pending_user' in session and session['pending_user']['id'] == temp_user_id:
-            # Update fields
-            session['pending_user']['name'] = name
-            session['pending_user']['email'] = email
-            session['pending_user']['mobile'] = mobile
-            session['pending_user']['password_hash'] = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-            
-            # Check if ALREADY verified
-            if session['pending_user'].get('email_verified') and session['pending_user'].get('mobile_verified'):
-                # Immediate creation!
-                return AuthService.create_verified_user_from_session()
+        # Check if unverified user exists - reuse/overwrite
+        user = User.objects(Q(email=email) | Q(mobile=mobile)).first()
         
-        # Fresh registration or incomplete verification
-        if not temp_user_id or 'pending_user' not in session:
-            temp_user_id = secrets.token_hex(12)
-            session['pending_user'] = {
-                'id': temp_user_id,
-                'name': name,
-                'email': email,
-                'mobile': mobile,
-                # Use bcrypt here too
-                'password_hash': bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
-                'email_verified': False,
-
-                'mobile_verified': False
-            }
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
-        # Generate and send OTPs Only if NOT verified yet
-        # If one is verified, skip sending that one
-        
-        email_verified = session['pending_user'].get('email_verified', False)
-        mobile_verified = session['pending_user'].get('mobile_verified', False)
-        
-        if not email_verified:
-            email_otp = OTPService.create_otp(temp_user_id, 'email', 'registration')
-            OTPService.send_email_otp(email, email_otp.otp_code, 'registration')
-            
-        if not mobile_verified:
-
-            mobile_otp = OTPService.create_otp(temp_user_id, 'mobile', 'registration')
-            OTPService.send_sms_otp(mobile, mobile_otp.otp_code, 'registration')
-            
-        # Return temp user data
-        is_fully_verified = email_verified and mobile_verified
-        return TempUser(temp_user_id, email, mobile, is_fully_verified), "Please verify OTPs."    
-    @staticmethod
-    def verify_user(user_id, email_otp, mobile_otp):
-        """Verify user with both email and mobile OTP and create account"""
-        from flask import session
-        
-        # Get pending user data from session
-        pending_user = session.get('pending_user')
-        if not pending_user or pending_user['id'] != user_id:
-            return False, "Invalid session or user data not found"
-        
-        # Verify email OTP
-        email_valid, email_msg = OTPService.verify_otp(user_id, email_otp, 'email', 'registration')
-        if not email_valid:
-            return False, f"Email OTP error: {email_msg}"
-        
-        # Verify mobile OTP
-        mobile_valid, mobile_msg = OTPService.verify_otp(user_id, mobile_otp, 'mobile', 'registration')
-        if not mobile_valid:
-            return False, f"Mobile OTP error: {mobile_msg}"
-        
-        # Both OTPs verified - now create or update the user in database
-        
-        # Check if user already exists (unverified)
-        user = User.objects(Q(email=pending_user['email']) | Q(mobile=pending_user['mobile'])).first()
-            
         if user:
-            # Update existing unverified user
-            user.name = pending_user['name']
-            user.email = pending_user['email']
-            user.mobile = pending_user['mobile']
-            user.password_hash = pending_user['password_hash']
-            user.is_verified = True
+            # Update existing pending user
+            user.name = name
+            user.email = email
+            user.mobile = mobile
+            user.password_hash = password_hash
+            user.is_verified = False
+            user.is_email_verified = False
+            user.is_mobile_verified = False
+            user.status = 'PENDING_VERIFICATION'
             user.updated_at = datetime.utcnow()
         else:
-            # Create new user
+            # Create new pending user
             user = User(
-                name=pending_user['name'],
-                email=pending_user['email'],
-                mobile=pending_user['mobile'],
-                is_verified=True  # Mark as verified immediately
+                name=name,
+                email=email,
+                mobile=mobile,
+                password_hash=password_hash,
+                is_verified=False,
+                is_email_verified=False,
+                is_mobile_verified=False,
+                status='PENDING_VERIFICATION'
             )
-            user.password_hash = pending_user['password_hash']
         
         user.save()
         
-        # Clear pending user from session
-        session.pop('pending_user', None)
+        # Generate and send OTPs
+        email_otp = OTPService.create_otp(str(user.id), 'email', 'registration')
+        OTPService.send_email_otp(email, email_otp.otp_code, 'registration')
+            
+        mobile_otp = OTPService.create_otp(str(user.id), 'mobile', 'registration')
+        OTPService.send_sms_otp(mobile, mobile_otp.otp_code, 'registration')
+            
+        # Return user object (TempUser adapter not needed anymore as User is real)
+        return user, "Please verify OTPs."
+
+    @staticmethod
+    def verify_user(user_id, email_otp, mobile_otp):
+        """Verify user with both email and mobile OTP and activate account"""
         
-        # Delete OTP records for temp user
+        user = User.objects(id=user_id).first()
+        if not user:
+            return False, "User not found"
+            
+        # Verify email OTP if provided
+        if email_otp:
+            email_valid, email_msg = OTPService.verify_otp(user_id, email_otp, 'email', 'registration')
+            if email_valid:
+                 user.is_email_verified = True
+                     
+        # Verify mobile OTP if provided
+        if mobile_otp:
+             mobile_valid, mobile_msg = OTPService.verify_otp(user_id, mobile_otp, 'mobile', 'registration')
+             if mobile_valid:
+                 user.is_mobile_verified = True
+        
+        user.save()
+
+        # Check verifications
+        if not user.is_email_verified and not user.is_mobile_verified:
+            return False, "Please verify at least one channel (Email or Mobile) to continue."
+        
+        # Activate User
+        user.is_verified = True
+        user.status = 'ACTIVE'
+        user.save()
+        
+        # Delete OTP records
         OTPService.delete_user_otps(user_id)
         
         return user, "User verified and registered successfully"
@@ -236,9 +215,29 @@ class AuthService:
         if not user.check_password(password):
             return None, "Invalid credentials"
         
-        # Double-check verification status (redundant but safe)
-        if not user.is_verified:
-            return None, "Please verify your account first"
+        # Check verification/status
+        # Backward compatibility: If no status but verified, treat as ACTIVE
+        current_status = getattr(user, 'status', None)
+        if not current_status:
+            if user.is_verified:
+                current_status = 'ACTIVE'
+                # Optional: Self-heal
+                user.status = 'ACTIVE'
+                user.save()
+            else:
+                current_status = 'PENDING_VERIFICATION'
+
+        if current_status != 'ACTIVE':
+             if not user.is_verified or current_status in ['PENDING_VERIFICATION', 'PARTIAL_VERIFIED']:
+                 return {
+                     'error_code': 'VERIFICATION_REQUIRED',
+                     'user_id': str(user.id),
+                     'verified_channels': {
+                         'email': user.is_email_verified,
+                         'mobile': user.is_mobile_verified
+                     }
+                 }, "Verification required"
+             return None, f"Account status is {current_status}. Please contact support."
         
         # Generate JWT token
         token = AuthService.generate_token(user.id)
@@ -262,20 +261,50 @@ class AuthService:
     @staticmethod
     def request_password_reset(identifier):
         """Request password reset via email or mobile"""
-        # Find user by email or mobile
-        user = User.objects(Q(email=identifier) | Q(mobile=identifier)).first()
+        # Normalize identifier if it looks like email
+        if '@' in identifier:
+            identifier = identifier.strip().lower()
+            # Case insensitive search for email
+            user = User.objects(email__iexact=identifier).first()
+        else:
+            # Assume mobile - strip non-digits for search if needed
+            # User might type spaced mobile, DB stores raw digits
+            clean_mobile = ''.join(filter(str.isdigit, str(identifier)))
+            # Try to find by normalized or raw
+            user = User.objects(mobile=clean_mobile).first()
+            if not user:
+                 user = User.objects(mobile=identifier).first()
         
         if not user:
             return None, "User not found"
         
+        # Security: Should we allow reset for unverified users?
+        # If they exist but blocked by verification, maybe yes, to let them recover?
+        # But we need verified email/mobile to send OTP!
+        # If is_email_verified is False, we can't trust the email.
+        
         # Generate and send OTPs
-        email_otp = OTPService.create_otp(str(user.id), 'email', 'reset')
-        mobile_otp = OTPService.create_otp(str(user.id), 'mobile', 'reset')
+        # Only send to verified channels!
         
-        OTPService.send_email_otp(user.email, email_otp.otp_code, 'password reset')
-        OTPService.send_sms_otp(user.mobile, mobile_otp.otp_code, 'password reset')
+        sent_any = False
         
-        return user, "OTP sent to your email and mobile"
+        if user.is_email_verified or user.is_verified: # Backward compat
+             email_otp = OTPService.create_otp(str(user.id), 'email', 'reset')
+             OTPService.send_email_otp(user.email, email_otp.otp_code, 'password reset')
+             sent_any = True
+             
+        if user.is_mobile_verified or user.is_verified:
+             mobile_otp = OTPService.create_otp(str(user.id), 'mobile', 'reset')
+             OTPService.send_sms_otp(user.mobile, mobile_otp.otp_code, 'password reset')
+             sent_any = True
+             
+        if not sent_any:
+            # If nothing verified, maybe send to connection provided?
+            # Risky. Let's stick to simple flow for now: Send to both if verified.
+            # If user is totally unverified, they should REGISTER again (which now works since we cleaned up).
+            return None, "User found but no verified contact channels. Please contact support or register again."
+        
+        return user, "OTP sent to your verified channels"
     
     @staticmethod
     def reset_password(user_id, email_otp, mobile_otp, new_password):

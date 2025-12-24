@@ -20,6 +20,9 @@ class User(Document):
     password_hash = StringField(max_length=255, required=True)
     password_history = ListField(StringField(max_length=255), default=list)  # Store last 3 password hashes
     is_verified = BooleanField(default=False)
+    is_email_verified = BooleanField(default=False)
+    is_mobile_verified = BooleanField(default=False)
+    status = StringField(max_length=20, default='PENDING_VERIFICATION') # PENDING_VERIFICATION, PARTIAL_VERIFIED, ACTIVE, SUSPENDED
     created_at = DateTimeField(default=datetime.utcnow)
     updated_at = DateTimeField(default=datetime.utcnow)
     
@@ -56,6 +59,10 @@ class User(Document):
     email_notifications = BooleanField(default=True)
     mobile_notifications = BooleanField(default=True)
     marketing_emails = BooleanField(default=False)
+
+    # Security Settings (Added Phase 21)
+    is_2fa_enabled = BooleanField(default=False)
+    login_alerts_enabled = BooleanField(default=True)
     
     # New Engagement & Accessibility Prefs
     preferred_learning_time = StringField(max_length=20, default='morning')
@@ -130,6 +137,8 @@ class User(Document):
             'email_notifications': self.email_notifications,
             'mobile_notifications': self.mobile_notifications,
             'marketing_emails': self.marketing_emails,
+            'is_2fa_enabled': self.is_2fa_enabled,
+            'login_alerts_enabled': self.login_alerts_enabled,
             'preferred_learning_time': self.preferred_learning_time,
             'daily_reminders': self.daily_reminders,
             'ai_insights': self.ai_insights,
@@ -149,7 +158,7 @@ class OTP(Document):
     email = StringField(max_length=120)
     mobile = StringField(max_length=15)
     otp_code = StringField(max_length=6, required=True)
-    otp_type = StringField(max_length=20, required=True) # email_verification, mobile_verification, password_reset
+    otp_type = StringField(max_length=20, required=True) # email_verification, mobile_verification, password_reset, account_deletion
     purpose = StringField(max_length=50) # inline_verification, registration, reset
     created_at = DateTimeField(default=datetime.utcnow)
     expires_at = DateTimeField(required=True)
@@ -483,7 +492,14 @@ class LearningPlan(Document):
 
 class DailyTask(Document):
     """Individual daily task generated from a learning plan"""
-    meta = {'collection': 'daily_tasks'}
+    meta = {
+        'collection': 'daily_tasks',
+        'indexes': [
+            {'fields': ['$title'],
+             'default_language': 'english',
+             'weights': {'title': 10}}
+        ]
+    }
     
     learning_plan_id = ReferenceField(LearningPlan, required=False)  # Optional now
     commitment_id = ReferenceField('Commitment', required=False)     # New link to Feature 3
@@ -522,10 +538,18 @@ class DailyTask(Document):
     # Metadata
     task_metadata = DictField()  # Additional task-specific data
     
+    # Priority Snapshot
+    priority_score_at_scheduling = FloatField()
+    
+    # Gamification
+    xp_reward = IntField(default=0)
+    
+    # Duplicate ID field in original - removing
+
     def to_dict(self):
         return {
             'id': str(self.id),
-            'learning_plan_id': str(self.learning_plan_id.id),
+            'learning_plan_id': str(self.learning_plan_id.id) if self.learning_plan_id else None,
             'learning_item_id': str(self.learning_item_id.id),
             'user_id': str(self.user_id.id),
             'title': self.title,
@@ -570,9 +594,10 @@ class DailyTask(Document):
         self.save()
         
         # Update learning plan stats
-        plan = self.learning_plan_id
-        plan.completed_tasks += 1
-        plan.save()
+        if self.learning_plan_id:
+            plan = self.learning_plan_id
+            plan.completed_tasks += 1
+            plan.save()
 
 
 # ============================================================================
@@ -683,121 +708,6 @@ class CommitmentViolation(Document):
             'is_grace_period': self.is_grace_period,
             'is_resolved': self.is_resolved
         }
-
-
-class LearningItem(Document):
-    meta = {
-        'collection': 'learning_items',
-        'indexes': [
-            {'fields': ['$title', '$description', '$tags'],
-             'default_language': 'english',
-             'weights': {'title': 10, 'description': 5, 'tags': 5}}
-        ]
-    }
-    
-    title = StringField(required=True)
-    description = StringField()
-    tags = ListField(StringField())
-    
-    # Core Metadata
-    source_url = StringField()
-    content_type = StringField(choices=('video', 'article', 'book', 'podcast', 'other'))
-    estimated_duration = IntField(default=0) # Minutes
-    
-    # Status
-    status = StringField(default='pending') # pending, in_progress, completed
-    priority_score = FloatField(default=0.0) # Calculated by AI
-    
-    # Dates
-    added_at = DateTimeField(default=datetime.utcnow)
-    completed_at = DateTimeField()
-    
-    # Priority Metadata
-    target_completion_date = DateTimeField() 
-    priority_level = StringField(default='medium') 
-    
-    # VideoGuard Metadata
-    original_video_url = StringField() 
-    sanitized_video_url = StringField() 
-    thumbnail_url = StringField()
-    
-    user_id = ReferenceField(User, required=True)
-
-class DailyTask(Document):
-    meta = {
-        'collection': 'daily_tasks',
-        'indexes': [
-            {'fields': ['$title'],
-             'default_language': 'english',
-             'weights': {'title': 10}}
-        ]
-    }
-    
-    learning_plan_id = ReferenceField(LearningPlan) # Optional now for Hard Mode tasks? Or stick to required?
-    # Actually, for MVP let's keep it simple. If failure, we can adjust.
-    # Wait, simple text search requires 'indexes'.
-    
-    learning_item_id = ReferenceField(LearningItem, required=True)
-    user_id = ReferenceField(User, required=True)
-    
-    title = StringField(required=True)
-    scheduled_date = DateTimeField(required=True)
-    duration_minutes = IntField(required=True)
-    
-    status = StringField(default='pending') # pending, completed, skipped
-    completed_at = DateTimeField()
-    
-    # Priority Snapshot
-    priority_score_at_scheduling = FloatField()
-    
-    # Gamification
-    xp_reward = IntField(default=0)
-
-    # Commitment Link
-    commitment_id = ReferenceField('Commitment')
-
-
-# ============================================================================
-# FEATURE 12: ACTIVE RECALL ENGINE (FLASHCARDS)
-# ============================================================================
-
-class Flashcard(Document):
-    """Spaced Repetition Flashcard"""
-    meta = {
-        'collection': 'flashcards',
-        'indexes': [
-            {'fields': ['$front', '$back'],
-             'default_language': 'english',
-             'weights': {'front': 10, 'back': 5}}
-        ]
-    }
-    
-    user_id = ReferenceField(User, required=True)
-    learning_item_id = ReferenceField(LearningItem, required=True)
-    
-    # Content
-    front = StringField(required=True) # Question / Trigger
-    back = StringField(required=True)  # Answer / Content
-    
-    # SRS Metadata (SuperMemo-2)
-    easiness_factor = FloatField(default=2.5) # EF
-    interval = IntField(default=0) # Days until next review
-    repetitions = IntField(default=0) # Consecutive successful reviews
-    
-    # Scheduling
-    created_at = DateTimeField(default=datetime.utcnow)
-    last_reviewed_at = DateTimeField()
-    next_review_date = DateTimeField(default=datetime.utcnow) # Due date
-    
-    def to_dict(self):
-        return {
-            'id': str(self.id),
-            'front': self.front,
-            'back': self.back,
-            'next_review': self.next_review_date.isoformat(),
-            'interval': self.interval
-        }
-
 
 
 # ============================================================================
@@ -947,3 +857,44 @@ class FocusSession(Document):
         })
         self.save()
 
+
+# ============================================================================
+# FEATURE 12: ACTIVE RECALL ENGINE (FLASHCARDS)
+# ============================================================================
+
+class Flashcard(Document):
+    """Spaced Repetition Flashcard"""
+    meta = {
+        'collection': 'flashcards',
+        'indexes': [
+            {'fields': ['$front', '$back'],
+             'default_language': 'english',
+             'weights': {'front': 10, 'back': 5}}
+        ]
+    }
+    
+    user_id = ReferenceField(User, required=True)
+    learning_item_id = ReferenceField(LearningItem, required=True)
+    
+    # Content
+    front = StringField(required=True) # Question / Trigger
+    back = StringField(required=True)  # Answer / Content
+    
+    # SRS Metadata (SuperMemo-2)
+    easiness_factor = FloatField(default=2.5) # EF
+    interval = IntField(default=0) # Days until next review
+    repetitions = IntField(default=0) # Consecutive successful reviews
+    
+    # Scheduling
+    created_at = DateTimeField(default=datetime.utcnow)
+    last_reviewed_at = DateTimeField()
+    next_review_date = DateTimeField(default=datetime.utcnow) # Due date
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'front': self.front,
+            'back': self.back,
+            'next_review': self.next_review_date.isoformat(),
+            'interval': self.interval
+        }

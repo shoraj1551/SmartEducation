@@ -1,0 +1,65 @@
+<header class="top-nav">
+    <div class="search-container">
+        <i class="fas fa-search"></i>
+        <input type="text" class="search-input" placeholder="Search for courses, activities...">
+    </div>
+
+    <div class="user-menu-container">
+        <div class="user-trigger" id="userMenuTrigger">
+            <div class="user-avatar" id="headerAvatarInitials">U</div>
+            <div class="user-info-brief">
+                <span class="user-name" id="headerUserName">Scholar</span>
+            </div>
+            <i class="fas fa-chevron-down" style="font-size: 0.8rem; opacity: 0.5;"></i>
+        </div>
+
+        <div class="user-dropdown" id="userDropdown">
+            <a href="/profile" class="dropdown-item">
+                <i class="fas fa-user-circle"></i>
+                My Profile
+            </a>
+            <a href="/preferences" class="dropdown-item">
+                <i class="fas fa-sliders-h"></i>
+                Preferences
+            </a>
+            <a href="/security" class="dropdown-item">
+                <i class="fas fa-shield-alt"></i>
+                Security
+            </a>
+            <div class="dropdown-divider"></div>
+            <a href="#" class="dropdown-item logout-item" onclick="handleLogout()">
+                <i class="fas fa-sign-out-alt"></i>
+                Log Out
+            </a>
+        </div>
+    </div>
+</header>
+
+<script>
+    // Simple logout handler to be reused
+    function handleLogout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+    }
+
+    // update header user info from localstorage if available
+    document.addEventListener('DOMContentLoaded', () => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                const initials = user.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
+                const name = user.name ? user.name.split(' ')[0] : 'Scholar';
+
+                const avatarEl = document.getElementById('headerAvatarInitials');
+                const nameEl = document.getElementById('headerUserName');
+
+                if (avatarEl) avatarEl.textContent = initials;
+                if (nameEl) nameEl.textContent = name;
+            } catch (e) {
+                console.error("Error parsing user info", e);
+            }
+        }
+    });
+</script>

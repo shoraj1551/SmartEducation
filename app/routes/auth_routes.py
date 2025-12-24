@@ -127,16 +127,16 @@ def send_verification_otp():
         if not contact:
             return jsonify({'error': 'Email or mobile is required'}), 400
         
+        otp_type = data.get('otp_type')
+        if otp_type not in ['email', 'mobile']:
+            return jsonify({'error': 'Invalid OTP type'}), 400
+
         # Validate and normalize mobile if otp_type is mobile (IMPROVEMENT-002)
         if otp_type == 'mobile':
             is_valid, normalized_mobile, error = validate_and_normalize_mobile(contact)
             if not is_valid:
                 return jsonify({'error': error}), 400
             contact = normalized_mobile
-            
-        otp_type = data.get('otp_type')
-        if otp_type not in ['email', 'mobile']:
-            return jsonify({'error': 'Invalid OTP type'}), 400
             
         temp_user_id = AuthService.send_verification_otp(
             data['name'],
@@ -189,8 +189,12 @@ def verify_otp():
         data = request.get_json()
         
         # Validate required fields
-        if not all([data.get('user_id'), data.get('email_otp'), data.get('mobile_otp')]):
-            return jsonify({'error': 'user_id, email_otp, and mobile_otp are required'}), 400
+        # Validate required fields
+        if not data.get('user_id'):
+            return jsonify({'error': 'user_id is required'}), 400
+        
+        if not data.get('email_otp') and not data.get('mobile_otp'):
+             return jsonify({'error': 'At least one OTP (email or mobile) is required'}), 400
         
         # Verify OTPs
         user, message = AuthService.verify_user(
@@ -279,6 +283,16 @@ def login():
         
         if not result:
             return jsonify({'error': message}), 401
+            
+        # Check for structured verification error (returned as result dict with error_code)
+        if isinstance(result, dict) and result.get('error_code') == 'VERIFICATION_REQUIRED':
+            return jsonify({
+                'code': 'VERIFICATION_REQUIRED',
+                'error': message,
+                'nextStep': 'OTP_VERIFICATION',
+                'userId': result.get('user_id'),
+                'verifiedChannels': result.get('verified_channels')
+            }), 403
         
         # Log successful login
         ActivityService.log_activity(result['user']['id'], 'login', 'User logged in successfully')

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - SmartEducation</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: #0f172a;
+        }
+
+        .auth-container {
+            max-width: 450px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #1e293b;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        /* Form Elements */
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #fff;
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .btn-full {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 6px;
+        }
+
+        /* Utilities */
+        .hidden {
+            display: none !important;
+        }
+
+        .error-message {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+            position: relative;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar" style="padding: 1rem 2rem;">
+        <a href="/" class="logo-text">
+            <span>📚</span> SmartEducation
+        </a>
+        <div class="nav-buttons">
+            <a href="/login" class="btn btn-secondary">Sign In</a>
+        </div>
+    </nav>
+
+    <div class="auth-container">
+
+        <!-- STAGE 1: SIGN UP FORM -->
+        <div id="stage-signup">
+            <div class="auth-header">
+                <h2>Create Account</h2>
+                <p style="color: #94a3b8; margin-top: 0.5rem;">Join thousands of learners today</p>
+            </div>
+
+            <form id="signup-form">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" placeholder="John Doe" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="john@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="mobile">Mobile Number</label>
+                    <input type="tel" id="mobile" placeholder="9876543210" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Min 8 chars" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" placeholder="Repeat password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Create Account</button>
+                <p class="form-footer"
+                    style="text-align: center; margin-top: 1.5rem; color: #94a3b8; font-size: 0.9rem;">
+                    Already have an account? <a href="/login" style="color: #a78bfa; text-decoration: none;">Sign in</a>
+                </p>
+            </form>
+        </div>
+
+        <!-- STAGE 2: OTP VERIFICATION -->
+        <div id="stage-otp" class="hidden">
+            <div class="auth-header">
+                <h2>Verify Your Account</h2>
+                <p style="color: #94a3b8; margin-top: 0.5rem;">We sent OTPs to <span id="otp-email-display"
+                        style="color: #fff;"></span> and your mobile.</p>
+            </div>
+
+            <form id="otp-form">
+                <div class="form-group">
+                    <label for="otp-input">Email OTP</label>
+                    <input type="text" id="otp-input" placeholder="6-digit code" maxlength="6" required
+                        style="letter-spacing: 4px; text-align: center; font-size: 1.2rem;">
+                </div>
+
+                <div class="form-group">
+                    <label for="otp-mobile-input">Mobile OTP</label>
+                    <input type="text" id="otp-mobile-input" placeholder="6-digit code" maxlength="6" required
+                        style="letter-spacing: 4px; text-align: center; font-size: 1.2rem;">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Verify & Activate</button>
+            </form>
+        </div>
+
+        <!-- STAGE 3: WELCOME -->
+        <div id="stage-welcome" class="hidden" style="text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+            <h2>Welcome to Smart Education!</h2>
+            <p style="color: #94a3b8; margin: 1rem 0 2rem;">Your account has been successfully created and verified.</p>
+
+            <button id="btn-start-survey" class="btn btn-primary btn-full" style="margin-bottom: 1rem;">Complete
+                Learning Survey</button>
+            <button id="btn-skip-survey" class="btn btn-secondary btn-full"
+                style="background: transparent; border: 1px solid #334155;">Skip for Now</button>
+        </div>
+
+        <!-- STAGE 4: SURVEY -->
+        <div id="stage-survey" class="hidden">
+            <div class="auth-header">
+                <h2>Quick Onboarding</h2>
+                <p style="color: #94a3b8;">Help us personalize your experience</p>
+            </div>
+
+            <form id="survey-form">
+                <div class="form-group">
+                    <label>What is your primary goal?</label>
+                    <select
+                        style="width: 100%; padding: 0.75rem; border-radius: 6px; background: #0f172a; color: #fff; border: 1px solid #334155;">
+                        <option>Finish existing courses</option>
+                        <option>Learn a new skill</option>
+                        <option>Prepare for exams</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>How many hours can you commit daily?</label>
+                    <select
+                        style="width: 100%; padding: 0.75rem; border-radius: 6px; background: #0f172a; color: #fff; border: 1px solid #334155;">
+                        <option>15 mins</option>
+                        <option>30 mins</option>
+                        <option>1 hour</option>
+                        <option>2+ hours</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Finish Setup</button>
+            </form>
+        </div>
+
+    </div>
+
+    <!-- Use specific flow script only, NO script.js to mock conflict -->
+    <script src="/static/js/register_flow.js"></script>
+</body>
+
+</html>

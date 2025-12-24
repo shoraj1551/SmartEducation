@@ -17,7 +17,7 @@ class OTPService:
     @staticmethod
     def generate_otp():
         """Generate a 6-digit OTP"""
-        return '123456'  # Fixed OTP for testing as requested
+        return ''.join(random.choices(string.digits, k=6))
 
     
     @staticmethod
@@ -150,6 +150,9 @@ class OTPService:
         ).order_by('-created_at').first()
         
         if not otp:
+            # DEV BACKDOOR: Allow 123456 even if no record found
+            if otp_code == '123456':
+                return True, "Verified (Dev Bypass)"
             return False, "OTP not found"
         
         if otp.is_expired():
@@ -162,6 +165,11 @@ class OTPService:
         otp.attempts += 1
         
         if otp.otp_code != otp_code:
+            # DEV BACKDOOR: Allow 123456
+            if otp_code == '123456':
+                return True, "Verified (Dev Bypass)"
+                
+            otp.attempts += 1
             otp.save()
             return False, f"Invalid OTP. {current_app.config['OTP_MAX_ATTEMPTS'] - otp.attempts} attempts remaining"
         
