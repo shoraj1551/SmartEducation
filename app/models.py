@@ -6,9 +6,12 @@ from mongoengine import (
     Document, StringField, BooleanField, DateTimeField, 
     IntField, ReferenceField, FloatField, ListField, DictField
 )
-import bcrypt
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # We will initialize connection in app.py
+
+# Import pod sharing models
+from app.pod_models import SharedContent, PodMessage
 
 class User(Document):
     """User model for authentication"""
@@ -44,7 +47,7 @@ class User(Document):
     deadline_type = StringField(max_length=50) # hard_deadline, soft_deadline, consistency, not_sure
     daily_time_commitment = StringField(max_length=50) # 15_30_min, 30_60_min, 1_2_hours, 2plus_hours, weekends_only
     learning_blockers = ListField(StringField(max_length=50)) # lack_of_time, too_many_resources, lose_motivation, overwhelming, no_plan
-
+    
     # Profile Fields
     job_title = StringField(max_length=100)
     bio = StringField()
@@ -71,12 +74,26 @@ class User(Document):
     community_milestones = BooleanField(default=False)
     reduced_motion = BooleanField(default=False)
     high_contrast = BooleanField(default=False)
+    
+    # Feature 3.1: Localization
+    timezone = StringField(max_length=50, default='UTC')
 
     def set_password(self, password):
-        self.password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
+        try:
+            return check_password_hash(self.password_hash, password)
+        except ValueError:
+            # Fallback for legacy bcrypt hashes (migration path)
+            if self.password_hash.startswith(('$2b$', '$2a$')):
+                import bcrypt
+                if bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8')):
+                    # Auto-update to new secure format
+                    self.set_password(password)
+                    self.save()
+                    return True
+            return False
     
     def check_password_in_history(self, password, count=3):
         """Check if password matches any of the last N passwords"""
@@ -87,10 +104,18 @@ class User(Document):
         
         for old_hash in recent_passwords:
             try:
-                if bcrypt.checkpw(password.encode('utf-8'), old_hash.encode('utf-8')):
+                if check_password_hash(old_hash, password):
                     return True
+            except ValueError:
+                # Check legacy hashes in history
+                if old_hash.startswith(('$2b$', '$2a$')):
+                    import bcrypt
+                    try:
+                        if bcrypt.checkpw(password.encode('utf-8'), old_hash.encode('utf-8')):
+                            return True
+                    except Exception:
+                        continue
             except Exception:
-                # Skip invalid hashes
                 continue
         return False
     

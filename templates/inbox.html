@@ -2,6 +2,10 @@
 
 {% block title %}Learning Inbox - SmartEducation{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/pod-enhancements.css">
+{% endblock %}
+
 {% block content %}
 <div class="inbox-header">
     <div>
@@ -88,6 +92,48 @@
                 <button type="submit" class="primary-btn nav-btn" style="flex: 1;">Add Item</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Share with Friends Modal -->
+<div class="modal" id="shareModal" style="display: none;">
+    <div class="modal-card"
+        style="max-width: 500px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px;">
+        <div style="padding: 2rem;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <h3
+                    style="margin: 0; font-size: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                    <i class="fas fa-user-friends"></i> Share with Pod Friends
+                </h3>
+                <button onclick="inboxManager.closeShareModal()"
+                    style="background: rgba(255,255,255,0.05); border: none; color: rgba(255,255,255,0.6); font-size: 1.25rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;"
+                    onmouseover="this.style.background='rgba(239,68,68,0.2)'; this.style.color='#ef4444';"
+                    onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='rgba(255,255,255,0.6)';">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <p id="shareItemTitle" style="margin-bottom: 1.5rem; opacity: 0.7; font-size: 0.95rem;"></p>
+
+            <div class="friend-selector" id="friendSelector"
+                style="max-height: 300px; overflow-y: auto; margin-bottom: 1.5rem;">
+                <div style="text-align: center; padding: 2rem; opacity: 0.5;">
+                    <i class="fas fa-circle-notch fa-spin"></i> Loading friends...
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" class="nav-btn"
+                    style="flex: 1; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); padding: 1rem;"
+                    onclick="inboxManager.closeShareModal()">Cancel</button>
+                <button type="button" class="primary-btn nav-btn"
+                    style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 1rem;"
+                    onclick="inboxManager.confirmShare()">
+                    <i class="fas fa-check"></i> Share
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 

@@ -106,15 +106,21 @@ class InboxManager {
         };
 
         return `
-            <div class="inbox-item" data-item-id="${item.id}">
+            <div class="inbox-item" data-item-id="${item.id}" style="position: relative;">
                 <div class="item-header">
                     <div>
                         <span class="item-type-badge" style="background: ${statusColors[item.status]}">
                             ${item.source_type}
                         </span>
                     </div>
-                    <input type="checkbox" class="item-checkbox" data-item-id="${item.id}" 
-                           style="width: 18px; height: 18px; cursor: pointer;">
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button class="share-btn" onclick="event.stopPropagation(); inboxManager.openShareModal('${item.id}', '${item.title.replace(/'/g, "\\'")}', '${item.source_type}')" 
+                            style="background: rgba(124, 58, 237, 0.1); border: 1px solid var(--primary); color: var(--primary); padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem;">
+                            <i class="fas fa-user-friends"></i> Share
+                        </button>
+                        <input type="checkbox" class="item-checkbox" data-item-id="${item.id}" 
+                               style="width: 18px; height: 18px; cursor: pointer;">
+                    </div>
                 </div>
                 <h3 class="item-title">${item.title}</h3>
                 <p class="item-platform">
@@ -418,6 +424,111 @@ class InboxManager {
         this.selectedItems.clear();
         document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = false);
         this.updateBulkActionsBar();
+    }
+
+    // ============================================================================
+    // POD SHARING FUNCTIONALITY
+    // ============================================================================
+
+    async openShareModal(itemId, itemTitle, itemType) {
+        this.currentShareItem = { id: itemId, title: itemTitle, type: itemType };
+        this.selectedFriends = [];
+
+        document.getElementById('shareItemTitle').textContent = `Sharing: ${itemTitle}`;
+        document.getElementById('shareModal').style.display = 'flex';
+
+        await this.loadPodFriends();
+    }
+
+    async loadPodFriends() {
+        try {
+            const res = await fetch('/api/social/pod', {
+                headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+
+            if (res.ok) {
+                const friends = await res.json();
+                const selector = document.getElementById('friendSelector');
+
+                if (friends.length === 0) {
+                    selector.innerHTML = '<p style="text-align: center; opacity: 0.5; padding: 2rem;">No pod friends yet. Invite friends from the Pods page!</p>';
+                    return;
+                }
+
+                selector.innerHTML = friends.map(f => `
+                    <label class="friend-checkbox" style="display: flex; align-items: center; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                        <input type="checkbox" value="${f.id}" onchange="inboxManager.toggleFriend('${f.id}')" style="margin-right: 1rem; width: 18px; height: 18px; cursor: pointer;">
+                        <div class="friend-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; margin-right: 1rem; font-weight: 700; font-size: 1rem;">
+                            ${this.getInitials(f.name)}
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; margin-bottom: 0.2rem;">${f.name}</div>
+                            <div style="font-size: 0.85rem; opacity: 0.6;">Level ${f.level} Scholar</div>
+                        </div>
+                    </label>
+                `).join('');
+            }
+        } catch (e) {
+            console.error('Error loading friends:', e);
+            document.getElementById('friendSelector').innerHTML = '<p style="text-align: center; color: #ef4444;">Error loading friends. Please try again.</p>';
+        }
+    }
+
+    toggleFriend(friendId) {
+        if (!this.selectedFriends) this.selectedFriends = [];
+
+        if (this.selectedFriends.includes(friendId)) {
+            this.selectedFriends = this.selectedFriends.filter(id => id !== friendId);
+        } else {
+            this.selectedFriends.push(friendId);
+        }
+    }
+
+    async confirmShare() {
+        if (!this.selectedFriends || this.selectedFriends.length === 0) {
+            alert('Please select at least one friend to share with');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/pod/share', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    content_type: this.currentShareItem.type,
+                    content_id: this.currentShareItem.id,
+                    content_title: this.currentShareItem.title,
+                    partner_ids: this.selectedFriends
+                })
+            });
+
+            if (res.ok) {
+                alert('Content shared successfully!');
+                this.closeShareModal();
+            } else {
+                const error = await res.json();
+                alert('Failed to share content: ' + (error.error || 'Unknown error'));
+            }
+        } catch (e) {
+            console.error('Error sharing:', e);
+            alert('Error sharing content. Please try again.');
+        }
+    }
+
+    closeShareModal() {
+        document.getElementById('shareModal').style.display = 'none';
+        this.selectedFriends = [];
+        this.currentShareItem = null;
+    }
+
+    getInitials(name) {
+        if (!name) return '??';
+        const parts = name.split(' ');
+        if (parts.length > 1) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        return name.slice(0, 2).toUpperCase();
     }
 }
 

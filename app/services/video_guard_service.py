@@ -5,6 +5,8 @@ Sanitizes video URLs to remove distraction algorithms (recommendations, related 
 """
 import re
 
+from app.constants import YOUTUBE_EMBED_URL_TEMPLATE, VIMEO_EMBED_URL_TEMPLATE
+
 class VideoGuardService:
     
     @staticmethod
@@ -27,7 +29,7 @@ class VideoGuardService:
             # modestbranding=1: Remove big YT logo
             # controls=1: Allow control but minimal
             # iv_load_policy=3: Hide annotations
-            return f"https://www.youtube-nocookie.com/embed/{video_id}?rel=0&modestbranding=1&iv_load_policy=3"
+            return YOUTUBE_EMBED_URL_TEMPLATE.format(video_id=video_id)
             
         # VIMEO MATCHING
         vimeo_pattern = r'vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|video\/|)(\d+)'
@@ -35,6 +37,6 @@ class VideoGuardService:
         
         if vimeo_match:
             video_id = vimeo_match.group(1)
-            return f"https://player.vimeo.com/video/{video_id}?dnt=1" # do not track
+            return VIMEO_EMBED_URL_TEMPLATE.format(video_id=video_id) # do not track
             
         return url # Return original if no match (maybe text link)

@@ -45,3 +45,25 @@ class Config:
     
     # JWT Configuration
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
+
+    @classmethod
+    def validate(cls):
+        """Validate that required environment variables are set in production."""
+        if cls.DEBUG:
+            return  # Skip validation in debug mode
+        required = {
+            'SECRET_KEY': cls.SECRET_KEY,
+            'JWT_SECRET_KEY': cls.JWT_SECRET_KEY,
+            'MAIL_USERNAME': cls.MAIL_USERNAME,
+            'MAIL_PASSWORD': cls.MAIL_PASSWORD,
+            'TWILIO_ACCOUNT_SID': cls.TWILIO_ACCOUNT_SID,
+            'TWILIO_AUTH_TOKEN': cls.TWILIO_AUTH_TOKEN,
+            'TWILIO_PHONE_NUMBER': cls.TWILIO_PHONE_NUMBER,
+        }
+        missing = [name for name, value in required.items() if not value]
+        if missing:
+            # In development or when optional services are not configured, we log a warning instead of raising
+            print(f"Warning: Missing environment variables for production: {', '.join(missing)}")
+
+# Run validation when the module is imported (in production mode)
+Config.validate()

@@ -259,6 +259,107 @@ class SecurityManager {
         this.otpModal.classList.remove('active');
         this.otpInput.value = '';
         this.otpError.style.display = 'none';
+        this.confirmDeleteBtn.disabled = false;
+        this.confirmDeleteBtn.textContent = 'Permanently Delete';
+    }
+
+    // --- PASSWORD CHANGE ---
+    openPasswordModal() {
+        document.getElementById('passwordModal').classList.add('active');
+    }
+
+    closePasswordModal() {
+        document.getElementById('passwordModal').classList.remove('active');
+        document.getElementById('changePasswordForm').reset();
+        document.getElementById('passwordError').style.display = 'none';
+        document.getElementById('submitPasswordBtn').disabled = false;
+        document.getElementById('submitPasswordBtn').textContent = 'Update Password';
+        // Reset OTP state
+        document.getElementById('passwordOtpGroup').style.display = 'none';
+        document.getElementById('passwordOtp').value = '';
+    }
+
+    async submitChangePassword() {
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+        const otpInput = document.getElementById('passwordOtp');
+        const otpGroup = document.getElementById('passwordOtpGroup');
+        const errorEl = document.getElementById('passwordError');
+        const btn = document.getElementById('submitPasswordBtn');
+
+        errorEl.style.display = 'none';
+
+        if (newPassword !== confirmNewPassword) {
+            errorEl.textContent = 'New passwords do not match.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        if (newPassword.length < 8) {
+            errorEl.textContent = 'Password must be at least 8 characters.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        // Basic check for OTP if visible
+        if (otpGroup.style.display === 'block' && otpInput.value.length < 6) {
+            errorEl.textContent = 'Please enter the verification code.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Processing...';
+
+        const payload = {
+            current_password: currentPassword,
+            new_password: newPassword,
+            otp_code: otpInput.value
+        };
+
+        try {
+            const res = await fetch('/api/security/password/update', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                if (data.status === 'OTP_REQUIRED') {
+                    // Show OTP field
+                    otpGroup.style.display = 'block';
+                    errorEl.style.color = '#fbbf24';
+                    errorEl.textContent = data.message;
+                    errorEl.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Verify & Update Password';
+                    // Focus OTP
+                    otpInput.focus();
+                } else {
+                    // Success
+                    alert('Password updated successfully.');
+                    this.closePasswordModal();
+                    this.loadLogs(); // Refresh logs
+                }
+            } else {
+                errorEl.style.color = '#ef4444';
+                errorEl.textContent = data.error || 'Failed to update password.';
+                errorEl.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = otpGroup.style.display === 'block' ? 'Verify & Update Password' : 'Update Password';
+            }
+        } catch (err) {
+            errorEl.textContent = 'Connection error.';
+            errorEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Update Password';
+        }
     }
 }
 
@@ -266,6 +367,9 @@ class SecurityManager {
 window.initiateDeleteAccount = () => window.securityManager.initiateDeleteAccount();
 window.closeOtpModal = () => window.securityManager.closeOtpModal();
 window.confirmDeleteAccount = () => window.securityManager.confirmDeleteAccount();
+window.openPasswordModal = () => window.securityManager.openPasswordModal();
+window.closePasswordModal = () => window.securityManager.closePasswordModal();
+window.submitChangePassword = () => window.securityManager.submitChangePassword();
 
 document.addEventListener('DOMContentLoaded', () => {
     window.securityManager = new SecurityManager();

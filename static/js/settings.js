@@ -1,152 +1,262 @@
 /**
- * SmartEducation - Settings & Preferences Management
+ * settings.js
+ * Handles Premium Settings UI interactions and API integrations.
  */
 
-class SettingsManager {
-    constructor() {
-        this.token = localStorage.getItem('token');
-        this.preferences = {};
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Managers
+    new ThemeManager();
+    new PreferencesManager();
+    new SessionManager();
+    new DataManager();
+});
 
-        // Element Bindings
-        this.themeOptions = document.querySelectorAll('.theme-option');
-        this.toggles = {
-            email_notifications: document.getElementById('email_notifications'),
-            mobile_notifications: document.getElementById('mobile_notifications'),
-            marketing_emails: document.getElementById('marketing_emails')
-        };
+
+/* ===== Theme Manager ===== */
+class ThemeManager {
+    constructor() {
+        this.themeCards = document.querySelectorAll('.theme-card');
+        // Force reset to 'dark' if 'sunset' or 'mode-night' was active
+        const saved = localStorage.getItem('theme_preference');
+        if (saved === 'sunset' || saved === 'night') {
+            this.currentTheme = 'dark';
+            localStorage.setItem('theme_preference', 'dark');
+        } else {
+            this.currentTheme = saved || 'dark';
+        }
 
         this.init();
     }
 
-    async init() {
-        if (!this.token) {
-            window.location.href = '/';
-            return;
-        }
+    init() {
+        // Set initial active state
+        this.setActiveCard(this.currentTheme);
 
-        await this.fetchPreferences();
-        this.attachListeners();
+        // Click listeners
+        this.themeCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const theme = card.dataset.theme;
+                this.applyTheme(theme);
+            });
+        });
     }
 
-    async fetchPreferences() {
+    setActiveCard(theme) {
+        this.themeCards.forEach(c => c.classList.remove('active'));
+        const target = document.querySelector(`.theme-card[data-theme="${theme}"]`);
+        if (target) target.classList.add('active');
+    }
+
+    async applyTheme(theme) {
+        // 1. Apply to DOM immediately
+        document.body.className = `theme-${theme}`;
+        this.currentTheme = theme;
+        this.setActiveCard(theme);
+        localStorage.setItem('theme_preference', theme);
+
+        // 2. Sync with Backend
         try {
-            const response = await fetch('/api/user/preferences', {
-                headers: { 'Authorization': `Bearer ${this.token}` }
-            });
-            const data = await response.json();
-
-            if (response.ok) {
-                this.preferences = data;
-                this.applyPreferences();
-            }
-        } catch (err) {
-            console.error('Error fetching preferences:', err);
-        }
-    }
-
-    applyPreferences() {
-        // Apply theme selection UI
-        this.themeOptions.forEach(opt => {
-            opt.classList.toggle('active', opt.dataset.theme === this.preferences.theme_preference);
-        });
-
-        // Apply toggle states
-        Object.keys(this.toggles).forEach(key => {
-            if (this.toggles[key]) {
-                this.toggles[key].checked = this.preferences[key];
-            }
-        });
-
-        // Apply actual theme to body (for preview)
-        this.applyThemeToBody(this.preferences.theme_preference);
-    }
-
-    applyThemeToBody(theme) {
-        document.body.className = ''; // Reset
-        if (theme === 'midnight') {
-            document.body.style.background = '#000000';
-        } else if (theme === 'glassy') {
-            document.body.style.background = 'linear-gradient(135deg, #1e293b, #0f172a)';
-        } else {
-            document.body.style.background = '#0f172a';
-        }
-    }
-
-    attachListeners() {
-        // Theme selection
-        this.themeOptions.forEach(opt => {
-            opt.addEventListener('click', () => {
-                const theme = opt.dataset.theme;
-                this.updatePreference('theme_preference', theme);
-
-                // UI feedback
-                this.themeOptions.forEach(o => o.classList.remove('active'));
-                opt.classList.add('active');
-                this.applyThemeToBody(theme);
-            });
-        });
-
-        // Toggle switches
-        Object.keys(this.toggles).forEach(key => {
-            this.toggles[key].addEventListener('change', (e) => {
-                this.updatePreference(key, e.target.checked);
-            });
-        });
-    }
-
-    async updatePreference(key, value) {
-        try {
-            const response = await fetch('/api/user/preferences', {
+            await fetch('/api/user/preferences', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.token}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                body: JSON.stringify({ [key]: value })
+                body: JSON.stringify({ theme_preference: theme })
             });
-
-            if (response.ok) {
-                this.preferences[key] = value;
-                // Optional: log activity for significant changes
-                if (key === 'theme_preference') {
-                    this.logActivity('theme_change', `Changed theme to ${value}`);
-                }
-            } else {
-                console.error('Failed to update preference');
-            }
         } catch (err) {
-            console.error('Error updating preference:', err);
+            console.error('Failed to save theme to backend', err);
         }
     }
+}
 
-    async logActivity(type, desc) {
+/* ===== Preferences Manager (Timezone, Notifications) ===== */
+class PreferencesManager {
+    constructor() {
+        this.timezoneSelect = document.getElementById('timezone');
+        this.toggles = {
+            email: document.getElementById('email_notifications'),
+            mobile: document.getElementById('mobile_notifications'),
+            marketing: document.getElementById('marketing_emails')
+        };
+
+        this.loadPreferences();
+        this.attachListeners();
+    }
+
+    async loadPreferences() {
         try {
-            await fetch('/api/user/log-activity', {
-                method: 'POST',
+            const response = await fetch('/api/user/preferences', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            const data = await response.json();
+
+            // Set Timezone
+            // If data.timezone is available, use it. Otherwise, guess local.
+            // Note: The API currently returns 'timezone' in profile or prefs?
+            // Checking user_routes.py, 'timezone' wasn't strictly in the prefs endpoint list but added to User model.
+            // We might need to fetch profile for timezone if it's not in prefs.
+            // Let's assume it's synced or we fetch profile. 
+            if (data.timezone) this.timezoneSelect.value = data.timezone;
+            else this.timezoneSelect.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            // Set Toggles
+            if (this.toggles.email) this.toggles.email.checked = data.email_notifications;
+            if (this.toggles.mobile) this.toggles.mobile.checked = data.mobile_notifications;
+            if (this.toggles.marketing) this.toggles.marketing.checked = data.marketing_emails;
+
+        } catch (e) { console.error("Error loading prefs", e); }
+    }
+
+    attachListeners() {
+        // Timezone Change
+        this.timezoneSelect.addEventListener('change', (e) => {
+            this.savePreference({ timezone: e.target.value });
+        });
+
+        // Toggles
+        Object.entries(this.toggles).forEach(([key, element]) => {
+            if (!element) return;
+            element.addEventListener('change', (e) => {
+                const payload = {};
+                if (key === 'email') payload.email_notifications = e.target.checked;
+                if (key === 'mobile') payload.mobile_notifications = e.target.checked;
+                if (key === 'marketing') payload.marketing_emails = e.target.checked;
+                this.savePreference(payload);
+            });
+        });
+    }
+
+    async savePreference(data) {
+        try {
+            await fetch('/api/user/preferences', {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.token}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                body: JSON.stringify({ type, description: desc })
+                body: JSON.stringify(data)
             });
-        } catch (err) {
-            console.warn('Failed to log setting activity');
-        }
+            // Optional: Show subtle toast
+        } catch (e) { console.error("Save failed", e); }
     }
 }
 
-function handleDeleteAccount() {
-    if (confirm('CRITICAL: Are you sure you want to delete your account? This action is permanent and cannot be undone.')) {
-        if (confirm('Final confirmation: All your data will be wiped.')) {
-            alert('Account deletion request received. In a real system, this would call DELETE /api/user/account and redirect to landing page.');
-            // For now, just logout
-            localStorage.clear();
-            window.location.href = '/';
+/* ===== Session Manager ===== */
+class SessionManager {
+    constructor() {
+        this.container = document.getElementById('activeSessionsList');
+        this.loadSessions();
+    }
+
+    async loadSessions() {
+        try {
+            const response = await fetch('/api/user/sessions', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            const sessions = await response.json();
+            this.render(sessions);
+        } catch (e) {
+            this.container.innerHTML = '<p class="text-danger">Failed to load sessions.</p>';
         }
+    }
+
+    render(sessions) {
+        if (!sessions || sessions.length === 0) {
+            this.container.innerHTML = '<p style="color:var(--text-secondary)">No active sessions found.</p>';
+            return;
+        }
+
+        this.container.innerHTML = sessions.map(session => `
+            <div class="session-item">
+                <div class="session-icon">
+                    <i class="fas ${this.getDeviceIcon(session.device_info)}"></i>
+                </div>
+                <div class="session-info">
+                    <div class="session-title">
+                        ${session.device_info || 'Unknown Device'}
+                        ${session.is_current ? '<span style="color:var(--primary); font-size:0.8em; margin-left:0.5rem">(Current)</span>' : ''}
+                    </div>
+                    <div class="session-meta">
+                        ${session.ip_address} • Active ${this.formatDate(session.created_at || session.login_time)}
+                    </div>
+                </div>
+                ${!session.is_current ? `
+                    <button class="revoke-btn" onclick="revokeSession('${session.session_id}')">
+                        Revoke
+                    </button>
+                ` : ''}
+            </div>
+        `).join('');
+
+        // Expose revoke function globally for onclick
+        window.revokeSession = (id) => this.revoke(id);
+    }
+
+    getDeviceIcon(userAgent) {
+        if (!userAgent) return 'fa-desktop';
+        if (/mobile/i.test(userAgent)) return 'fa-mobile-alt';
+        if (/tablet/i.test(userAgent)) return 'fa-tablet-alt';
+        return 'fa-desktop';
+    }
+
+    formatDate(dateStr) {
+        if (!dateStr) return 'Recently';
+        return new Date(dateStr).toLocaleDateString();
+    }
+
+    async revoke(sessionId) {
+        if (!confirm('Are you sure you want to log out this device?')) return;
+
+        try {
+            const res = await fetch(`/api/user/sessions/${sessionId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            if (res.ok) {
+                this.loadSessions(); // Reload list
+            } else {
+                alert('Failed to revoke session');
+            }
+        } catch (e) { alert('Error connecting to server'); }
     }
 }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    new SettingsManager();
-});
+/* ===== Data Manager ===== */
+class DataManager {
+    constructor() {
+        const btn = document.getElementById('exportDataBtn');
+        if (btn) btn.addEventListener('click', () => this.exportData());
+    }
+
+    async exportData() {
+        const btn = document.getElementById('exportDataBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/user/export', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+
+            if (!response.ok) throw new Error('Export failed');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `smart_education_data_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+
+        } catch (e) {
+            alert('Failed to export data. Please try again.');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+}

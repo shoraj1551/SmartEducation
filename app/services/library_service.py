@@ -53,12 +53,13 @@ class LibraryService:
             return True, "No connected accounts found. Please connect YouTube, Udemy or Drive first."
 
         # Rich Mock Data Generator
+        from app.constants import YOUTUBE_WATCH_URL_TEMPLATE, UDEMY_COURSE_URL_TEMPLATE, COURSERA_LEARN_URL_TEMPLATE
         mock_data = [
              {
                 'title': 'Advanced System Design Patterns',
                 'source': 'YouTube',
                 'type': 'video', 
-                'url': 'https://youtube.com/watch?v=mock1',
+                'url': YOUTUBE_WATCH_URL_TEMPLATE.format(video_id='mock1'),
                 'desc': 'Deep dive into microservices and scalable architecture. Learn asking the right questions.',
                 'topic': 'System Design',
                 'relevance': 0.98,
@@ -72,7 +73,7 @@ class LibraryService:
                 'title': 'The Complete Python Bootcamp: From Zero to Hero in Python',
                 'source': 'Udemy',
                 'type': 'course',
-                'url': 'https://udemy.com/course/python-bootcamp',
+                'url': UDEMY_COURSE_URL_TEMPLATE.format(slug='python-bootcamp'),
                 'desc': 'Learn Python like a Professional! Start from the basics and go all the way to creating your own applications and games.',
                 'topic': 'Python',
                 'relevance': 0.95,
@@ -100,7 +101,7 @@ class LibraryService:
                 'title': 'Machine Learning Specialty Certification',
                 'source': 'Coursera',
                 'type': 'course',
-                'url': 'https://coursera.org/learn/ml',
+                'url': COURSERA_LEARN_URL_TEMPLATE.format(course_id='ml'),
                 'desc': 'Master Machine Learning on AWS. Build, train, and deploy models using Amazon SageMaker.',
                 'topic': 'Machine Learning',
                 'relevance': 0.91,
@@ -114,7 +115,7 @@ class LibraryService:
                 'title': 'React 18 Concurrent Features',
                 'source': 'YouTube',
                 'type': 'video',
-                'url': 'https://youtube.com/watch?v=mock2',
+                'url': YOUTUBE_WATCH_URL_TEMPLATE.format(video_id='mock2'),
                 'desc': 'Understanding concurrency, suspense, and server components in React 18.',
                 'topic': 'React',
                 'relevance': 0.88,

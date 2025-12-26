@@ -16,9 +16,13 @@ def login_required(f):
         if token.startswith('Bearer '):
             token = token[7:]
             
-        user_id = AuthService.verify_token(token)
-        if not user_id:
+        # Get full payload to extract session_id
+        payload = AuthService.get_token_payload(token)
+        if not payload:
             return jsonify({'error': 'Token is invalid or expired'}), 401
+            
+        user_id = payload.get('user_id')
+        session_id = payload.get('sid')
         
         # Determine if ObjectId or string
         from bson import ObjectId
@@ -29,6 +33,7 @@ def login_required(f):
             return jsonify({'error': 'User not found'}), 401
             
         g.user = user
+        g.session_id = session_id
         return f(*args, **kwargs)
     return decorated
 
@@ -37,7 +42,7 @@ def login_required(f):
 def get_sessions():
     """Get active sessions"""
     try:
-        sessions = SecurityService.get_active_sessions(g.user.id)
+        sessions = SecurityService.get_active_sessions(g.user.id, getattr(g, 'session_id', None))
         return jsonify(sessions), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -103,3 +108,54 @@ def delete_account():
         return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': 'Server error'}), 500
+
+@security_bp.route('/password/update', methods=['POST'])
+@login_required
+def update_password():
+    """Update password with OTP verification"""
+    data = request.get_json()
+    current_password = data.get('current_password')
+    new_password = data.get('new_password')
+    otp_code = data.get('otp_code')
+    
+    if not current_password or not new_password:
+        return jsonify({'error': 'Current and new passwords are required'}), 400
+        
+    # 1. Validate Current Password First (to prevent OTP spam/enumeration)
+    if not g.user.check_password(current_password):
+        return jsonify({'error': 'Current password is incorrect'}), 401
+        
+    # 2. Check for OTP
+    if not otp_code:
+        # Generate & Send OTP
+        try:
+            SecurityService.send_action_otp(g.user.id, 'password_change')
+            return jsonify({
+                'status': 'OTP_REQUIRED', 
+                'message': 'For your security, please enter the verification code sent to your email/mobile.'
+            }), 200
+        except Exception as e:
+            return jsonify({'error': 'Failed to send verification code'}), 500
+            
+    # 3. Verify OTP
+    # We check both email and mobile types since we sent to both potentially
+    email_valid, _ = AuthService.verify_inline_otp(None, 'email', otp_code, 'password_change') # user_id is implicit in verify_inline_otp context? No.
+    # verify_inline_otp uses session['pending_user']. Here users are logged in.
+    # We should use OTPService directly or a new helper.
+    # Let's look at SecurityService.delete_account which used OTP model directly.
+    # We will use that pattern or add verify_otp to SecurityService.
+    
+    # Better: Use a helper in SecurityService
+    try:
+        SecurityService.verify_action_otp(g.user.id, otp_code, 'password_change')
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+        
+    # 4. Perform Update
+    try:
+        SecurityService.update_password(g.user.id, current_password, new_password)
+        return jsonify({'status': 'SUCCESS', 'message': 'Password updated successfully'}), 200
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': 'An unexpected error occurred'}), 500

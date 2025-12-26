@@ -48,15 +48,56 @@ class CommonUI {
         if (!this.userData) return;
 
         // Update name and avatar initials globally
-        const nameBrief = document.getElementById('userNameBrief');
-        const initials = document.getElementById('avatarInitials');
+        // Correct ID from header.html is 'headerUserName'
+        const nameBrief = document.getElementById('headerUserName');
+        // Correct ID from header.html is 'headerAvatarInitials'
+        const avatarInitialsElement = document.getElementById('headerAvatarInitials');
 
         if (nameBrief) nameBrief.textContent = this.userData.name || 'User';
-        if (initials) {
-            const parts = (this.userData.name || 'U').split(' ');
-            initials.textContent = parts.length > 1
-                ? (parts[0][0] + parts[1][0]).toUpperCase()
-                : parts[0][0].toUpperCase();
+
+        if (avatarInitialsElement) {
+            if (this.userData.profile_picture) {
+                avatarInitialsElement.textContent = ''; // Clear text initials
+                avatarInitialsElement.style.backgroundImage = `url('${this.userData.profile_picture}')`;
+                avatarInitialsElement.style.backgroundSize = 'cover';
+                avatarInitialsElement.style.backgroundPosition = 'center';
+                avatarInitialsElement.style.backgroundRepeat = 'no-repeat'; // Ensure no repeat
+            } else {
+                const parts = (this.userData.name || 'U').split(' ');
+                avatarInitialsElement.textContent = parts.length > 1
+                    ? (parts[0][0] + parts[1][0]).toUpperCase()
+                    : parts[0][0].toUpperCase();
+                avatarInitialsElement.style.backgroundImage = 'none'; // Clear background image
+            }
+        }
+
+        // Apply Global Preferences
+        if (this.userData.reduced_motion) {
+            document.body.classList.add('reduced-motion');
+        } else {
+            document.body.classList.remove('reduced-motion');
+        }
+
+        if (this.userData.high_contrast) {
+            document.body.classList.add('high-contrast');
+        } else {
+            document.body.classList.remove('high-contrast');
+        }
+
+        // Apply Learning Time Theme
+        // Remove existing mode classes first
+        document.body.classList.remove('mode-morning', 'mode-deep-focus', 'mode-night');
+
+        // Normalize preference string (e.g. "Morning Owl" -> "mode-morning")
+        if (this.userData.preferred_learning_time) {
+            const pref = this.userData.preferred_learning_time.toLowerCase();
+            if (pref.includes('morning')) {
+                document.body.classList.add('mode-morning');
+            } else if (pref.includes('focus')) {
+                document.body.classList.add('mode-deep-focus');
+            } else if (pref.includes('night')) {
+                document.body.classList.add('mode-night');
+            }
         }
     }
 

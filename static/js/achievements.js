@@ -53,6 +53,18 @@ class AchievementManager {
     }
 
     async fetchAchievements() {
+        // Toggle Check
+        if (this.userData.community_milestones === false) {
+            // Hide everything related to milestones
+            if (this.badgeGrid) {
+                this.badgeGrid.style.display = 'none';
+                // Also hide the header (ugly DOM traversal but effective for now)
+                const header = this.badgeGrid.previousElementSibling;
+                if (header && header.tagName === 'H2') header.style.display = 'none';
+            }
+            return;
+        }
+
         // Mock achievements for now
         const allAchievements = [
             { code: 'first_bookmark', title: 'Knowledge Seeker', description: 'Saved your first educational resource.', icon: 'fa-bookmark', xp: 50 },

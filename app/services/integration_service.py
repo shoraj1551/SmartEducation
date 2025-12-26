@@ -108,11 +108,12 @@ class YouTubeIntegration:
         Note: Requires YouTube Data API key - placeholder implementation
         """
         # Placeholder - would use YouTube Data API v3
+        from app.constants import YOUTUBE_MAXRES_THUMBNAIL_URL_TEMPLATE
         return {
             'title': f'Video {video_id}',
             'duration': 600,  # in seconds
             'description': 'Video description',
-            'thumbnail': f'https://img.youtube.com/vi/{video_id}/maxresdefault.jpg'
+            'thumbnail': YOUTUBE_MAXRES_THUMBNAIL_URL_TEMPLATE.format(video_id=video_id)
         }
     
     @staticmethod

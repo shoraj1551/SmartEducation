@@ -5,7 +5,7 @@ from flask import current_app
 
 class SecurityService:
     @staticmethod
-    def get_active_sessions(user_id):
+    def get_active_sessions(user_id, current_session_id=None):
         """Fetch all active sessions for a user"""
         sessions = UserSession.objects(user_id=user_id, is_active=True).order_by('-login_time')
         # In a real app, we might parse User-Agent string here
@@ -15,7 +15,7 @@ class SecurityService:
                 'device_info': s.device_info,
                 'ip_address': s.ip_address,
                 'login_time': s.login_time.isoformat(),
-                'is_current': False # Logic to check current session token vs DB
+                'is_current': str(s.session_id) == str(current_session_id) if current_session_id else False
             }
             for s in sessions
         ]
@@ -111,5 +111,40 @@ class SecurityService:
 
         # Invalidate all sessions
         UserSession.objects(user_id=user_id).update(is_active=False, logout_time=datetime.utcnow())
+        
+        return True
+
+    @staticmethod
+    def update_password(user_id, current_password, new_password):
+        """Update password with validation"""
+        user = User.objects(id=user_id).first()
+        if not user:
+            raise ValueError("User not found")
+        
+        # Validate current password
+        if not user.check_password(current_password):
+            raise ValueError("Current password is incorrect")
+            
+        # Validate new password (length check for now, can expand later)
+        if len(new_password) < 8:
+            raise ValueError("New password must be at least 8 characters long")
+            
+        # Check history
+        if user.check_password_in_history(new_password):
+            raise ValueError("New password cannot match recent passwords")
+            
+        # Update
+        if user.password_hash:
+            user.add_to_password_history(user.password_hash)
+            
+        user.set_password(new_password)
+        user.save()
+        
+        # Log it
+        Activity(
+            user_id=user_id,
+            activity_type='password_change',
+            description="Password updated successfully"
+        ).save()
         
         return True

@@ -3,7 +3,7 @@ User routes for SmartEducation API - Activities and Preferences
 """
 from flask import Blueprint, request, jsonify, current_app
 from functools import wraps
-from app.models import User, Schedule
+from app.models import User, Schedule, UserSession
 from app.services.auth_service import AuthService
 from app.services.activity_service import ActivityService
 
@@ -118,6 +118,62 @@ def update_profile(current_user):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@user_bp.route('/profile-picture', methods=['POST'])
+@token_required
+def update_profile_picture(current_user):
+    """
+    Handle profile picture upload.
+    Expects multipart/form-data with key 'profile_picture'.
+    """
+    import os
+    from werkzeug.utils import secure_filename
+    from datetime import datetime
+
+    if 'profile_picture' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+        
+    file = request.files['profile_picture']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+        
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    def allowed_file(filename):
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+        
+    if file and allowed_file(file.filename):
+        try:
+            # Secure filename with timestamp to prevent cache issues and collisions
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            filename = secure_filename(f"user_{current_user.id}_{timestamp}.{ext}")
+            
+            # Ensure directory exists (relative to app root)
+            # app/../static/uploads/avatars
+            save_dir = os.path.join(current_app.root_path, '..', 'static', 'uploads', 'avatars')
+            os.makedirs(save_dir, exist_ok=True)
+            
+            file_path = os.path.join(save_dir, filename)
+            file.save(file_path)
+            
+            # Update user profile
+            relative_url = f"/static/uploads/avatars/{filename}"
+            current_user.profile_picture = relative_url
+            current_user.save()
+            
+            # Log activity
+            ActivityService.log_activity(current_user.id, 'profile_picture_update', 'Updated profile picture')
+            
+            return jsonify({
+                'message': 'Profile picture updated',
+                'url': relative_url
+            })
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': str(e)}), 500
+            
+    return jsonify({'error': 'Invalid file type'}), 400
+
 @user_bp.route('/onboarding', methods=['POST'])
 @token_required
 def save_onboarding(current_user):
@@ -181,7 +237,8 @@ def get_preferences(current_user):
         'ai_insights': current_user.ai_insights,
         'community_milestones': current_user.community_milestones,
         'reduced_motion': current_user.reduced_motion,
-        'high_contrast': current_user.high_contrast
+        'high_contrast': current_user.high_contrast,
+        'timezone': current_user.timezone if hasattr(current_user, 'timezone') else 'UTC'
     })
 
 @user_bp.route('/preferences', methods=['PUT'])
@@ -198,7 +255,7 @@ def update_preferences(current_user):
         'mobile_notifications', 'marketing_emails',
         'preferred_learning_time', 'daily_reminders',
         'ai_insights', 'community_milestones',
-        'reduced_motion', 'high_contrast'
+        'reduced_motion', 'high_contrast', 'timezone'
     ]
     
     for field in pref_fields:
@@ -316,3 +373,70 @@ def delete_schedule(current_user, schedule_id):
         
     schedule.delete()
     return jsonify({'message': 'Schedule deleted successfully'})
+
+# Feature 3.1: Settings Expansion
+
+@user_bp.route('/export', methods=['GET'])
+@token_required
+def export_user_data(current_user):
+    """Export user data as JSON"""
+    # Collect data
+    from app.models import Schedule, Activity
+    from app.services.achievement_service import AchievementService
+    
+    schedules = Schedule.objects(user_id=current_user.id)
+    activities = Activity.objects(user_id=current_user.id).limit(100) # Limit for sanity
+    achievements = AchievementService.get_user_achievements(current_user.id)
+    
+    data = {
+        'profile': current_user.to_dict(),
+        'schedules': [s.to_dict() for s in schedules],
+        'recent_activities': [a.to_dict() for a in activities],
+        'achievements': [a.to_dict() for a in achievements],
+        'exported_at': datetime.utcnow().isoformat()
+    }
+    
+    return jsonify(data)
+
+@user_bp.route('/sessions', methods=['GET'])
+@token_required
+def get_sessions(current_user):
+    """Get active sessions for user"""
+    from app.models import UserSession
+    sessions = UserSession.objects(user_id=current_user, is_active=True).order_by('-created_at')
+    
+    # Enrich with current session flag
+    token = request.headers.get('Authorization').split(' ')[1]
+    current_sid = AuthService.get_token_payload(token).get('sid')
+    
+    results = []
+    for s in sessions:
+        s_dict = s.to_dict()
+        if s.session_id == current_sid:
+            s_dict['is_current'] = True
+        results.append(s_dict)
+        
+    return jsonify(results)
+
+@user_bp.route('/sessions/<session_id>', methods=['DELETE'])
+@token_required
+def revoke_session(current_user, session_id):
+    """Revoke a specific session"""
+    from app.models import UserSession
+    
+    # Allow revoking by ID or session_id string
+    session = UserSession.objects(session_id=session_id, user_id=current_user).first()
+    if not session:
+        # Try object ID
+        try:
+             session = UserSession.objects(id=session_id, user_id=current_user).first()
+        except:
+            pass
+            
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+        
+    session.is_active = False
+    session.save()
+    
+    return jsonify({'message': 'Session revoked successfully'})

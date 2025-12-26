@@ -13,6 +13,10 @@ class ProfileManager {
         this.profileNameDisplay = document.getElementById('profileNameDisplay');
         this.profileEmailDisplay = document.getElementById('profileEmailDisplay');
 
+        // Avatar Bindings
+        this.editAvatarBtn = document.getElementById('editAvatarBtn');
+        this.avatarInput = document.getElementById('avatarInput');
+
         this.init();
     }
 
@@ -72,7 +76,18 @@ class ProfileManager {
     updateUI(user) {
         this.profileNameDisplay.textContent = user.name || 'User';
         this.profileEmailDisplay.textContent = user.email || '';
-        this.profileInitials.textContent = (user.name || 'U').charAt(0).toUpperCase();
+        this.profileNameDisplay.textContent = user.name || 'User';
+        this.profileEmailDisplay.textContent = user.email || '';
+
+        if (user.profile_picture) {
+            this.profileInitials.textContent = '';
+            this.profileInitials.style.backgroundImage = `url('${user.profile_picture}')`;
+            this.profileInitials.style.backgroundSize = 'cover';
+            this.profileInitials.style.backgroundPosition = 'center';
+        } else {
+            this.profileInitials.style.backgroundImage = 'none';
+            this.profileInitials.textContent = (user.name || 'U').charAt(0).toUpperCase();
+        }
 
         // Update local storage if name changed
         const currentLocal = JSON.parse(localStorage.getItem('user') || '{}');
@@ -82,6 +97,87 @@ class ProfileManager {
 
     attachListeners() {
         this.profileForm.addEventListener('submit', (e) => this.handleSubmit(e));
+
+        // Explicitly bind click events for upload
+        if (this.editAvatarBtn && this.avatarInput) {
+            this.editAvatarBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.avatarInput.click();
+            });
+        }
+
+        // Also allow clicking the main avatar to trigger upload (Better UX)
+        if (this.profileInitials && this.avatarInput) {
+            this.profileInitials.style.cursor = 'pointer';
+            this.profileInitials.addEventListener('click', (e) => {
+                // Prevent double trigger if clicking the button itself which bubbles
+                if (e.target.closest('.edit-avatar-btn')) return;
+                this.avatarInput.click();
+            });
+        }
+
+        if (this.avatarInput) {
+            this.avatarInput.addEventListener('change', (e) => this.handleAvatarUpload(e));
+        }
+    }
+
+    async handleAvatarUpload(e) {
+        alert('File selected! Starting upload...');
+        const file = e.target.files[0];
+        if (!file) {
+            alert('No file detected');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('profile_picture', file);
+
+        // Visual feedback
+        const icon = this.editAvatarBtn.querySelector('i');
+        icon.className = 'fas fa-spinner fa-spin';
+
+        try {
+            const response = await fetch('/api/user/profile-picture', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                    // Content-Type not set for FormData
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Update UI immediately
+                this.profileInitials.textContent = '';
+                this.profileInitials.style.backgroundImage = `url('${result.url}')`;
+                this.profileInitials.style.backgroundSize = 'cover';
+                this.profileInitials.style.backgroundPosition = 'center';
+
+                // Update Global User Data
+                const currentLocal = JSON.parse(localStorage.getItem('user') || '{}');
+                currentLocal.profile_picture = result.url;
+                localStorage.setItem('user', JSON.stringify(currentLocal));
+
+                // Try updating global nav if present
+                if (window.commonUI) {
+                    window.commonUI.userData.profile_picture = result.url;
+                    window.commonUI.updateUI();
+                }
+
+                alert('Profile picture updated successfully!');
+            } else {
+                alert(result.error || 'Failed to upload image. Please try a smaller file (max 5MB).');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Upload failed');
+        } finally {
+            icon.className = 'fas fa-camera';
+            this.avatarInput.value = ''; // Reset
+        }
     }
 
     async handleSubmit(e) {

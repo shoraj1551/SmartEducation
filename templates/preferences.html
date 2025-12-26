@@ -14,18 +14,38 @@
             <i class="fas fa-clock"></i>
             Preferred Learning Time
         </div>
-        <div class="time-grid">
-            <div class="time-option" data-time="Morning">
-                <i class="fas fa-sun"></i>
-                <span>Morning Owl</span>
+        <div class="settings-section">
+            <div class="section-title">
+                <i class="fas fa-clock"></i>
+                Preferred Learning Time
             </div>
-            <div class="time-option" data-time="Afternoon">
-                <i class="fas fa-cloud-sun"></i>
-                <span>Deep Focus</span>
+            <div class="time-grid">
+                <div class="time-option" data-time="Morning">
+                    <i class="fas fa-sun"></i>
+                    <span>Morning Owl</span>
+                    <span class="time-badge">5 AM - 11 AM</span>
+                </div>
+                <div class="time-option" data-time="Deep Focus">
+                    <i class="fas fa-crosshairs"></i>
+                    <span>Deep Focus</span>
+                    <span class="time-badge">9 AM - 5 PM</span>
+                </div>
+                <div class="time-option" data-time="Night">
+                    <i class="fas fa-moon"></i>
+                    <span>Night Owl</span>
+                    <span class="time-badge">7 PM - 1 AM</span>
+                </div>
             </div>
-            <div class="time-option" data-time="Night">
-                <i class="fas fa-moon"></i>
-                <span>Night Owl</span>
+            <div class="preference-explanation" id="timeExplanation">
+                <div class="explainer-icon"><i class="fas fa-info-circle"></i></div>
+                <div class="explainer-text">
+                    <h4 id="explainerTitle">Select your rhythm</h4>
+                    <p id="explainerBody">We'll adapt notifications and AI suggestions to match your peak energy hours.
+                    </p>
+                    <div class="rules-list" id="explainerRules" style="display:none;">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -6,7 +6,8 @@
 <div class="profile-container">
     <div class="profile-header">
         <div class="profile-avatar-large" id="profileInitials">U
-            <div class="edit-avatar-btn"><i class="fas fa-camera"></i></div>
+            <div class="edit-avatar-btn" id="editAvatarBtn"><i class="fas fa-camera"></i></div>
+            <input type="file" id="avatarInput" accept="image/*" style="display: none;">
         </div>
         <div class="profile-intro">
             <h1 id="profileNameDisplay">User Name</h1>
@@ -114,9 +115,10 @@
             </button>
         </div>
     </form>
-</div>
-{% endblock %}
+
+    <!-- Hidden Global Input Removed (Duplicate) -->
+</div>{% endblock %}
 
 {% block extra_js %}
-<script src="/static/js/profile.js"></script>
+<script src="/static/js/profile.js?v=2"></script>
 {% endblock %}

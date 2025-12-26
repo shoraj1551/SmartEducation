@@ -200,7 +200,7 @@ class AuthService:
         return user, "User verified and registered successfully"
     
     @staticmethod
-    def login_user(identifier, password):
+    def login_user(identifier, password, device_info=None, ip_address=None):
         """Login user with email/mobile and password (BUG-007 fix)"""
         # Check if identifier is email or mobile
         # IMPORTANT: Only match verified users to prevent duplicate logins
@@ -239,16 +239,43 @@ class AuthService:
                  }, "Verification required"
              return None, f"Account status is {current_status}. Please contact support."
         
-        # Generate JWT token
-        token = AuthService.generate_token(user.id)
+        # ENFORCEMENT 1: Two-Factor Authentication
+        # If enabled, do not create session yet. Send OTP and return requirement.
+        if getattr(user, 'is_2fa_enabled', False):
+            # Send Login OTP
+            otp = OTPService.create_otp(str(user.id), 'email', 'login_2fa')
+            OTPService.send_email_otp(user.email, otp.otp_code, 'login verification')
+            
+            return {
+                'error_code': '2FA_REQUIRED',
+                'user_id': str(user.id),
+                'email': user.email
+            }, "Two-Factor Authentication required"
+
+        # ENFORCEMENT 2: Login Alerts
+        if getattr(user, 'login_alerts_enabled', False):
+            # Send alert asynchronously (or sync for now since simple)
+            OTPService.send_email_login_alert(
+                user.email,
+                device_info or "Unknown Device",
+                ip_address or "Unknown IP",
+                datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+            )
         
-        # Create UserSession
+        # Create Session ID first
         import secrets
         session_id = secrets.token_hex(16)
+        
+        # Generate JWT token with session_id
+        token = AuthService.generate_token(user.id, session_id)
+        
+        # Create UserSession
         user_session = UserSession(
             user_id=user,
             session_id=session_id,
-            is_active=True
+            is_active=True,
+            device_info=device_info,
+            ip_address=ip_address
         )
         user_session.save()
         
@@ -356,23 +383,77 @@ class AuthService:
         return True, f"OTP resent to {otp_type}"
     
     @staticmethod
-    def generate_token(user_id):
+    def generate_token(user_id, session_id=None):
         """Generate JWT token"""
         payload = {
             'user_id': str(user_id),
             'exp': datetime.utcnow() + current_app.config['JWT_ACCESS_TOKEN_EXPIRES']
         }
+        if session_id:
+            payload['sid'] = session_id
+            
         return jwt.encode(payload, current_app.config['JWT_SECRET_KEY'], algorithm='HS256')
     
     @staticmethod
     def verify_token(token):
-        """Verify JWT token"""
+        """Verify JWT token and return user_id"""
         try:
             payload = jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
             return payload['user_id']
-        except jwt.ExpiredSignatureError:
+        except Exception:
             return None
-        except jwt.InvalidTokenError:
+
+    @staticmethod
+    def verify_2fa_and_login(user_id, otp_code, device_info=None, ip_address=None):
+        """Verify 2FA OTP and complete login"""
+        # Verify OTP
+        is_valid, message = OTPService.verify_otp(user_id, otp_code, 'email', 'login_2fa')
+        
+        if not is_valid:
+            return None, message
+            
+        user = User.objects(id=user_id).first()
+        if not user:
+             return None, "User not found"
+             
+        # ENFORCEMENT 2: Login Alerts (Triggered here for 2FA users)
+        if getattr(user, 'login_alerts_enabled', False):
+            OTPService.send_email_login_alert(
+                user.email,
+                device_info or "Unknown Device",
+                ip_address or "Unknown IP",
+                datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+            )
+            
+        # Create Session ID
+        import secrets
+        session_id = secrets.token_hex(16)
+        
+        # Generate JWT token with session_id
+        token = AuthService.generate_token(user.id, session_id)
+        
+        # Create UserSession
+        user_session = UserSession(
+            user_id=user,
+            session_id=session_id,
+            is_active=True,
+            device_info=device_info,
+            ip_address=ip_address
+        )
+        user_session.save()
+        
+        return {
+            'user': user.to_dict(), 
+            'token': token,
+            'session_id': session_id
+        }, "Login successful"
+
+    @staticmethod
+    def get_token_payload(token):
+        """Verify token and return full payload"""
+        try:
+            return jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
+        except Exception:
             return None
 
 class TempUser:

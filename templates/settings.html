@@ -3,106 +3,203 @@
 {% block title %}Settings - SmartEducation{% endblock %}
 
 {% block content %}
-<div class="settings-container">
-    <div class="settings-header">
+<div class="settings-premium-list">
+
+    <div class="settings-header center-header">
         <h1>Settings</h1>
-        <p>Manage your account preferences and application experience.</p>
+        <p>Manage your preferences and privacy.</p>
     </div>
 
-    <!-- Appearance -->
-    <div class="settings-section">
+    <!-- Appearance Section -->
+    <div class="settings-section-premium">
         <div class="section-title">
-            <i class="fas fa-palette"></i>
-            Appearance
+            <i class="fas fa-palette"></i> Interface Theme
         </div>
-        <div class="theme-grid" id="themeGrid">
-            <div class="theme-option active" data-theme="dark">
-                <div class="theme-preview preview-dark"></div>
-                <span>Deep Blue</span>
+
+        <div class="theme-showcase">
+            <!-- Theme Cards -->
+            <div class="theme-card" data-theme="dark">
+                <div class="preview-box deep-blue-preview">
+                    <div class="mini-sidebar"></div>
+                    <div class="mini-content">
+                        <div class="mini-header"></div>
+                        <div class="mini-card"></div>
+                    </div>
+                </div>
+                <div class="theme-info">
+                    <h4>Deep Blue</h4>
+                    <p>Classic Dashboard</p>
+                </div>
             </div>
-            <div class="theme-option" data-theme="midnight">
-                <div class="theme-preview preview-midnight"></div>
-                <span>Midnight</span>
+
+            <div class="theme-card" data-theme="midnight">
+                <div class="preview-box midnight-preview">
+                    <div class="mini-sidebar"></div>
+                    <div class="mini-content">
+                        <div class="mini-card"></div>
+                    </div>
+                </div>
+                <div class="theme-info">
+                    <h4>Midnight</h4>
+                    <p>True OLED Black</p>
+                </div>
             </div>
-            <div class="theme-option" data-theme="glassy">
-                <div class="theme-preview preview-glass"></div>
-                <span>Glassy</span>
+
+            <div class="theme-card" data-theme="glassy">
+                <div class="preview-box glassy-preview">
+                    <div class="glass-overlay"></div>
+                </div>
+                <div class="theme-info">
+                    <h4>Glassy</h4>
+                    <p>Modern Blur</p>
+                </div>
+            </div>
+
+            <div class="theme-card" data-theme="sunset">
+                <div class="preview-box sunset-preview">
+                    <div class="gradient-ball"></div>
+                </div>
+                <div class="theme-info">
+                    <h4>Sunset</h4>
+                    <p>Warm Dusk</p>
+                </div>
+            </div>
+
+            <div class="theme-card" data-theme="nebula">
+                <div class="preview-box nebula-preview">
+                    <div class="neon-line"></div>
+                </div>
+                <div class="theme-info">
+                    <h4>Nebula</h4>
+                    <p>Cyberpunk</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Notifications -->
-    <div class="settings-section">
+    <!-- General Section -->
+    <div class="settings-section-premium">
         <div class="section-title">
-            <i class="fas fa-bell"></i>
-            Notifications
+            <i class="fas fa-sliders-h"></i> General Preferences
+        </div>
+        <div class="glass-panel">
+            <div class="control-label">
+                <i class="fas fa-globe"></i>
+                <div>
+                    <h4>Timezone</h4>
+                    <p>Sync your calendar and reminders.</p>
+                </div>
+            </div>
+            <select id="timezone" class="premium-select">
+                <option value="UTC">UTC (Universal Time)</option>
+                <option value="EST">EST (New York)</option>
+                <option value="CST">CST (Chicago)</option>
+                <option value="MST">MST (Denver)</option>
+                <option value="PST">PST (Los Angeles)</option>
+                <option value="IST">IST (India)</option>
+                <option value="BST">BST (London)</option>
+                <option value="CET">CET (Berlin)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Notifications Section -->
+    <div class="settings-section-premium">
+        <div class="section-title">
+            <i class="fas fa-bell"></i> Notifications
         </div>
 
-        <div class="setting-row">
-            <div class="setting-info">
-                <h4>Email Notifications</h4>
-                <p>Receive updates about your learning progress via email.</p>
+        <div class="glass-panel">
+            <div class="control-label">
+                <i class="fas fa-envelope-open-text"></i>
+                <div>
+                    <h4>Email Digests</h4>
+                    <p>Weekly summaries of your progress.</p>
+                </div>
             </div>
-            <label class="switch">
-                <input type="checkbox" id="email_notifications" checked>
-                <span class="slider"></span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="email_notifications">
+                <span class="slider round"></span>
             </label>
         </div>
 
-        <div class="setting-row">
-            <div class="setting-info">
-                <h4>Mobile Push</h4>
-                <p>Get instant alerts on your mobile device.</p>
+        <div class="glass-panel">
+            <div class="control-label">
+                <i class="fas fa-mobile-alt"></i>
+                <div>
+                    <h4>Mobile Push</h4>
+                    <p>Real-time alerts for deadlines.</p>
+                </div>
             </div>
-            <label class="switch">
-                <input type="checkbox" id="mobile_notifications" checked>
-                <span class="slider"></span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="mobile_notifications">
+                <span class="slider round"></span>
             </label>
         </div>
 
-        <div class="setting-row">
-            <div class="setting-info">
-                <h4>Marketing Emails</h4>
-                <p>Stay informed about new courses and special offers.</p>
+        <div class="glass-panel">
+            <div class="control-label">
+                <i class="fas fa-ad"></i>
+                <div>
+                    <h4>Marketing Emails</h4>
+                    <p>News about features and pro plans.</p>
+                </div>
             </div>
-            <label class="switch">
+            <label class="toggle-switch">
                 <input type="checkbox" id="marketing_emails">
-                <span class="slider"></span>
+                <span class="slider round"></span>
             </label>
         </div>
     </div>
 
-    <!-- Account -->
-    <div class="settings-section">
+    <!-- Security & Sessions Section -->
+    <div class="settings-section-premium">
         <div class="section-title">
-            <i class="fas fa-shield-alt"></i>
-            Account Security
+            <i class="fas fa-shield-alt"></i> Security & Sessions
         </div>
-        <div class="setting-row">
-            <div class="setting-info">
-                <h4>Change Password</h4>
-                <p>Update your password to keep your account secure.</p>
+
+        <div class="glass-panel active-sessions-box">
+            <div class="box-header">
+                <h4><i class="fas fa-satellite-dish"></i> Active Devices</h4>
+                <small class="text-secondary">Manage where you are logged in.</small>
             </div>
-            <button class="text-btn nav-btn" onclick="alert('Redirecting to reset flow...')">Update</button>
+            <div id="activeSessionsList" class="sessions-list">
+                <div class="loading-pulse"></div>
+            </div>
+        </div>
+
+        <div class="glass-panel clickable" onclick="window.location.href='/security'">
+            <div class="control-label">
+                <i class="fas fa-user-shield text-danger"></i>
+                <div>
+                    <h4>Security Center</h4>
+                    <p>Change password, 2FA, and account deletion.</p>
+                </div>
+            </div>
+            <i class="fas fa-arrow-right text-secondary"></i>
         </div>
     </div>
 
-    <!-- Danger Zone -->
-    <div class="settings-section danger-zone">
-        <div class="section-title danger-title">
-            <i class="fas fa-exclamation-triangle"></i>
-            Danger Zone
+    <!-- Data Section -->
+    <div class="settings-section-premium">
+        <div class="section-title">
+            <i class="fas fa-database"></i> My Data
         </div>
-        <div class="setting-row">
-            <div class="setting-info">
-                <h4>Delete Account</h4>
-                <p>Permanently delete your account and all associated data.</p>
+
+        <div class="glass-panel">
+            <div class="control-label">
+                <i class="fas fa-file-export"></i>
+                <div>
+                    <h4>Export Personal Data</h4>
+                    <p>Download a copy of your profile and history.</p>
+                </div>
             </div>
-            <button class="nav-btn"
-                style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);"
-                onclick="handleDeleteAccount()">Delete</button>
+            <button class="btn-premium" id="exportDataBtn">
+                Download Archive
+            </button>
         </div>
     </div>
+
 </div>
 {% endblock %}
 

@@ -1,0 +1,234 @@
+/* ============================================================================
+   POD SHARING - VISUAL ENHANCEMENTS
+   ============================================================================ */
+
+/* Shared Content Cards */
+.shared-item-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.shared-item-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.shared-item-card:hover::before {
+    left: 100%;
+}
+
+/* Progress Bar Animation */
+@keyframes progressFill {
+    from {
+        width: 0%;
+    }
+
+    to {
+        width: var(--progress-width);
+    }
+}
+
+.progress-bar-animated {
+    animation: progressFill 1s ease-out forwards;
+}
+
+/* Friend Selector Animations */
+.friend-checkbox {
+    transform: translateX(0);
+    transition: all 0.2s ease;
+}
+
+.friend-checkbox:hover {
+    transform: translateX(5px);
+}
+
+.friend-checkbox input[type="checkbox"]:checked+.friend-avatar {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+    transform: scale(1.1);
+}
+
+/* Message Bubbles */
+.message-bubble {
+    animation: messageSlideIn 0.3s ease-out;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Partner Card Hover Effects */
+.partner-card {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.partner-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+}
+
+.partner-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.partner-card:hover::after {
+    transform: scaleX(1);
+}
+
+/* Expandable Content */
+.expandable-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.expandable-content.expanded {
+    max-height: 500px;
+}
+
+/* Share Button Pulse */
+@keyframes pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 0 10px rgba(124, 58, 237, 0);
+    }
+}
+
+.share-btn:hover {
+    animation: pulse 1.5s infinite;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .pod-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .shared-content-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .modal-card {
+        width: 95% !important;
+        max-width: none !important;
+        margin: 1rem;
+    }
+
+    .friend-selector {
+        max-height: 200px !important;
+    }
+
+    #messageThread {
+        max-height: 250px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .partner-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .item-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.5rem;
+    }
+
+    .share-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Loading States */
+.skeleton {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Notification Badge */
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    animation: badgePop 0.3s ease-out;
+}
+
+@keyframes badgePop {
+    0% {
+        transform: scale(0);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Smooth Transitions */
+* {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+button,
+.btn,
+.action-btn {
+    transition: all 0.2s ease;
+}
+
+button:active,
+.btn:active {
+    transform: scale(0.95);
+}

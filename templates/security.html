@@ -40,8 +40,7 @@
                 <h4>Password</h4>
                 <p>Last changed: <span id="passwordLastChanged">Recently</span></p>
             </div>
-            <button class="btn btn-secondary"
-                onclick="alert('Please go to Settings > Account Security to change your password.')">Update</button>
+            <button class="btn btn-secondary" onclick="openPasswordModal()">Update</button>
         </div>
     </div>
 
@@ -66,19 +65,17 @@
         </div>
     </div>
 
-    <div class="settings-section danger-zone" style="border-color: rgba(239, 68, 68, 0.2);">
-        <div class="section-title" style="color: #ef4444;">
+    <div class="settings-section danger-zone border-danger-light">
+        <div class="section-title text-danger">
             <i class="fas fa-user-slash"></i>
             Account Deactivation
         </div>
-        <div class="setting-row" style="border-bottom: none;">
+        <div class="setting-row border-b-0">
             <div class="setting-info">
                 <h4>Delete Your Account</h4>
                 <p>Permanently remove all your data and achievements. This cannot be undone.</p>
             </div>
-            <button class="nav-btn"
-                style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.75rem 1.5rem;"
-                onclick="initiateDeleteAccount()">Delete
+            <button class="nav-btn btn-danger-outline" onclick="initiateDeleteAccount()">Delete
                 Account</button>
         </div>
     </div>
@@ -92,21 +89,62 @@
             <button class="close-modal" onclick="closeOtpModal()"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
-            <p style="margin-bottom: 1.5rem; color: #cbd5e1;">
+            <p class="mb-6 text-gray-300">
                 For your security, please enter the One-Time Password sent to your email to confirm account deletion.
             </p>
             <div class="form-group">
                 <label>Enter OTP Code</label>
-                <input type="text" id="otpInput" class="form-input" placeholder="123456" maxlength="6"
-                    style="text-align: center; letter-spacing: 5px; font-size: 1.5rem;">
+                <input type="text" id="otpInput" class="form-input otp-input-style" placeholder="123456" maxlength="6">
             </div>
-            <div id="otpError" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; display: none;">Invalid
+            <div id="otpError" class="text-danger text-sm mt-2 hidden">Invalid
                 Code</div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeOtpModal()">Cancel</button>
             <button class="btn btn-danger" onclick="confirmDeleteAccount()" id="confirmDeleteBtn">Permanently
                 Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-overlay" id="passwordModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="fas fa-key"></i> Change Password</h3>
+            <button class="close-modal" onclick="closePasswordModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <form id="changePasswordForm">
+                <div class="form-group mb-4">
+                    <label>Current Password</label>
+                    <input type="password" id="currentPassword" class="form-input" required>
+                </div>
+                <div class="form-group mb-4">
+                    <label>New Password</label>
+                    <input type="password" id="newPassword" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" id="confirmNewPassword" class="form-input" required>
+                </div>
+
+                <div class="form-group password-otp-group">
+                    <label class="text-warning"><i class="fas fa-lock"></i> Security Verification Code</label>
+                    <p class="text-xs text-gray-500 mb-2">Please enter the
+                        code sent to your email/mobile.</p>
+                    <input type="text" id="passwordOtp" class="form-input" placeholder="Enter 6-digit OTP" maxlength="6"
+                        style="letter-spacing: 2px;">
+                </div>
+
+                <div id="passwordError" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; display: none;">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closePasswordModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitChangePassword()" id="submitPasswordBtn">Update
+                Password</button>
         </div>
     </div>
 </div>
@@ -145,5 +183,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="/static/js/security.js"></script>
+<script src="/static/js/security.js?v=2"></script>
 {% endblock %}

@@ -231,9 +231,12 @@ class DashboardManager {
             });
             if (reviewRes.ok) {
                 const rData = await reviewRes.json();
-                // If we have substantial data (e.g. > 1 task or hour), offer review
-                if (rData.tasks_completed > 0 || rData.total_hours > 0) {
-                    this.renderReviewTrigger(rData);
+                // Check Preference: AI Insight Summaries
+                // Default to true if not set
+                if (this.userData.ai_insights !== false) {
+                    if (rData.tasks_completed > 0 || rData.total_hours > 0) {
+                        this.renderReviewTrigger(rData);
+                    }
                 }
             }
         } catch (err) {
@@ -384,12 +387,37 @@ class DashboardManager {
         if (greetingEl) {
             greetingEl.innerHTML = `Welcome back, ${name}! <span style="font-size: 1rem; color: rgba(255,255,255,0.4); display: block; margin-top: 0.5rem; font-weight: 400;">You're ${phrase}.</span>`;
         } else {
-            // If there's no H1, insert one at
-            const topNav = document.querySelector('.top-nav');
-            const h1 = document.createElement('h1');
-            h1.style.marginBottom = '2rem';
-            h1.innerHTML = `Welcome back, ${name}! <span style="font-size: 1rem; color: rgba(255,255,255,0.4); display: block; margin-top: 0.5rem; font-weight: 400;">You're ${phrase}.</span>`;
-            topNav.parentNode.insertBefore(h1, topNav.nextSibling);
+            // Locate H1 or insert
+            const existingH1 = document.querySelector('.main-content h1');
+            if (existingH1) {
+                // If found (sometimes hidden in layouts)
+                // Custom Greeting based on Persona
+                let greeting = `Welcome back, ${name}!`;
+                let subtext = `You're ${phrase}.`;
+
+                if (this.userData.preferred_learning_time) {
+                    const pref = this.userData.preferred_learning_time.toLowerCase();
+                    if (pref.includes('morning')) {
+                        greeting = `Rise and Shine, ${name}!`;
+                        subtext = "Ready to own the morning?";
+                    } else if (pref.includes('focus')) {
+                        greeting = `Focus Mode Active.`;
+                        subtext = "Distractions minimized. Let's work.";
+                    } else if (pref.includes('night')) {
+                        greeting = `Good Evening, ${name}.`;
+                        subtext = "The quiet hours are yours.";
+                    }
+                }
+
+                existingH1.innerHTML = `${greeting} <span style="font-size: 1rem; color: rgba(255,255,255,0.4); display: block; margin-top: 0.5rem; font-weight: 400;">${subtext}</span>`;
+            } else {
+                // Fallback insert if completely missing
+                const topNav = document.querySelector('.top-nav');
+                const h1 = document.createElement('h1');
+                h1.style.marginBottom = '2rem';
+                h1.innerHTML = `Welcome back, ${name}! <span style="font-size: 1rem; color: rgba(255,255,255,0.4); display: block; margin-top: 0.5rem; font-weight: 400;">You're ${phrase}.</span>`;
+                if (topNav) topNav.parentNode.insertBefore(h1, topNav.nextSibling);
+            }
         }
     }
 

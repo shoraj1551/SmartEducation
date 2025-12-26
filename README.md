@@ -17,6 +17,23 @@ SmartEducation is a premium AI-powered educational dashboard and resource manage
 - **Frontend:** Vanilla JS, CSS3 (Glassmorphism), FontAwesome.
 - **Database:** SQLite (SQLAlchemy ORM).
 
+
+## Configuration
+
+The application uses environment variables for configuration. Create a `.env` file in the root directory or set these variables in your deployment environment.
+
+### Required Variables
+- `SECRET_KEY`: Secret key for Flask sessions.
+- `JWT_SECRET_KEY`: Secret key for JWT authentication.
+- `MAIL_USERNAME` / `MAIL_PASSWORD`: Credentials for the mail server.
+- `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN`: Credentials for Twilio SMS.
+
+### Development Defaults
+If not set, the application defaults to development values (e.g., `dev-secret-key-change-in-production`). The application automatically validates the presence of these variables on startup in production mode (`DEBUG=False`).
+
+### Constants
+Hardcoded values and URLs are centralized in `app/constants.py`.
+
 ## Getting Started
 
 ### Prerequisites

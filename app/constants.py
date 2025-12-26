@@ -1,0 +1,7 @@
+YOUTUBE_THUMBNAIL_URL_TEMPLATE = "https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
+YOUTUBE_EMBED_URL_TEMPLATE = "https://www.youtube-nocookie.com/embed/{video_id}?rel=0&modestbranding=1&iv_load_policy=3"
+VIMEO_EMBED_URL_TEMPLATE = "https://player.vimeo.com/video/{video_id}?dnt=1"
+YOUTUBE_MAXRES_THUMBNAIL_URL_TEMPLATE = "https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+YOUTUBE_WATCH_URL_TEMPLATE = "https://youtube.com/watch?v={video_id}"
+UDEMY_COURSE_URL_TEMPLATE = "https://udemy.com/course/{slug}"
+COURSERA_LEARN_URL_TEMPLATE = "https://coursera.org/learn/{course_id}"

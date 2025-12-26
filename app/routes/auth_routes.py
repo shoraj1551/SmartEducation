@@ -278,21 +278,32 @@ def login():
         # Login user
         result, message = AuthService.login_user(
             identifier,
-            data['password']
+            data['password'],
+            device_info=request.user_agent.string,
+            ip_address=request.remote_addr
         )
         
         if not result:
             return jsonify({'error': message}), 401
             
         # Check for structured verification error (returned as result dict with error_code)
-        if isinstance(result, dict) and result.get('error_code') == 'VERIFICATION_REQUIRED':
-            return jsonify({
-                'code': 'VERIFICATION_REQUIRED',
-                'error': message,
-                'nextStep': 'OTP_VERIFICATION',
-                'userId': result.get('user_id'),
-                'verifiedChannels': result.get('verified_channels')
-            }), 403
+        if isinstance(result, dict):
+            if result.get('error_code') == 'VERIFICATION_REQUIRED':
+                return jsonify({
+                    'code': 'VERIFICATION_REQUIRED',
+                    'error': message,
+                    'nextStep': 'OTP_VERIFICATION',
+                    'userId': result.get('user_id'),
+                    'verifiedChannels': result.get('verified_channels')
+                }), 403
+            elif result.get('error_code') == '2FA_REQUIRED':
+                return jsonify({
+                    'code': '2FA_REQUIRED',
+                    'error': message,
+                    'nextStep': '2FA_VERIFICATION',
+                    'userId': result.get('user_id'),
+                    'email': result.get('email')
+                }), 403
         
         # Log successful login
         ActivityService.log_activity(result['user']['id'], 'login', 'User logged in successfully')
@@ -302,6 +313,38 @@ def login():
             'token': result['token']
         }), 200
         
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@auth_bp.route('/verify-2fa-otp', methods=['POST'])
+def verify_2fa_otp():
+    """Verify 2FA OTP and complete login"""
+    try:
+        data = request.get_json()
+        
+        if not data.get('user_id') or not data.get('otp_code'):
+             return jsonify({'error': 'user_id and otp_code are required'}), 400
+
+        result, message = AuthService.verify_2fa_and_login(
+            data['user_id'],
+            data['otp_code'],
+            device_info=request.user_agent.string,
+            ip_address=request.remote_addr
+        )
+
+        if not result:
+            return jsonify({'error': message}), 400
+
+        # Log successful login
+        ActivityService.log_activity(result['user']['id'], 'login', 'User logged in successfully (2FA)')
+        
+        return jsonify({
+            'message': message,
+            'user': result['user'],
+            'token': result['token']
+        }), 200
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

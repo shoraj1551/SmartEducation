@@ -1,10 +1,10 @@
 <header class="top-nav">
-    <div class="search-container">
+    <div class="search-container" {% if request.path !='/bookmarks' %}style="display: none;" {% endif %}>
         <i class="fas fa-search"></i>
         <input type="text" class="search-input" placeholder="Search for courses, activities...">
     </div>
 
-    <div class="user-menu-container">
+    <div class="user-menu-container" style="margin-left: auto;">
         <div class="user-trigger" id="userMenuTrigger">
             <div class="user-avatar" id="headerAvatarInitials">U</div>
             <div class="user-info-brief">
@@ -42,24 +42,5 @@
         localStorage.removeItem('user');
         window.location.href = '/login';
     }
-
-    // update header user info from localstorage if available
-    document.addEventListener('DOMContentLoaded', () => {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-            try {
-                const user = JSON.parse(userStr);
-                const initials = user.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
-                const name = user.name ? user.name.split(' ')[0] : 'Scholar';
-
-                const avatarEl = document.getElementById('headerAvatarInitials');
-                const nameEl = document.getElementById('headerUserName');
-
-                if (avatarEl) avatarEl.textContent = initials;
-                if (nameEl) nameEl.textContent = name;
-            } catch (e) {
-                console.error("Error parsing user info", e);
-            }
-        }
-    });
+    // Note: User info population is now handled globally by common.js
 </script>

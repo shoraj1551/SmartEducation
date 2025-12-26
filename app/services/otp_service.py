@@ -140,6 +140,54 @@ class OTPService:
             return True  # Return True to allow testing to continue
     
     @staticmethod
+    def send_email_login_alert(email, device_info, ip_address, timestamp):
+        """Send Login Alert via email"""
+        try:
+            # Check if SMTP credentials are configured
+            if not current_app.config.get('MAIL_USERNAME') or not current_app.config.get('MAIL_PASSWORD'):
+                print(f"⚠️  EMAIL CREDENTIALS NOT CONFIGURED - Login Alert Skipped for {email}")
+                return True
+            
+            subject = f"SmartEducation - New Login Alert"
+            
+            body = f"""
+            <html>
+                <body style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;">
+                    <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; border-left: 5px solid #667eea;">
+                        <h2 style="color: #333;">New Sign-in Detected</h2>
+                        <p>We noticed a new sign-in to your SmartEducation account.</p>
+                        
+                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>Device:</strong> {device_info}</p>
+                            <p style="margin: 5px 0;"><strong>IP Address:</strong> {ip_address}</p>
+                            <p style="margin: 5px 0;"><strong>Time:</strong> {timestamp}</p>
+                        </div>
+                        
+                        <p style="color: #666;">If this was you, you can ignore this email.</p>
+                        <p style="color: #e53e3e; font-weight: bold;">If this wasn't you, please change your password immediately.</p>
+                        
+                        <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
+                        <p style="color: #999; font-size: 12px;">© 2025 SmartEducation. All rights reserved.</p>
+                    </div>
+                </body>
+            </html>
+            """
+            
+            msg = Message(
+                subject=subject,
+                recipients=[email],
+                html=body
+            )
+            
+            mail.send(msg)
+            print(f"✅ Login Alert sent successfully to {email}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error sending Login Alert: {str(e)}")
+            return True
+
+    @staticmethod
     def verify_otp(user_id, otp_code, otp_type, purpose):
         """Verify OTP code"""
         otp = OTP.objects(

@@ -4,7 +4,7 @@ import requests
 from typing import Dict, Any, Optional
 from datetime import datetime
 from .base import BaseAdapter
-from flask import current_app
+from app.constants import YOUTUBE_THUMBNAIL_URL_TEMPLATE
 
 class YouTubeAdapter(BaseAdapter):
     """
@@ -55,7 +55,7 @@ class YouTubeAdapter(BaseAdapter):
             'title': f"YouTube Video ({video_id})",
             'description': "Imported from YouTube",
             'duration_minutes': 15, # Default placeholder
-            'thumbnail_url': f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg",
+            'thumbnail_url': YOUTUBE_THUMBNAIL_URL_TEMPLATE.format(video_id=video_id),
             'author': "YouTube Creator",
             'published_at': datetime.utcnow().isoformat(),
             'platform_metadata': {
