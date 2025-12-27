@@ -16,7 +16,15 @@ class Config:
     DEBUG = os.getenv('DEBUG', 'True') == 'True'
     
     # Database
+    # Database
+    # DEBUG: Print environment state to diagnose Vercel issue
+    print(f"DEBUG: VERCEL env var: {os.getenv('VERCEL')}")
+    print(f"DEBUG: MONGODB_URI present: {'Yes' if os.getenv('MONGODB_URI') else 'No'}")
+    
     db_url = os.getenv('MONGODB_URI', os.getenv('DATABASE_URL', 'mongodb://localhost:27017/SmartEducation'))
+    print(f"DEBUG: Final db_url type: {type(db_url)}")
+    print(f"DEBUG: Final db_url (masked): {db_url.split('@')[-1] if '@' in db_url else db_url}")
+
     # MongoDB Settings for Flask-MongoEngine
     MONGODB_SETTINGS = {
         'host': db_url
