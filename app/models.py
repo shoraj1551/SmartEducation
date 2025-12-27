@@ -38,21 +38,6 @@ class User(Document):
     weekly_xp = IntField(default=0)
     last_weekly_reset = DateTimeField(default=datetime.utcnow)
 
-class DailyStat(Document):
-    """Pre-aggregated stats for dashboard performance (Phase 29)"""
-    meta = {'collection': 'daily_stats', 'indexes': [('user_id', 'date')]}
-    
-    user_id = ReferenceField('User', required=True)
-    date = DateTimeField(required=True) # Midnight UTC
-    total_minutes = IntField(default=0)
-    sessions_count = IntField(default=0)
-    
-    def to_dict(self):
-        return {
-            'date': self.date.isoformat(),
-            'total_minutes': self.total_minutes,
-            'sessions_count': self.sessions_count
-        }
     
     # Onboarding / Learning Context (OLD - kept for backward compatibility)
     learning_goal = StringField(max_length=50) # upskill, switch, academic, hobby
@@ -1029,4 +1014,20 @@ class LiveClass(Document):
             'ended_at': self.ended_at.isoformat() if self.ended_at else None,
             'tags': self.tags,
             'category': self.category
+        }
+
+class DailyStat(Document):
+    """Pre-aggregated stats for dashboard performance (Phase 29)"""
+    meta = {'collection': 'daily_stats', 'indexes': [('user_id', 'date')]}
+    
+    user_id = ReferenceField('User', required=True)
+    date = DateTimeField(required=True) # Midnight UTC
+    total_minutes = IntField(default=0)
+    sessions_count = IntField(default=0)
+    
+    def to_dict(self):
+        return {
+            'date': self.date.isoformat(),
+            'total_minutes': self.total_minutes,
+            'sessions_count': self.sessions_count
         }
