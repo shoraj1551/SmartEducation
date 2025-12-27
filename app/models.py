@@ -25,6 +25,7 @@ class User(Document):
     is_verified = BooleanField(default=False)
     is_email_verified = BooleanField(default=False)
     is_mobile_verified = BooleanField(default=False)
+    is_active = BooleanField(default=True) # Added for Flask-Login support
     status = StringField(max_length=20, default='PENDING_VERIFICATION') # PENDING_VERIFICATION, PARTIAL_VERIFIED, ACTIVE, SUSPENDED
     created_at = DateTimeField(default=datetime.utcnow)
     updated_at = DateTimeField(default=datetime.utcnow)
