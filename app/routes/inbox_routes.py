@@ -249,3 +249,67 @@ def validate_addition(user_id):
     except Exception as e:
         return jsonify({'error': f'Validation failed: {str(e)}'}), 500
 
+
+# ==============================================================================
+# LIBRARY ROUTES
+# ==============================================================================
+
+@inbox_bp.route('/library', methods=['GET'])
+@token_required
+def get_library(user_id):
+    """Get all library items for the user"""
+    try:
+        source_type = request.args.get('source_type')
+        limit = request.args.get('limit', type=int)
+        skip = request.args.get('skip', default=0, type=int)
+        
+        items = InboxService.get_library_items(
+            user_id=user_id,
+            source_type_filter=source_type,
+            limit=limit,
+            skip=skip
+        )
+        
+        return jsonify({
+            'items': [item.to_dict() for item in items],
+            'count': len(items)
+        }), 200
+    
+    except Exception as e:
+        return jsonify({'error': f'Failed to fetch library: {str(e)}'}), 500
+
+
+@inbox_bp.route('/items/<item_id>/move-to-inbox', methods=['POST'])
+@token_required
+def move_to_inbox(user_id, item_id):
+    """Move an item from library to active inbox"""
+    try:
+        item = InboxService.move_to_inbox(user_id, item_id)
+        
+        return jsonify({
+            'message': 'Item moved to inbox successfully',
+            'item': item.to_dict()
+        }), 200
+    
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f'Failed to move item: {str(e)}'}), 500
+
+
+@inbox_bp.route('/items/<item_id>/move-to-library', methods=['POST'])
+@token_required
+def move_to_library(user_id, item_id):
+    """Move an item from inbox back to library"""
+    try:
+        item = InboxService.move_to_library(user_id, item_id)
+        
+        return jsonify({
+            'message': 'Item moved to library successfully',
+            'item': item.to_dict()
+        }), 200
+    
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f'Failed to move item: {str(e)}'}), 500

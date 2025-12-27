@@ -359,7 +359,11 @@ class LearningItem(Document):
     platform = StringField(max_length=100)  # udemy, youtube, coursera, local, medium, etc.
     
     # Status Management
-    status = StringField(max_length=20, default='active')  # active, paused, completed, dropped
+    status = StringField(
+        max_length=20, 
+        default='library',
+        choices=['library', 'active', 'paused', 'completed', 'archived']
+    )  # library: available to add, active: currently learning, paused: temporarily stopped, completed: finished, archived: completed and archived
     
     # Duration Tracking
     total_duration = IntField(default=0)  # in minutes
@@ -922,4 +926,71 @@ class Flashcard(Document):
             'back': self.back,
             'next_review': self.next_review_date.isoformat(),
             'interval': self.interval
+        }
+
+
+# ==============================================================================
+# FEATURE 13: LIVE CLASSES
+# ==============================================================================
+
+class LiveClass(Document):
+    """Live online class sessions (Google Meet, Zoom, etc.)"""
+    meta = {'collection': 'live_classes'}
+    
+    user_id = ReferenceField(User, required=True)
+    title = StringField(max_length=300)
+    description = StringField()
+    
+    # Platform and Meeting Info
+    platform = StringField(
+        max_length=50,
+        choices=['google_meet', 'zoom', 'custom'],
+        default='custom'
+    )
+    meeting_url = StringField(max_length=500, required=True)
+    meeting_id = StringField(max_length=200)
+    passcode = StringField(max_length=100)
+    
+    # Scheduling
+    scheduled_at = DateTimeField()
+    duration_minutes = IntField(default=60)
+    
+    # Recording (Future AI Integration)
+    is_recorded = BooleanField(default=False)
+    recording_url = StringField(max_length=500)
+    transcript = StringField()
+    recording_status = StringField(
+        max_length=50,
+        choices=['pending', 'recording', 'processing', 'completed', 'failed'],
+        default='pending'
+    )
+    
+    # Metadata
+    created_at = DateTimeField(default=datetime.utcnow)
+    joined_at = DateTimeField()
+    ended_at = DateTimeField()
+    
+    # Tags and Categories
+    tags = ListField(StringField(max_length=50))
+    category = StringField(max_length=100)
+    
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'user_id': str(self.user_id.id),
+            'title': self.title,
+            'description': self.description,
+            'platform': self.platform,
+            'meeting_url': self.meeting_url,
+            'meeting_id': self.meeting_id,
+            'scheduled_at': self.scheduled_at.isoformat() if self.scheduled_at else None,
+            'duration_minutes': self.duration_minutes,
+            'is_recorded': self.is_recorded,
+            'recording_url': self.recording_url,
+            'recording_status': self.recording_status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'joined_at': self.joined_at.isoformat() if self.joined_at else None,
+            'ended_at': self.ended_at.isoformat() if self.ended_at else None,
+            'tags': self.tags,
+            'category': self.category
         }

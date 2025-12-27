@@ -9,8 +9,8 @@
 {% block content %}
 <div class="inbox-header">
     <div>
-        <h1>Learning Inbox</h1>
-        <p>Manage your learning materials in one unified place</p>
+        <h1>📥 Learning Inbox</h1>
+        <p>Your active learning focus zone (max 3 items)</p>
     </div>
     <div style="display: flex; gap: 1rem; align-items: center;">
         <div class="capacity-indicator">
@@ -22,19 +22,29 @@
             </div>
             <span id="capacityText" style="font-size: 0.85rem; font-weight: 700;">0/3</span>
         </div>
-        <button class="primary-btn nav-btn" id="addItemBtn"
-            onclick="document.getElementById('addItemModal').style.display='flex'">
-            <i class="fas fa-plus"></i> Add Item
+        <button class="primary-btn nav-btn" onclick="openJoinClassModal()">
+            <i class="fas fa-video"></i> Join Live Class
         </button>
+        <a href="/bookmarks" class="primary-btn nav-btn">
+            <i class="fas fa-book"></i> Browse Library
+        </a>
     </div>
 </div>
 
 <div class="filter-tabs">
-    <button class="filter-tab active" data-filter="active">Active</button>
-    <button class="filter-tab" data-filter="paused">Paused</button>
-    <button class="filter-tab" data-filter="completed">Completed</button>
-    <button class="filter-tab" data-filter="dropped">Dropped</button>
-    <button class="filter-tab" data-filter="all">All</button>
+    <button class="filter-tab active" data-filter="active">🟢 Active</button>
+    <button class="filter-tab" data-filter="paused">⏸️ Paused</button>
+</div>
+
+<!-- Today's Schedule Section -->
+<div class="today-schedule" id="todaySchedule"
+    style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border: 1px solid rgba(102, 126, 234, 0.2); border-radius: 12px; padding: 1.5rem;">
+    <h3 style="margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+        <i class="fas fa-calendar-day"></i> Today's Schedule (Next 6 Hours)
+    </h3>
+    <div id="scheduleItems" style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <div style="text-align: center; opacity: 0.5; padding: 1rem;">Loading schedule...</div>
+    </div>
 </div>
 
 <div class="inbox-grid" id="inboxGrid">
@@ -43,53 +53,34 @@
 
 <div class="empty-state" id="emptyState" style="display: none;">
     <i class="fas fa-inbox"></i>
-    <h3>No items found</h3>
-    <p>Add your first learning item to get started</p>
+    <h3>Your inbox is empty</h3>
+    <p>Go to <a href="/library" style="color: #667eea; text-decoration: underline;">Library</a> to add content to your
+        inbox</p>
 </div>
 
-<!-- Add Item Modal -->
-<div class="modal" id="addItemModal">
-    <div class="modal-card">
-        <h2 style="margin-bottom: 2rem;">Add Learning Item</h2>
-        <form id="addItemForm">
+<!-- Add Item Modal removed - use Library instead -->
+
+<!-- Join Live Class Modal -->
+<div class="modal" id="joinClassModal" style="display: none;">
+    <div class="modal-card" style="max-width: 500px;">
+        <h2 style="margin-bottom: 1.5rem;"><i class="fas fa-video"></i> Join Live Class</h2>
+        <form id="joinClassForm" onsubmit="inboxManager.handleJoinClass(event)">
             <div class="form-group">
-                <label>Title *</label>
-                <input type="text" class="form-control" id="itemTitle" required
-                    placeholder="e.g., Python for Data Science">
+                <label>Meeting URL *</label>
+                <input type="url" id="classUrl" required placeholder="https://meet.google.com/abc-defg-hij"
+                    class="form-control">
+                <small>Paste Google Meet, Zoom, or any meeting link</small>
             </div>
             <div class="form-group">
-                <label>Source Type *</label>
-                <select class="form-control" id="itemSourceType" required>
-                    <option value="">Select type...</option>
-                    <option value="course">Course</option>
-                    <option value="video">Video</option>
-                    <option value="playlist">Playlist</option>
-                    <option value="pdf">PDF</option>
-                    <option value="article">Article</option>
-                    <option value="bookmark">Bookmark</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Source URL</label>
-                <input type="url" class="form-control" id="itemSourceUrl" placeholder="https://...">
-            </div>
-            <div class="form-group">
-                <label>Platform</label>
-                <input type="text" class="form-control" id="itemPlatform" placeholder="e.g., Udemy, YouTube, Coursera">
-            </div>
-            <div class="form-group">
-                <label>Description</label>
-                <textarea class="form-control" id="itemDescription" rows="3"
-                    placeholder="Brief description..."></textarea>
-            </div>
-            <div class="form-group">
-                <label>Total Duration (minutes)</label>
-                <input type="number" class="form-control" id="itemDuration" placeholder="e.g., 600">
+                <label>Class Title (Optional)</label>
+                <input type="text" id="classTitle" placeholder="e.g., Weekly Study Session" class="form-control">
             </div>
             <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                 <button type="button" class="nav-btn" style="flex: 1; opacity: 0.5;"
-                    onclick="document.getElementById('addItemModal').style.display='none'">Cancel</button>
-                <button type="submit" class="primary-btn nav-btn" style="flex: 1;">Add Item</button>
+                    onclick="closeJoinClassModal()">Cancel</button>
+                <button type="submit" class="primary-btn nav-btn" style="flex: 1;">
+                    <i class="fas fa-rocket"></i> Join Class
+                </button>
             </div>
         </form>
     </div>

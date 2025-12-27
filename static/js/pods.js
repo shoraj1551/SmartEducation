@@ -258,53 +258,129 @@ async function nudge(id) {
 // ============================================================================
 
 let currentPartnerId = null;
+let currentPartnerName = null;
 
 async function openMessageModal(partnerId, partnerName) {
+    console.log('Opening message modal for:', partnerId, partnerName);
     currentPartnerId = partnerId;
-    document.getElementById('messagePartnerName').innerHTML = `<i class="fas fa-comment"></i> Messages with ${partnerName}`;
+    currentPartnerName = partnerName;
+
+    // Update header
+    document.getElementById('messagePartnerName').innerHTML = `<i class="fas fa-comment"></i> ${partnerName}`;
+
+    // Set avatar initials
+    const avatar = document.getElementById('messagePartnerAvatar');
+    if (avatar) {
+        avatar.textContent = getInitials(partnerName);
+    }
+
+    // Show modal
     document.getElementById('messageModal').style.display = 'flex';
+
+    // Load messages
     await loadMessages(partnerId);
+
+    // Focus input
+    setTimeout(() => {
+        document.getElementById('messageInput').focus();
+    }, 100);
 }
 
 async function loadMessages(partnerId) {
+    console.log('Loading messages for partner:', partnerId);
     try {
         const res = await fetch(`/api/pod/messages/${partnerId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
+        console.log('Messages response status:', res.status);
+
         if (res.ok) {
             const messages = await res.json();
+            console.log('Loaded messages:', messages);
+
             const thread = document.getElementById('messageThread');
             const userStr = localStorage.getItem('user');
             const userId = userStr ? JSON.parse(userStr).id : null;
 
+            // Update message count
+            const countEl = document.getElementById('messageCount');
+            if (countEl) {
+                countEl.textContent = `${messages.length} message${messages.length !== 1 ? 's' : ''}`;
+            }
+
             if (messages.length === 0) {
-                thread.innerHTML = '<p style="opacity:0.5; text-align:center; padding: 2rem;">No messages yet. Start the conversation!</p>';
+                thread.innerHTML = `
+                    <div style="text-align: center; padding: 3rem 1rem; opacity: 0.5;">
+                        <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                        <p style="font-size: 1.1rem; margin: 0;">No messages yet</p>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Start the conversation with ${currentPartnerName}!</p>
+                    </div>
+                `;
                 return;
             }
 
-            thread.innerHTML = messages.map(m => `
-                <div style="margin-bottom: 1rem; text-align: ${m.sender_id === userId ? 'right' : 'left'};">
-                    <div style="display: inline-block; max-width: 70%; padding: 0.75rem 1rem; background: ${m.sender_id === userId ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'rgba(255,255,255,0.1)'}; border-radius: 12px; word-wrap: break-word;">
-                        ${m.message}
-                    </div>
-                    <div style="font-size: 0.75rem; opacity: 0.5; margin-top: 0.25rem;">${new Date(m.created_at).toLocaleTimeString()}</div>
-                </div>
-            `).join('');
+            thread.innerHTML = messages.map(m => {
+                const isSender = m.sender_id === userId;
+                const time = new Date(m.created_at);
+                const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+                return `
+                <div class="message-bubble" style="margin-bottom: 1.25rem; text-align: ${isSender ? 'right' : 'left'}; animation: messageSlideIn 0.3s ease-out;">
+                    <div style="display: inline-block; max-width: 75%; text-align: left;">
+                        ${!isSender ? `<div style="font-size: 0.75rem; opacity: 0.6; margin-bottom: 0.25rem; font-weight: 600;">${currentPartnerName}</div>` : ''}
+                        <div style="padding: 0.875rem 1.125rem; background: ${isSender ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'rgba(255,255,255,0.1)'}; border-radius: ${isSender ? '16px 16px 4px 16px' : '16px 16px 16px 4px'}; word-wrap: break-word; box-shadow: 0 2px 8px rgba(0,0,0,0.2); position: relative;">
+                            ${m.message}
+                            ${isSender ? '<div style="position: absolute; bottom: 0.5rem; right: 0.5rem; font-size: 0.7rem; opacity: 0.7;"><i class="fas fa-check"></i></div>' : ''}
+                        </div>
+                        <div style="font-size: 0.7rem; opacity: 0.5; margin-top: 0.35rem; ${isSender ? 'text-align: right;' : ''}">${timeStr}</div>
+                    </div>
+                </div>
+            `}).join('');
+
+            // Update last message time
+            if (messages.length > 0) {
+                const lastMsg = messages[messages.length - 1];
+                const lastTime = new Date(lastMsg.created_at);
+                const now = new Date();
+                const diffMinutes = Math.floor((now - lastTime) / 60000);
+
+                const timeEl = document.getElementById('lastMessageTime');
+                if (timeEl) {
+                    if (diffMinutes < 1) timeEl.textContent = 'Just now';
+                    else if (diffMinutes < 60) timeEl.textContent = `${diffMinutes}m ago`;
+                    else timeEl.textContent = lastTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+            }
+
+            // Scroll to bottom
             thread.scrollTop = thread.scrollHeight;
+        } else {
+            const error = await res.json();
+            console.error('Error loading messages:', error);
+            document.getElementById('messageThread').innerHTML = `<p style="text-align: center; color: #ef4444; padding: 2rem;">Error loading messages: ${error.error || 'Unknown error'}</p>`;
         }
     } catch (e) {
-        console.error('Error loading messages:', e);
-        document.getElementById('messageThread').innerHTML = '<p style="text-align: center; color: #ef4444;">Error loading messages</p>';
+        console.error('Exception loading messages:', e);
+        document.getElementById('messageThread').innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">Error loading messages. Please try again.</p>';
     }
 }
 
 async function sendMessage() {
     const input = document.getElementById('messageInput');
     const message = input.value.trim();
+    const sendBtn = document.getElementById('sendMessageBtn');
 
-    if (!message || !currentPartnerId) return;
+    if (!message || !currentPartnerId) {
+        console.log('Cannot send: message empty or no partner selected');
+        return;
+    }
+
+    console.log('Sending message to:', currentPartnerId, 'Message:', message);
+
+    // Disable button and show loading
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Sending...';
 
     try {
         const res = await fetch('/api/pod/message', {
@@ -319,21 +395,43 @@ async function sendMessage() {
             })
         });
 
+        console.log('Send message response status:', res.status);
+
         if (res.ok) {
             input.value = '';
+            autoResizeTextarea(input);
             await loadMessages(currentPartnerId);
+
+            // Success feedback
+            sendBtn.innerHTML = '<i class="fas fa-check"></i> Sent!';
+            setTimeout(() => {
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+                sendBtn.disabled = false;
+            }, 1000);
         } else {
-            alert('Failed to send message');
+            const error = await res.json();
+            console.error('Failed to send message:', error);
+            alert(`Failed to send message: ${error.error || 'Unknown error'}`);
+            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+            sendBtn.disabled = false;
         }
     } catch (e) {
-        console.error('Error sending message:', e);
-        alert('Error sending message');
+        console.error('Exception sending message:', e);
+        alert('Error sending message. Please try again.');
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+        sendBtn.disabled = false;
     }
 }
 
 function closeMessageModal() {
     document.getElementById('messageModal').style.display = 'none';
     currentPartnerId = null;
+    currentPartnerName = null;
+}
+
+function autoResizeTextarea(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
 }
 
 function getInitials(name) {

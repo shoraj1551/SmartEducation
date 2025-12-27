@@ -413,6 +413,11 @@ class BookmarkManager {
                             ${Math.round(bm.relevance_score * 100)}% Match
                         </div>
                         <div class="card-actions">
+                            <!-- Add to Inbox Button -->
+                            <button class="action-btn inbox-btn" onclick="window.manager.addToInbox('${bm.id}', '${bm.title.replace(/'/g, "\\'")}')" title="Add to Learning Inbox">
+                                <i class="fas fa-inbox"></i>
+                            </button>
+                            
                             <!-- Commit Button for Features 1 & 3 -->
                             <button class="action-btn commit-btn" onclick="openCommitmentModal('${bm.id}', '${bm.title.replace(/'/g, "\\'")}')" title="Make a Hard Commitment">
                                 <i class="fas fa-handshake"></i>
@@ -429,6 +434,27 @@ class BookmarkManager {
                 </div>
             </div>
         `;
+    }
+
+    async addToInbox(bookmarkId, title) {
+        try {
+            const response = await fetch(`/api/inbox/items/${bookmarkId}/move-to-inbox`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+
+            if (response.ok) {
+                alert(`✅ "${title}" added to Learning Inbox!`);
+            } else {
+                const error = await response.json();
+                alert(`❌ ${error.error || 'Failed to add to inbox'}`);
+            }
+        } catch (error) {
+            console.error('Error adding to inbox:', error);
+            alert('❌ Error adding to inbox');
+        }
     }
 
     closeUploadModal() {

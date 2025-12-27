@@ -628,3 +628,124 @@ class InboxService:
         
         return item
 
+    @staticmethod
+    def move_to_inbox(user_id, item_id):
+        """
+        Move an item from library to active inbox
+        
+        Args:
+            user_id: User ID
+            item_id: Learning item ID
+            
+        Returns:
+            Updated LearningItem object
+            
+        Raises:
+            ValueError: If capacity limit reached or item not found
+        """
+        # Get user
+        try:
+            if isinstance(user_id, str):
+                user = User.objects.get(id=user_id)
+            else:
+                user = user_id
+        except DoesNotExist:
+            raise ValueError("User not found")
+        
+        # Check capacity
+        active_count = LearningItem.objects(
+            user_id=user,
+            status='active'
+        ).count()
+        
+        if active_count >= InboxService.MAX_ACTIVE_ITEMS:
+            raise ValueError(
+                f'Maximum {InboxService.MAX_ACTIVE_ITEMS} active items allowed. '
+                f'Please pause or complete an existing item first.'
+            )
+        
+        # Get item and verify ownership
+        item = InboxService.get_item_by_id(item_id, user_id)
+        if not item:
+            raise ValueError("Learning item not found or access denied")
+        
+        # Only allow moving from library status
+        if item.status != 'library':
+            raise ValueError(f"Can only move items from library. Current status: {item.status}")
+        
+        # Move to active
+        item.status = 'active'
+        if not item.started_at:
+            item.started_at = datetime.utcnow()
+        item.save()
+        
+        return item
+    
+    @staticmethod
+    def move_to_library(user_id, item_id):
+        """
+        Move an item from inbox back to library
+        
+        Args:
+            user_id: User ID
+            item_id: Learning item ID
+            
+        Returns:
+            Updated LearningItem object
+            
+        Raises:
+            ValueError: If item not found
+        """
+        # Get item and verify ownership
+        item = InboxService.get_item_by_id(item_id, user_id)
+        if not item:
+            raise ValueError("Learning item not found or access denied")
+        
+        # Only allow moving from active or paused status
+        if item.status not in ['active', 'paused']:
+            raise ValueError(f"Can only move active or paused items to library. Current status: {item.status}")
+        
+        # Move to library
+        item.status = 'library'
+        item.save()
+        
+        return item
+    
+    @staticmethod
+    def get_library_items(user_id, source_type_filter=None, limit=None, skip=0):
+        """
+        Get all library items for a user
+        
+        Args:
+            user_id: User ID
+            source_type_filter: Optional filter by source type
+            limit: Maximum number of items to return
+            skip: Number of items to skip (for pagination)
+            
+        Returns:
+            List of LearningItem objects with status='library'
+        """
+        try:
+            if isinstance(user_id, str):
+                user = User.objects.get(id=user_id)
+            else:
+                user = user_id
+        except DoesNotExist:
+            return []
+        
+        query = LearningItem.objects(user_id=user, status='library')
+        
+        if source_type_filter:
+            query = query.filter(source_type=source_type_filter)
+        
+        # Sort by added date (newest first)
+        query = query.order_by('-added_at')
+        
+        if skip:
+            query = query.skip(skip)
+        
+        if limit:
+            query = query.limit(limit)
+        
+        return list(query)
+

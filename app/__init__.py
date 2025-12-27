@@ -46,6 +46,8 @@ def create_app():
     from .routes.preference_routes import preference_bp
     from .routes.pod_routes import pod_bp
     from .routes.advanced_pod_routes import advanced_pod_bp
+    from .routes.live_class_routes import live_class_bp
+    from .routes.schedule_routes import schedule_bp
     # from .routes.video_guard_routes import video_guard_bp
     # from .routes.weekly_review_routes import weekly_review_bp
     # from .routes.burnout_routes import burnout_bp
@@ -75,6 +77,8 @@ def create_app():
     app.register_blueprint(preference_bp)
     app.register_blueprint(pod_bp)
     app.register_blueprint(advanced_pod_bp)
+    app.register_blueprint(live_class_bp)
+    app.register_blueprint(schedule_bp)
     # app.register_blueprint(video_guard_bp)
     # app.register_blueprint(weekly_review_bp)
     # app.register_blueprint(burnout_bp)

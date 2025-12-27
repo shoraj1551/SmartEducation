@@ -4,6 +4,7 @@ Pod Sharing Service - Handles privacy-controlled content sharing
 from app.models import User
 from app.pod_models import SharedContent, PodMessage
 from datetime import datetime
+from mongoengine import Q
 
 
 class PodSharingService:
