@@ -26,14 +26,13 @@
 </div>
 
 <div class="bookmarks-container">
-    <div class="controls-row">
-        <div class="filter-tabs">
+    <div class="controls-row" style="flex-wrap: wrap;">
+        <!-- Dynamic Filter Chips -->
+        <div class="filter-tabs" id="filterContainer">
             <div class="filter-tab active" data-filter="all">All Items</div>
-            <div class="filter-tab" data-filter="tech">Technology</div>
-            <div class="filter-tab" data-filter="science">Science</div>
-            <div class="filter-tab" data-filter="design">Design</div>
-            <div class="filter-tab" data-filter="business">Business</div>
+            <!-- Dynamic categories will be injected here by JS -->
         </div>
+
         <div class="sort-select">
             <select id="sortBookmarks"
                 style="background: none; border: none; color: white; cursor: pointer; font-weight: 600;">
@@ -59,23 +58,30 @@
 <div id="uploadModal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="document.getElementById('uploadModal').style.display='none'">&times;</span>
-        <h2>Upload Book</h2>
-        <p class="modal-subtitle">Add a PDF or eBook to your personal library.</p>
+        <h2>Upload to Drive</h2>
+        <p class="modal-subtitle">Add PDFs, eBooks, or notes to your personal Knowledge Drive.</p>
+
+        <div class="info-alert"
+            style="background: rgba(102, 126, 234, 0.1); border-left: 3px solid #667eea; padding: 0.8rem; border-radius: 4px; margin-bottom: 1.5rem; font-size: 0.9rem;">
+            <i class="fas fa-info-circle"></i> Max 5 files at a time. Total size limit: 50MB.
+        </div>
+
         <form id="uploadBookForm" class="auth-form">
             <div class="form-group">
-                <label>Book Title</label>
-                <input type="text" id="uploadTitle" placeholder="Enter book title" required>
+                <label>Files (PDF, EPUB, DOCX)</label>
+                <input type="file" id="uploadFile" accept=".pdf,.epub,.mobi,.doc,.docx" multiple required
+                    style="padding: 1rem; background: rgba(255,255,255,0.05); border: 2px dashed rgba(255,255,255,0.2); border-radius: 8px; text-align: center; cursor: pointer; height: auto;">
+                <small style="display: block; margin-top: 0.5rem; opacity: 0.6;">Select up to 5 files</small>
             </div>
+
             <div class="form-group">
-                <label>Topic / Category</label>
-                <input type="text" id="uploadTopic" placeholder="e.g. System Design" required>
+                <label>Topic / Label (Optional)</label>
+                <input type="text" id="uploadTopic" placeholder="e.g. System Design, History, Finances">
             </div>
-            <div class="form-group">
-                <label>File (PDF, EPUB)</label>
-                <input type="file" id="uploadFile" accept=".pdf,.epub,.mobi,.doc,.docx" required
-                    style="padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
-            </div>
-            <button type="submit" class="btn btn-primary btn-full">Upload to Library</button>
+
+            <button type="submit" class="btn btn-primary btn-full">
+                <i class="fas fa-cloud-upload-alt"></i> Upload to Drive
+            </button>
         </form>
     </div>
 </div>
@@ -113,6 +119,46 @@
     </div>
 </div>
 
+<!-- Share with Friends Modal -->
+<div class="modal" id="shareModal" style="display: none;">
+    <div class="modal-card"
+        style="max-width: 500px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px;">
+        <div style="padding: 2rem;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <h3
+                    style="margin: 0; font-size: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                    <i class="fas fa-user-friends"></i> Share Resource
+                </h3>
+                <button onclick="document.getElementById('shareModal').style.display='none'"
+                    style="background: rgba(255,255,255,0.05); border: none; color: rgba(255,255,255,0.6); font-size: 1.25rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <p id="shareItemTitle" style="margin-bottom: 1.5rem; opacity: 0.7; font-size: 0.95rem;"></p>
+
+            <div class="friend-selector" id="friendSelector"
+                style="max-height: 300px; overflow-y: auto; margin-bottom: 1.5rem;">
+                <div style="text-align: center; padding: 2rem; opacity: 0.5;">
+                    <i class="fas fa-circle-notch fa-spin"></i> Loading friends...
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" class="nav-btn"
+                    style="flex: 1; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); padding: 1rem;"
+                    onclick="document.getElementById('shareModal').style.display='none'">Cancel</button>
+                <button type="button" class="primary-btn nav-btn"
+                    style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 1rem;"
+                    onclick="window.manager.confirmShare()">
+                    <i class="fas fa-check"></i> Share
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Sync Loading Overlay -->
 <div id="syncOverlay"
     style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 14, 39, 0.95); z-index: 2000; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
@@ -127,13 +173,94 @@
             style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.5rem; color: #f093fb;"></i>
     </div>
     <h2
-        style="font-size: 2rem; margin-bottom: 1rem; background: var(--secondary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        style="font-size: 2rem; margin-bottom: 1rem; background: var(--secondary-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
         Magic Sync in Progress...</h2>
     <p style="color: rgba(255,255,255,0.6); max-width: 400px; line-height: 1.6;">AI is scanning your connected
         accounts (YouTube, Udemy, Drive) to build your personalized learning graph.</p>
 </div>
 
-<!-- Include Iron Contract Modal -->
+<!-- Connect Accounts Modal -->
+<div id="connectAccountsModal" class="modal" style="z-index: 2500;">
+    <div class="modal-content" style="max-width: 480px;">
+        <span class="close"
+            onclick="document.getElementById('connectAccountsModal').style.display='none'">&times;</span>
+        <h2>Connect Learning Sources</h2>
+        <p class="modal-subtitle">Link your external accounts to automatically sync courses and playists.</p>
+
+        <div class="account-list" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem;">
+            <!-- YouTube -->
+            <div class="account-item"
+                style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div
+                        style="width: 40px; height: 40px; background: #FF0000; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                        <i class="fab fa-youtube"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600;">YouTube</div>
+                        <div style="font-size: 0.8rem; opacity: 0.6;" id="ytStatus">Not Connected</div>
+                    </div>
+                </div>
+                <button class="btn-sm secondary-btn" onclick="window.manager.connectAccount('youtube')">Connect</button>
+            </div>
+
+            <!-- Udemy -->
+            <div class="account-item"
+                style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div
+                        style="width: 40px; height: 40px; background: #A435F0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600;">Udemy</div>
+                        <div style="font-size: 0.8rem; opacity: 0.6;" id="udemyStatus">Not Connected</div>
+                    </div>
+                </div>
+                <button class="btn-sm secondary-btn" onclick="window.manager.connectAccount('udemy')">Connect</button>
+            </div>
+
+            <!-- Coursera -->
+            <div class="account-item"
+                style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div
+                        style="width: 40px; height: 40px; background: #0056D2; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600;">Coursera</div>
+                        <div style="font-size: 0.8rem; opacity: 0.6;" id="courseraStatus">Not Connected</div>
+                    </div>
+                </div>
+                <button class="btn-sm secondary-btn"
+                    onclick="window.manager.connectAccount('coursera')">Connect</button>
+            </div>
+
+            <!-- Drive -->
+            <div class="account-item"
+                style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div
+                        style="width: 40px; height: 40px; background: #1FA463; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                        <i class="fab fa-google-drive"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600;">Google Drive</div>
+                        <div style="font-size: 0.8rem; opacity: 0.6;" id="driveStatus">Not Connected</div>
+                    </div>
+                </div>
+                <button class="btn-sm secondary-btn" onclick="window.manager.connectAccount('drive')">Connect</button>
+            </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; text-align: center;">
+            <button class="btn btn-primary btn-full" onclick="window.manager.startSyncFlow()"> Start Sync </button>
+        </div>
+    </div>
+</div>
+
+<!-- Includes -->
 {% include 'components/commitment_modal.html' %}
 {% endblock %}
 

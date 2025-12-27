@@ -81,6 +81,111 @@
     <!-- Common Modals (Search, etc.) -->
     {% include 'components/commitment_modal.html' ignore missing %}
 
+    <!-- Auto Course Breakdown Modal -->
+    <div class="resume-modal" id="planGeneratorModal" style="display: none; z-index: 3000;">
+        <div class="modal-card" style="max-width: 550px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="margin: 0;">Create Learning Plan</h3>
+                <button onclick="closePlanGeneratorModal()"
+                    style="background: none; border: none; color: white; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            </div>
+
+            <p style="font-size: 0.9rem; margin-bottom: 1.5rem; color: rgba(255,255,255,0.7);">
+                Break down <strong id="planItemTitle" style="color: white;">Course Name</strong> into manageable daily
+                tasks.
+            </p>
+
+            <form id="planGeneratorForm" class="auth-form">
+                <input type="hidden" id="planItemId">
+
+                <div class="form-group">
+                    <label>Target Completion Date</label>
+                    <input type="date" id="planTargetDate" required
+                        style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white;">
+                    <small style="color: rgba(255,255,255,0.4); display: block; margin-top: 5px;">We'll calculate the
+                        pace based on this date.</small>
+                </div>
+
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>Daily Availability (Minutes)</label>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" class="time-btn" onclick="selectTime(15)">15m</button>
+                        <button type="button" class="time-btn" onclick="selectTime(30)">30m</button>
+                        <button type="button" class="time-btn active" onclick="selectTime(45)">45m</button>
+                        <button type="button" class="time-btn" onclick="selectTime(60)">1h</button>
+                        <button type="button" class="time-btn" onclick="selectTime(120)">2h</button>
+                    </div>
+                    <input type="hidden" id="planDailyMinutes" value="45">
+                </div>
+
+                <div class="form-group" style="margin-top: 1.5rem; display: flex; align-items: center; gap: 0.8rem;">
+                    <input type="checkbox" id="planSkipWeekends" checked
+                        style="width: 18px; height: 18px; cursor: pointer;">
+                    <label for="planSkipWeekends" style="margin: 0; cursor: pointer;">Skip Weekends (Study
+                        Mon-Fri)</label>
+                </div>
+
+                <div class="modal-btns" style="margin-top: 2rem;">
+                    <button type="button" onclick="closePlanGeneratorModal()" class="secondary-btn"
+                        style="flex: 1; padding: 0.8rem; background: rgba(255,255,255,0.1); border: none; color: white; border-radius: 10px; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button type="submit" class="primary-btn"
+                        style="flex: 2; padding: 0.8rem; background: var(--primary-gradient); border: none; color: white; border-radius: 10px; cursor: pointer; font-weight: 600;">
+                        <i class="fas fa-magic"></i> Generate Plan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Styles for Time Buttons -->
+    <style>
+        .time-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .time-btn.active {
+            background: rgba(124, 58, 237, 0.2);
+            border-color: var(--primary);
+            color: white;
+        }
+    </style>
+
+    <script>
+        // Inline script for modal behavior to ensure it works globally
+        function openPlanGeneratorModal(id, title) {
+            document.getElementById('planItemId').value = id;
+            document.getElementById('planItemTitle').textContent = title;
+            document.getElementById('planGeneratorModal').style.display = 'flex';
+
+            // Set default target date to 1 month from now
+            const date = new Date();
+            date.setDate(date.getDate() + 30);
+            document.getElementById('planTargetDate').valueAsDate = date;
+        }
+
+        function closePlanGeneratorModal() {
+            document.getElementById('planGeneratorModal').style.display = 'none';
+        }
+
+        function selectTime(minutes) {
+            document.getElementById('planDailyMinutes').value = minutes;
+            document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+    </script>
+
     <!-- Scripts -->
     <script src="/static/js/common.js"></script>
     <script src="/static/js/script.js?v=layout"></script>

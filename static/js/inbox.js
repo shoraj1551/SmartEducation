@@ -116,7 +116,7 @@ class InboxManager {
                 <div class="item-header">
                     <div>
                         <span class="item-type-badge" style="background: ${statusColors[item.status]}">
-                            ${item.source_type}
+                            ${escapeHTML(item.source_type)}
                         </span>
                     </div>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -128,10 +128,10 @@ class InboxManager {
                                style="width: 18px; height: 18px; cursor: pointer;">
                     </div>
                 </div>
-                <h3 class="item-title">${item.title}</h3>
+                <h3 class="item-title">${escapeHTML(item.title)}</h3>
                 <p class="item-platform">
                     <i class="fas fa-${this.getSourceIcon(item.source_type)}"></i> 
-                    ${item.platform || 'No platform'}
+                    ${escapeHTML(item.platform || 'No platform')}
                 </p>
                 
                 <div class="progress-bar-container">
@@ -141,6 +141,14 @@ class InboxManager {
                     ${Math.round(item.progress_percentage)}% complete
                     ${item.total_duration > 0 ? ` • ${item.completed_duration}/${item.total_duration} min` : ''}
                 </p>
+
+                <!-- AUTO COURSE BREAKDOWN TRIGGER -->
+                ${(item.source_type === 'course' || item.source_type === 'playlist') && !item.learning_plan_id ? `
+                    <button onclick="event.stopPropagation(); window.openPlanGeneratorModal('${item.id}', '${escapeHTML(item.title.replace(/'/g, "\\'"))}')"
+                        style="width: 100%; margin: 0.5rem 0; padding: 0.6rem; background: rgba(124, 58, 237, 0.15); border: 1px dashed var(--primary); color: var(--primary); border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s;">
+                        <i class="fas fa-magic"></i> Break Down into Daily Tasks
+                    </button>
+                ` : ''}
 
                 <div class="item-actions">
                     ${this.getActionButtons(item)}
@@ -357,6 +365,7 @@ class InboxManager {
             });
 
             const data = await response.json();
+            console.log('Capacity Stats:', data);
             const stats = data.stats;
 
             // Update capacity slots
@@ -429,59 +438,60 @@ class InboxManager {
         } catch (error) {
             console.error('Error in bulk update:', error);
         }
+    }
 
     // ============================================================================
     // STATUS UPDATE & COMPLETION HANDLING
     // ============================================================================
 
     async updateStatus(itemId, newStatus) {
-            try {
-                // Find the item to get its title
-                const item = this.allItems.find(i => i.id === itemId);
-                const itemTitle = item ? item.title : 'this item';
+        try {
+            // Find the item to get its title
+            const item = this.allItems.find(i => i.id === itemId);
+            const itemTitle = item ? item.title : 'this item';
 
-                const response = await fetch(`/api/inbox/items/${itemId}/status`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${this.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ status: newStatus })
-                });
+            const response = await fetch(`/api/inbox/items/${itemId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
 
-                if (response.ok) {
-                    await this.loadItems();
-                    await this.updateCapacityIndicator();
+            if (response.ok) {
+                await this.loadItems();
+                await this.updateCapacityIndicator();
 
-                    // Show completion notification with action buttons
-                    if (newStatus === 'completed') {
-                        this.showCompletionNotification(itemId, itemTitle);
-                    } else {
-                        this.showNotification(`✅ Status updated to ${newStatus}`, 'success');
-                    }
+                // Show completion notification with action buttons
+                if (newStatus === 'completed') {
+                    this.showCompletionNotification(itemId, itemTitle);
                 } else {
-                    const error = await response.json();
-                    this.showNotification(`❌ Failed to update status: ${error.error || 'Unknown error'}`, 'error');
+                    this.showNotification(`✅ Status updated to ${newStatus}`, 'success');
                 }
-            } catch (error) {
-                console.error('Error updating status:', error);
-                this.showNotification('❌ Error updating status. Please try again.', 'error');
+            } else {
+                const error = await response.json();
+                this.showNotification(`❌ Failed to update status: ${error.error || 'Unknown error'}`, 'error');
             }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            this.showNotification('❌ Error updating status. Please try again.', 'error');
+        }
+    }
+
+    showCompletionNotification(itemId, itemTitle) {
+        // Create notification container if it doesn't exist
+        let container = document.getElementById('notificationContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'notificationContainer';
+            container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; max-width: 450px;';
+            document.body.appendChild(container);
         }
 
-        showCompletionNotification(itemId, itemTitle) {
-            // Create notification container if it doesn't exist
-            let container = document.getElementById('notificationContainer');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'notificationContainer';
-                container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; max-width: 450px;';
-                document.body.appendChild(container);
-            }
-
-            const notification = document.createElement('div');
-            notification.className = 'notification success';
-            notification.style.cssText = `
+        const notification = document.createElement('div');
+        notification.className = 'notification success';
+        notification.style.cssText = `
             background: linear-gradient(135deg, rgba(34, 197, 94, 0.95) 0%, rgba(16, 185, 129, 0.95) 100%);
             color: white;
             padding: 1.25rem 1.5rem;
@@ -493,7 +503,7 @@ class InboxManager {
             animation: slideInRight 0.3s ease-out;
         `;
 
-            notification.innerHTML = `
+        notification.innerHTML = `
             <div style="display: flex; align-items: start; gap: 1rem;">
                 <div style="font-size: 1.5rem;">🎉</div>
                 <div style="flex: 1;">
@@ -523,32 +533,32 @@ class InboxManager {
             </div>
         `;
 
-            container.appendChild(notification);
+        container.appendChild(notification);
 
-            // Auto-remove after 15 seconds
-            setTimeout(() => {
-                notification.style.animation = 'slideOutRight 0.3s ease-out';
-                setTimeout(() => notification.remove(), 300);
-            }, 15000);
+        // Auto-remove after 15 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease-out';
+            setTimeout(() => notification.remove(), 300);
+        }, 15000);
+    }
+
+    showNotification(message, type = 'info') {
+        let container = document.getElementById('notificationContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'notificationContainer';
+            container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; max-width: 400px;';
+            document.body.appendChild(container);
         }
 
-        showNotification(message, type = 'info') {
-            let container = document.getElementById('notificationContainer');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'notificationContainer';
-                container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; max-width: 400px;';
-                document.body.appendChild(container);
-            }
+        const colors = {
+            success: 'linear-gradient(135deg, rgba(34, 197, 94, 0.95) 0%, rgba(16, 185, 129, 0.95) 100%)',
+            error: 'linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%)',
+            info: 'linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(37, 99, 235, 0.95) 100%)'
+        };
 
-            const colors = {
-                success: 'linear-gradient(135deg, rgba(34, 197, 94, 0.95) 0%, rgba(16, 185, 129, 0.95) 100%)',
-                error: 'linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%)',
-                info: 'linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(37, 99, 235, 0.95) 100%)'
-            };
-
-            const notification = document.createElement('div');
-            notification.style.cssText = `
+        const notification = document.createElement('div');
+        notification.style.cssText = `
             background: ${colors[type] || colors.info};
             color: white;
             padding: 1rem 1.25rem;
@@ -557,94 +567,94 @@ class InboxManager {
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             animation: slideInRight 0.3s ease-out;
         `;
-            notification.textContent = message;
+        notification.textContent = message;
 
-            container.appendChild(notification);
+        container.appendChild(notification);
 
-            setTimeout(() => {
-                notification.style.animation = 'slideOutRight 0.3s ease-out';
-                setTimeout(() => notification.remove(), 300);
-            }, 5000);
-        }
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease-out';
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
 
     // ============================================================================
     // FLASHCARD CREATION
     // ============================================================================
 
     async createFlashcardFor(itemId, itemTitle) {
-            const summary = prompt(`📝 What did you learn from "${itemTitle}"?\n\nSummarize the key takeaways in 2-3 sentences:`);
+        const summary = prompt(`📝 What did you learn from "${itemTitle}"?\n\nSummarize the key takeaways in 2-3 sentences:`);
 
-            if (!summary || summary.trim().length === 0) {
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/recall/create', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${this.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        learning_item_id: itemId,
-                        front: `What did you learn from: ${itemTitle}?`,
-                        back: summary.trim()
-                    })
-                });
-
-                if (response.ok) {
-                    this.showNotification('✅ Flashcard created! Review it in Active Recall.', 'success');
-                } else {
-                    const error = await response.json();
-                    this.showNotification(`❌ Failed to create flashcard: ${error.error || 'Unknown error'}`, 'error');
-                }
-            } catch (error) {
-                console.error('Error creating flashcard:', error);
-                this.showNotification('❌ Error creating flashcard. Please try again.', 'error');
-            }
+        if (!summary || summary.trim().length === 0) {
+            return;
         }
+
+        try {
+            const response = await fetch('/api/recall/create', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    learning_item_id: itemId,
+                    front: `What did you learn from: ${itemTitle}?`,
+                    back: summary.trim()
+                })
+            });
+
+            if (response.ok) {
+                this.showNotification('✅ Flashcard created! Review it in Active Recall.', 'success');
+            } else {
+                const error = await response.json();
+                this.showNotification(`❌ Failed to create flashcard: ${error.error || 'Unknown error'}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error creating flashcard:', error);
+            this.showNotification('❌ Error creating flashcard. Please try again.', 'error');
+        }
+    }
 
     // ============================================================================
     // MOVE TO LIBRARY
     // ============================================================================
 
     async moveToLibrary(itemId, itemTitle) {
-            if (!confirm(`Move "${itemTitle}" back to library?\n\nYou can add it to your inbox again later from the Library.`)) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/inbox/items/${itemId}/move-to-library`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${this.token}`
-                    }
-                });
-
-                if (response.ok) {
-                    this.showNotification(`✅ "${itemTitle}" moved to library`, 'success');
-                    await this.loadItems();
-                    await this.updateCapacityIndicator();
-                } else {
-                    const error = await response.json();
-                    this.showNotification(`❌ ${error.error}`, 'error');
-                }
-            } catch (error) {
-                console.error('Error moving to library:', error);
-                this.showNotification('❌ Error moving to library', 'error');
-            }
+        if (!confirm(`Move "${itemTitle}" back to library?\n\nYou can add it to your inbox again later from the Library.`)) {
+            return;
         }
+
+        try {
+            const response = await fetch(`/api/inbox/items/${itemId}/move-to-library`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+
+            if (response.ok) {
+                this.showNotification(`✅ "${itemTitle}" moved to library`, 'success');
+                await this.loadItems();
+                await this.updateCapacityIndicator();
+            } else {
+                const error = await response.json();
+                this.showNotification(`❌ ${error.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error moving to library:', error);
+            this.showNotification('❌ Error moving to library', 'error');
+        }
+    }
 
     // ============================================================================
     // AI TEST GENERATION
     // ============================================================================
 
     async generateAITest(itemId, itemTitle) {
-            // Show AI test generation modal
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.style.display = 'flex';
-            modal.innerHTML = `
+        // Show AI test generation modal
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
             <div class="modal-card" style="max-width: 600px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 2rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h3 style="margin: 0; font-size: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
@@ -695,49 +705,49 @@ class InboxManager {
                 </div>
             </div>
         `;
-            document.body.appendChild(modal);
+        document.body.appendChild(modal);
 
-            // TODO: Implement actual AI test generation
-            // This would call an AI service (OpenAI, etc.) to generate questions
-            // based on the video/course title and description
-        }
+        // TODO: Implement actual AI test generation
+        // This would call an AI service (OpenAI, etc.) to generate questions
+        // based on the video/course title and description
+    }
 
-        clearSelection() {
-            this.selectedItems.clear();
-            document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = false);
-            this.updateBulkActionsBar();
-        }
+    clearSelection() {
+        this.selectedItems.clear();
+        document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = false);
+        this.updateBulkActionsBar();
+    }
 
     // ============================================================================
     // POD SHARING FUNCTIONALITY
     // ============================================================================
 
     async openShareModal(itemId, itemTitle, itemType) {
-            this.currentShareItem = { id: itemId, title: itemTitle, type: itemType };
-            this.selectedFriends = [];
+        this.currentShareItem = { id: itemId, title: itemTitle, type: itemType };
+        this.selectedFriends = [];
 
-            document.getElementById('shareItemTitle').textContent = `Sharing: ${itemTitle}`;
-            document.getElementById('shareModal').style.display = 'flex';
+        document.getElementById('shareItemTitle').textContent = `Sharing: ${itemTitle}`;
+        document.getElementById('shareModal').style.display = 'flex';
 
-            await this.loadPodFriends();
-        }
+        await this.loadPodFriends();
+    }
 
     async loadPodFriends() {
-            try {
-                const res = await fetch('/api/social/pod', {
-                    headers: { 'Authorization': `Bearer ${this.token}` }
-                });
+        try {
+            const res = await fetch('/api/social/pod', {
+                headers: { 'Authorization': `Bearer ${this.token}` }
+            });
 
-                if (res.ok) {
-                    const friends = await res.json();
-                    const selector = document.getElementById('friendSelector');
+            if (res.ok) {
+                const friends = await res.json();
+                const selector = document.getElementById('friendSelector');
 
-                    if (friends.length === 0) {
-                        selector.innerHTML = '<p style="text-align: center; opacity: 0.5; padding: 2rem;">No pod friends yet. Invite friends from the Pods page!</p>';
-                        return;
-                    }
+                if (friends.length === 0) {
+                    selector.innerHTML = '<p style="text-align: center; opacity: 0.5; padding: 2rem;">No pod friends yet. Invite friends from the Pods page!</p>';
+                    return;
+                }
 
-                    selector.innerHTML = friends.map(f => `
+                selector.innerHTML = friends.map(f => `
                     <label class="friend-checkbox" style="display: flex; align-items: center; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
                         <input type="checkbox" value="${f.id}" onchange="inboxManager.toggleFriend('${f.id}')" style="margin-right: 1rem; width: 18px; height: 18px; cursor: pointer;">
                         <div class="friend-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; margin-right: 1rem; font-weight: 700; font-size: 1rem;">
@@ -749,288 +759,359 @@ class InboxManager {
                         </div>
                     </label>
                 `).join('');
-                }
-            } catch (e) {
-                console.error('Error loading friends:', e);
-                document.getElementById('friendSelector').innerHTML = '<p style="text-align: center; color: #ef4444;">Error loading friends. Please try again.</p>';
             }
-        }
-
-        toggleFriend(friendId) {
-            if (!this.selectedFriends) this.selectedFriends = [];
-
-            if (this.selectedFriends.includes(friendId)) {
-                this.selectedFriends = this.selectedFriends.filter(id => id !== friendId);
-            } else {
-                this.selectedFriends.push(friendId);
-            }
-        }
-
-    async confirmShare() {
-            if (!this.selectedFriends || this.selectedFriends.length === 0) {
-                alert('Please select at least one friend to share with');
-                return;
-            }
-
-            try {
-                const res = await fetch('/api/pod/share', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${this.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        content_type: this.currentShareItem.type,
-                        content_id: this.currentShareItem.id,
-                        content_title: this.currentShareItem.title,
-                        partner_ids: this.selectedFriends
-                    })
-                });
-
-                if (res.ok) {
-                    alert('Content shared successfully!');
-                    this.closeShareModal();
-                } else {
-                    const error = await res.json();
-                    alert('Failed to share content: ' + (error.error || 'Unknown error'));
-                }
-            } catch (e) {
-                console.error('Error sharing:', e);
-                alert('Error sharing content. Please try again.');
-            }
-        }
-
-        closeShareModal() {
-            document.getElementById('shareModal').style.display = 'none';
-            this.selectedFriends = [];
-            this.currentShareItem = null;
-        }
-
-        getInitials(name) {
-            if (!name) return '??';
-            const parts = name.split(' ');
-            if (parts.length > 1) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-            return name.slice(0, 2).toUpperCase();
-        }
-
-        // ============================================================================
-        // JOIN LIVE CLASS
-        // ============================================================================
-
-        async handleJoinClass(event) {
-            event.preventDefault();
-
-            const meetingUrl = document.getElementById('classUrl').value.trim();
-            const classTitle = document.getElementById('classTitle').value.trim();
-
-            if (!meetingUrl) {
-                alert('Please enter a meeting URL');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/live-class/join', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${this.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        meeting_url: meetingUrl,
-                        title: classTitle || 'Live Class',
-                        platform: 'custom'
-                    })
-                });
-
-                if (response.ok) {
-                    // Open meeting in new tab
-                    window.open(meetingUrl, '_blank');
-
-                    // Show success message
-                    this.showNotification('✅ Joining class... Opening in new tab', 'success');
-
-                    // Close modal and reset form
-                    closeJoinClassModal();
-                } else {
-                    const error = await response.json();
-                    this.showNotification(`❌ ${error.error}`, 'error');
-                }
-            } catch (error) {
-                console.error('Error joining class:', error);
-                this.showNotification('❌ Error joining class', 'error');
-            }
-        }
-
-        // ============================================================================
-        // TODAY'S SCHEDULE
-        // ============================================================================
-
-        async loadTodaysSchedule() {
-            const scheduleContainer = document.getElementById('scheduleItems');
-
-            if (!scheduleContainer) {
-                console.error('Schedule container not found');
-                return;
-            }
-
-            try {
-                // Get current time and 6 hours from now
-                const now = new Date();
-                const sixHoursLater = new Date(now.getTime() + (6 * 60 * 60 * 1000));
-
-                // Fetch schedule from calendar API
-                const response = await fetch(`/api/schedule/events?start=${now.toISOString()}&end=${sixHoursLater.toISOString()}`, {
-                    headers: {
-                        'Authorization': `Bearer ${this.token}`
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const events = data.events || [];
-
-                    if (events.length === 0) {
-                        scheduleContainer.innerHTML = '<div style="text-align: center; opacity: 0.5; padding: 1rem;">No events in the next 6 hours</div>';
-                        return;
-                    }
-
-                    scheduleContainer.innerHTML = events.map(event => {
-                        const startTime = new Date(event.start_time);
-                        const timeStr = startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-
-                        return `
-                            <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                                <div style="font-weight: 700; color: #667eea; min-width: 60px;">${timeStr}</div>
-                                <div style="flex: 1;">
-                                    <div style="font-weight: 600;">${event.title}</div>
-                                    ${event.description ? `<div style="font-size: 0.85rem; opacity: 0.7;">${event.description}</div>` : ''}
-                                </div>
-                                ${event.meeting_url ? `
-                                    <button onclick="window.open('${event.meeting_url}', '_blank')" class="action-btn" style="padding: 0.5rem 1rem;">
-                                        <i class="fas fa-video"></i> Join
-                                    </button>
-                                ` : ''}
-                            </div>
-                        `;
-                    }).join('');
-                } else {
-                    scheduleContainer.innerHTML = '<div style="text-align: center; opacity: 0.5; padding: 1rem;">Unable to load schedule</div>';
-                }
-            } catch (error) {
-                console.error('Error loading schedule:', error);
-                scheduleContainer.innerHTML = '<div style="text-align: center; opacity: 0.5; padding: 1rem;">Error loading schedule</div>';
-            }
-        }
-
-        // ============================================================================
-        // JOIN LIVE CLASS
-        // ============================================================================
-
-        async handleJoinClass(event) {
-            event.preventDefault();
-
-            const meetingUrl = document.getElementById('classUrl').value.trim();
-            const classTitle = document.getElementById('classTitle').value.trim();
-
-            if (!meetingUrl) {
-                alert('Please enter a meeting URL');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/live-class/join', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${this.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        meeting_url: meetingUrl,
-                        title: classTitle || 'Live Class',
-                        platform: 'custom'
-                    })
-                });
-
-                if (response.ok) {
-                    // Open meeting in new tab
-                    window.open(meetingUrl, '_blank');
-
-                    // Show success message
-                    this.showNotification('✅ Joining class... Opening in new tab', 'success');
-
-                    // Close modal and reset form
-                    closeJoinClassModal();
-                } else {
-                    const error = await response.json();
-                    this.showNotification(`❌ ${error.error}`, 'error');
-                }
-            } catch (error) {
-                console.error('Error joining class:', error);
-                this.showNotification('❌ Error joining class', 'error');
-            }
-        }
-
-        // ============================================================================
-        // TODAY'S SCHEDULE
-        // ============================================================================
-
-        async loadTodaysSchedule() {
-            const scheduleContainer = document.getElementById('scheduleItems');
-
-            if (!scheduleContainer) {
-                console.error('Schedule container not found');
-                return;
-            }
-
-            try {
-                // Get current time and 6 hours from now
-                const now = new Date();
-                const sixHoursLater = new Date(now.getTime() + (6 * 60 * 60 * 1000));
-
-                // Fetch schedule from calendar API
-                const response = await fetch(`/api/schedule/events?start=${now.toISOString()}&end=${sixHoursLater.toISOString()}`, {
-                    headers: {
-                        'Authorization': `Bearer ${this.token}`
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const events = data.events || [];
-
-                    if (events.length === 0) {
-                        scheduleContainer.innerHTML = '<div style="text-align: center; opacity: 0.5; padding: 1rem;">No events in the next 6 hours</div>';
-                        return;
-                    }
-
-                    scheduleContainer.innerHTML = events.map(event => {
-                        const startTime = new Date(event.start_time);
-                        const timeStr = startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-
-                        return `
-                            <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                                <div style="font-weight: 700; color: #667eea; min-width: 60px;">${timeStr}</div>
-                                <div style="flex: 1;">
-                                    <div style="font-weight: 600;">${event.title}</div>
-                                    ${event.description ? `<div style="font-size: 0.85rem; opacity: 0.7;">${event.description}</div>` : ''}
-                                </div>
-                                ${event.meeting_url ? `
-                                    <button onclick="window.open('${event.meeting_url}', '_blank')" class="action-btn" style="padding: 0.5rem 1rem;">
-                                        <i class="fas fa-video"></i> Join
-                                    </button>
-                                ` : ''}
-                            </div>
-                        `;
-                    }).join('');
-                } else {
-                    scheduleContainer.innerHTML = '<div style="text-align: center; opacity: 0.5; padding: 1rem;">Unable to load schedule</div>';
-                }
-            } catch (error) {
-                console.error('Error loading schedule:', error);
-                scheduleContainer.innerHTML = '<div style="text-align: center; opacity: 0.5; padding: 1rem;">Error loading schedule</div>';
-            }
+        } catch (e) {
+            console.error('Error loading friends:', e);
+            document.getElementById('friendSelector').innerHTML = '<p style="text-align: center; color: #ef4444;">Error loading friends. Please try again.</p>';
         }
     }
+
+    toggleFriend(friendId) {
+        if (!this.selectedFriends) this.selectedFriends = [];
+
+        if (this.selectedFriends.includes(friendId)) {
+            this.selectedFriends = this.selectedFriends.filter(id => id !== friendId);
+        } else {
+            this.selectedFriends.push(friendId);
+        }
+    }
+
+    async confirmShare() {
+        if (!this.selectedFriends || this.selectedFriends.length === 0) {
+            alert('Please select at least one friend to share with');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/pod/share', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    content_type: this.currentShareItem.type,
+                    content_id: this.currentShareItem.id,
+                    content_title: this.currentShareItem.title,
+                    partner_ids: this.selectedFriends
+                })
+            });
+
+            if (res.ok) {
+                alert('Content shared successfully!');
+                this.closeShareModal();
+            } else {
+                const error = await res.json();
+                alert('Failed to share content: ' + (error.error || 'Unknown error'));
+            }
+        } catch (e) {
+            console.error('Error sharing:', e);
+            alert('Error sharing content. Please try again.');
+        }
+    }
+
+    closeShareModal() {
+        document.getElementById('shareModal').style.display = 'none';
+        this.selectedFriends = [];
+        this.currentShareItem = null;
+    }
+
+    getInitials(name) {
+        if (!name) return '??';
+        const parts = name.split(' ');
+        if (parts.length > 1) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        return name.slice(0, 2).toUpperCase();
+    }
+
+    // ============================================================================
+    // JOIN LIVE CLASS
+    // ============================================================================
+
+    async handleJoinClass(event) {
+        event.preventDefault();
+
+        const meetingUrl = document.getElementById('classUrl').value.trim();
+        const classTitle = document.getElementById('classTitle').value.trim();
+
+        if (!meetingUrl) {
+            alert('Please enter a meeting URL');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/live-class/join', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    meeting_url: meetingUrl,
+                    title: classTitle || 'Live Class',
+                    platform: 'custom'
+                })
+            });
+
+            if (response.ok) {
+                // Open meeting in new tab
+                window.open(meetingUrl, '_blank');
+
+                // Show success message
+                this.showNotification('✅ Joining class... Opening in new tab', 'success');
+
+                // Close modal and reset form
+                closeJoinClassModal();
+            } else {
+                const error = await response.json();
+                this.showNotification(`❌ ${error.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error joining class:', error);
+            this.showNotification('❌ Error joining class', 'error');
+        }
+    }
+
+    // ============================================================================
+    // TODAY'S SCHEDULE
+    // ============================================================================
+
+    async loadTodaysSchedule() {
+        const scheduleContainer = document.getElementById('scheduleItems');
+
+        if (!scheduleContainer) {
+            console.error('Schedule container not found');
+            return;
+        }
+
+        try {
+            // Get current time and 6 hours from now
+            const now = new Date();
+            const sixHoursLater = new Date(now.getTime() + (6 * 60 * 60 * 1000));
+
+            // Fetch schedule from calendar API
+            const response = await fetch(`/api/schedule/events?start=${now.toISOString()}&end=${sixHoursLater.toISOString()}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const events = data.events || [];
+
+                if (events.length === 0) {
+                    scheduleContainer.innerHTML = '<div style="text-align: center; opacity: 0.5; padding: 1rem;">No events in the next 6 hours</div>';
+                    return;
+                }
+
+                scheduleContainer.innerHTML = events.map(event => {
+                    const startTime = new Date(event.start_time);
+
+                    // Use user timezone if available
+                    const timeZone = (window.user && window.user.timezone) || Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    let timeStr;
+                    try {
+                        timeStr = startTime.toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            timeZone: timeZone
+                        });
+                    } catch (e) {
+                        timeStr = startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    }
+
+                    // Check if alarm is set
+                    const alarms = JSON.parse(localStorage.getItem('schedule_alarms') || '{}');
+                    const isAlarmSet = alarms[event.id];
+
+                    // Check if audio alarm is set
+                    const audioAlarms = JSON.parse(localStorage.getItem('schedule_audio_alarms') || '{}');
+                    const isAudioSet = audioAlarms[event.id];
+
+                    return `
+                            <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <div style="font-weight: 700; color: #667eea; min-width: 60px;">${timeStr}</div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600;">${event.title}</div>
+                                    ${event.description ? `<div style="font-size: 0.85rem; opacity: 0.7;">${event.description}</div>` : ''}
+                                </div>
+                                ${event.meeting_url ? `
+                                    <button onclick="window.open('${event.meeting_url}', '_blank')" class="action-btn" style="padding: 0.5rem 1rem;">
+                                        <i class="fas fa-video"></i> Join
+                                    </button>
+                                ` : ''}
+                                <button onclick="window.inboxManager.toggleAudioAlarm('${event.id}', '${event.title.replace(/'/g, "\\'")}', '${event.start_time}')" 
+                                    class="action-btn" 
+                                    title="${isAudioSet ? 'Turn off audio alarm' : 'Set audio alarm (Sound)'}"
+                                    style="background: none; border: none; color: ${isAudioSet ? '#ff3b30' : 'rgba(255,255,255,0.3)'}; cursor: pointer; padding: 0.25rem; transition: color 0.2s; margin-right: 4px;">
+                                    <i class="fas ${isAudioSet ? 'fa-clock' : 'fa-clock'}"></i>
+                                </button>
+                                <button onclick="window.inboxManager.toggleAlarm('${event.id}', '${event.start_time}')" 
+                                    class="alarm-btn" 
+                                    title="${isAlarmSet ? 'Turn off notification' : 'Set browser notification'}"
+                                    style="background: none; border: none; color: ${isAlarmSet ? '#fbbf24' : 'rgba(255,255,255,0.3)'}; cursor: pointer; padding: 0.25rem; transition: color 0.2s;">
+                                    <i class="fas ${isAlarmSet ? 'fa-bell' : 'fa-bell-slash'}"></i>
+                                </button>
+                            </div>
+                        `;
+                }).join('');
+
+                this.startAlarmChecker();
+            } else {
+                scheduleContainer.innerHTML = '<div style="text-align: center; opacity: 0.5; padding: 1rem;">Unable to load schedule</div>';
+            }
+        } catch (error) {
+            console.error('Error loading schedule:', error);
+            scheduleContainer.innerHTML = '<div style="text-align: center; opacity: 0.5; padding: 1rem;">Error loading schedule</div>';
+        }
+    }
+
+    toggleAlarm(eventId, startTime) {
+        if (Notification.permission === 'default') {
+            Notification.requestPermission().then(perm => {
+                if (perm === 'granted') this.toggleAlarm(eventId, startTime);
+            });
+            return;
+        }
+
+        if (Notification.permission !== 'granted') {
+            alert('Please enable notifications to set alarms.');
+            return;
+        }
+
+        const alarms = JSON.parse(localStorage.getItem('schedule_alarms') || '{}');
+        if (alarms[eventId]) {
+            delete alarms[eventId];
+        } else {
+            alarms[eventId] = { time: startTime, fired: false };
+            alert('Alarm set for 10 minutes before event');
+        }
+        localStorage.setItem('schedule_alarms', JSON.stringify(alarms));
+        this.loadTodaysSchedule();
+    }
+
+    toggleAudioAlarm(eventId, title, startTime) {
+        const alarms = JSON.parse(localStorage.getItem('schedule_audio_alarms') || '{}');
+        if (alarms[eventId]) {
+            delete alarms[eventId];
+        } else {
+            alarms[eventId] = { time: startTime, title: title, fired: false };
+
+            // Test sound
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance('Alarm set.');
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+        localStorage.setItem('schedule_audio_alarms', JSON.stringify(alarms));
+        this.loadTodaysSchedule();
+    }
+
+    startAlarmChecker() {
+        if (this.alarmInterval) return;
+        this.alarmInterval = setInterval(() => this.checkAlarms(), 30000); // Check every 30s
+        this.checkAlarms();
+    }
+
+    checkAlarms() {
+        const now = new Date();
+
+        // 1. Browser Notifications
+        const alarms = JSON.parse(localStorage.getItem('schedule_alarms') || '{}');
+        let changed = false;
+        Object.keys(alarms).forEach(id => {
+            const alarm = alarms[id];
+            if (alarm.fired) return;
+            const targetTime = new Date(alarm.time);
+            const diffMins = Math.floor((targetTime - now) / 60000);
+
+            if (diffMins <= 10 && diffMins >= -5) {
+                new Notification('SmartEducation Reminder', {
+                    body: 'Event starts in ' + (diffMins > 0 ? diffMins + ' mins' : 'now!'),
+                    icon: '/static/icons/icon-192x192.png'
+                });
+                alarm.fired = true;
+                changed = true;
+            }
+        });
+        if (changed) localStorage.setItem('schedule_alarms', JSON.stringify(alarms));
+
+        // 2. Audio Alarms (Wall Sign)
+        const audioAlarms = JSON.parse(localStorage.getItem('schedule_audio_alarms') || '{}');
+        let audioChanged = false;
+        Object.keys(audioAlarms).forEach(id => {
+            const alarm = audioAlarms[id];
+            if (alarm.fired) return;
+            const targetTime = new Date(alarm.time);
+            const diffMins = Math.floor((targetTime - now) / 60000);
+
+            if (diffMins <= 5 && diffMins >= -5) { // 5 mins before for audio
+                // Play Sound
+                if ('speechSynthesis' in window) {
+                    const msg = new SpeechSynthesisUtterance(`Attention. Your event, ${alarm.title}, is starting soon.`);
+                    msg.rate = 1.0;
+                    msg.pitch = 1.0;
+                    window.speechSynthesis.speak(msg);
+                }
+
+                // Show Visual Alert
+                alert(`🔔 ALARM: ${alarm.title} is starting!`);
+
+                alarm.fired = true;
+                audioChanged = true;
+            }
+        });
+        if (audioChanged) localStorage.setItem('schedule_audio_alarms', JSON.stringify(audioAlarms));
+    }  // ============================================================================
+    // JOIN LIVE CLASS
+    // ============================================================================
+
+    async handleJoinClass(event) {
+        event.preventDefault();
+
+        const meetingUrl = document.getElementById('classUrl').value.trim();
+        const classTitle = document.getElementById('classTitle').value.trim();
+
+        if (!meetingUrl) {
+            alert('Please enter a meeting URL');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/live-class/join', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    meeting_url: meetingUrl,
+                    title: classTitle || 'Live Class',
+                    platform: 'custom'
+                })
+            });
+
+            if (response.ok) {
+                // Open meeting in new tab
+                window.open(meetingUrl, '_blank');
+
+                // Show success message
+                this.showNotification('✅ Joining class... Opening in new tab', 'success');
+
+                // Close modal and reset form
+                closeJoinClassModal();
+            } else {
+                const error = await response.json();
+                this.showNotification(`❌ ${error.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error joining class:', error);
+            this.showNotification('❌ Error joining class', 'error');
+        }
+    }
+
+
+}
 
 // Global functions for modals
 function openJoinClassModal() {
@@ -1042,8 +1123,72 @@ function closeJoinClassModal() {
     document.getElementById('joinClassForm').reset();
 }
 
-// Initialize
-let inboxManager;
+// ============================================================================
+// AUTO COURSE BREAKDOWN LOGIC
+// ============================================================================
+
 document.addEventListener('DOMContentLoaded', () => {
-    inboxManager = new InboxManager();
+    // Other initializations...
+
+    // Wire up the Plan Generator Form
+    const planForm = document.getElementById('planGeneratorForm');
+    if (planForm) {
+        planForm.onsubmit = async (e) => {
+            e.preventDefault();
+
+            const submitBtn = planForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            submitBtn.disabled = true;
+
+            const itemId = document.getElementById('planItemId').value;
+            const targetDate = document.getElementById('planTargetDate').value; // YYYY-MM-DD
+            const dailyMinutes = parseInt(document.getElementById('planDailyMinutes').value);
+            const skipWeekends = document.getElementById('planSkipWeekends').checked;
+
+            try {
+                const response = await fetch('/api/tasks/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        learning_item_id: itemId,
+                        target_completion_date: targetDate,
+                        daily_availability_minutes: dailyMinutes,
+                        skip_weekends: skipWeekends
+                    })
+                });
+
+                if (response.ok) {
+                    // Success!
+                    window.closePlanGeneratorModal();
+
+                    // Show global notification (using Toast if available, or alert)
+                    // Assuming we have a showToast utility or similar. If not, simple alert for now.
+                    alert('Success! Your learning plan has been generated. Check your Schedule.');
+
+                    // Refresh inbox to update UI (remove the "Break Down" button)
+                    if (window.inboxManager) {
+                        window.inboxManager.fetchItems();
+                    }
+                } else {
+                    const error = await response.json();
+                    alert(`Failed to generate plan: ${error.error}`);
+                }
+            } catch (err) {
+                console.error('Error generating plan:', err);
+                alert('An error occurred. Please try again.');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        };
+    }
+});
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    window.inboxManager = new InboxManager();
 });

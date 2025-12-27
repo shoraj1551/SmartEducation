@@ -128,6 +128,10 @@ def end_session():
             xp_amount += 500 # Bonus for finishing task
             
         gamification_result = GamificationService.award_xp(user_id, xp_amount, "Focus Session")
+        
+        # --- PHASE 29: UPDATE DAILY STATS (Write-Through) ---
+        from app.services.stats_service import StatsService
+        StatsService.update_daily_stats(user_id, session.duration_minutes)
             
         return jsonify({
             'message': 'Session ended successfully',

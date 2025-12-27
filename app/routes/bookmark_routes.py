@@ -47,8 +47,7 @@ def get_bookmarks(current_user):
         'per_page': per_page
     }), 200
 
-    bookmark.delete()
-    return jsonify({'message': 'Bookmark deleted successfully'}), 200
+
 
 @bookmark_bp.route('/sync', methods=['POST'])
 @token_required
@@ -69,23 +68,51 @@ def upload_book(current_user):
     """Handle manual book upload"""
     from app.services.library_service import LibraryService
     
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
-        
-    file = request.files['file']
-    title = request.form.get('title', '')
+    files = request.files.getlist('file')
+    if not files or len(files) == 0:
+        return jsonify({'error': 'No files selected'}), 400
+
+    if len(files) > 5:
+        return jsonify({'error': 'Maximum 5 files allowed per upload'}), 400
+
+    total_size = sum(f.content_length or 0 for f in files) 
+    # content_length might not be set by all clients, usually need to read/seek
+    # Simplified check: we'll check individual processing or trust client side mostly, 
+    # but strictly we can check f.seek(0, os.SEEK_END)
+    
+    # Let's count successes
+    uploaded_count = 0
+    errors = []
+    
+    title_base = request.form.get('title', '')
     topic = request.form.get('topic', 'General')
     
-    success, message = LibraryService.handle_manual_upload(
-        current_user.id,
-        file,
-        title,
-        topic
-    )
-    
-    if success:
-        return jsonify({'message': message}), 201
-    return jsonify({'error': message}), 400
+    for i, file in enumerate(files):
+        # Infer title for multiple files if generic
+        current_title = title_base
+        if len(files) > 1 and title_base:
+            current_title = f"{title_base} ({i+1})"
+        elif not title_base:
+            current_title = file.filename
+            
+        success, message = LibraryService.handle_manual_upload(
+            current_user.id,
+            file,
+            current_title,
+            topic
+        )
+        if success:
+            uploaded_count += 1
+        else:
+            errors.append(f"{file.filename}: {message}")
+            
+    if uploaded_count > 0:
+        msg = f"Successfully uploaded {uploaded_count} files."
+        if errors:
+            msg += f" Failed: {', '.join(errors)}"
+        return jsonify({'message': msg}), 201
+        
+    return jsonify({'error': f"Upload failed. {', '.join(errors)}"}), 400
 
 @bookmark_bp.route('/<bookmark_id>/delete-otp', methods=['POST'])
 @token_required

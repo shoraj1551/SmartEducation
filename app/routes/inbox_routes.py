@@ -282,12 +282,20 @@ def get_library(user_id):
 @inbox_bp.route('/items/<item_id>/move-to-inbox', methods=['POST'])
 @token_required
 def move_to_inbox(user_id, item_id):
-    """Move an item from library to active inbox"""
+    """Move an item from library to active inbox (handles both LearningItems and Bookmarks)"""
     try:
-        item = InboxService.move_to_inbox(user_id, item_id)
+        # First try to move an existing LearningItem (status='library' -> 'active')
+        try:
+            item = InboxService.move_to_inbox(user_id, item_id)
+        except ValueError as e:
+            # If item not found, it might be a Bookmark that needs importing
+            if "not found" in str(e).lower():
+                item = InboxService.import_from_bookmark(user_id, item_id)
+            else:
+                raise e
         
         return jsonify({
-            'message': 'Item moved to inbox successfully',
+            'message': 'Item added to inbox successfully',
             'item': item.to_dict()
         }), 200
     

@@ -59,10 +59,43 @@ class BookmarkManager {
                 this.bookmarks.sort((a, b) => new Date(b.added_at) - new Date(a.added_at));
                 this.filteredBookmarks = [...this.bookmarks];
                 this.renderClusters();
+                this.extractCategories();
             }
         } catch (err) {
             console.error('Error fetching library:', err);
         }
+    }
+
+    extractCategories() {
+        if (!this.bookmarks || this.bookmarks.length === 0) return;
+
+        // Extract unique types
+        const types = new Set();
+        this.bookmarks.forEach(b => {
+            let type = b.resource_type || b.category;
+            if (type) types.add(type.toLowerCase());
+        });
+
+        const container = document.getElementById('filterContainer');
+        if (!container) return;
+
+        // Keep "All Items"
+        container.innerHTML = '<div class="filter-tab active" data-filter="all">All Items</div>';
+
+        // Sort and Render
+        Array.from(types).sort().forEach(type => {
+            const label = type.charAt(0).toUpperCase() + type.slice(1);
+            const tab = document.createElement('div');
+            tab.className = 'filter-tab';
+            tab.dataset.filter = type;
+            tab.textContent = label;
+            tab.onclick = (e) => {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                this.handleFilter();
+            };
+            container.appendChild(tab);
+        });
     }
 
     attachListeners() {
@@ -137,7 +170,12 @@ class BookmarkManager {
     }
 
     async handleSync() {
-        // Show Overlay
+        // Open Connect Modal instead of direct sync
+        document.getElementById('connectAccountsModal').style.display = 'flex';
+    }
+
+    async startSyncFlow() {
+        document.getElementById('connectAccountsModal').style.display = 'none';
         this.syncOverlay.style.display = 'flex';
 
         try {
@@ -145,45 +183,84 @@ class BookmarkManager {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
-            const data = await response.json();
 
-            // Fake delay for effect if response was too fast
-            await new Promise(r => setTimeout(r, 2000));
-
-            if (response.ok) {
-                this.syncOverlay.style.display = 'none';
-                await this.fetchBookmarks();
-                // Show generic success
-                alert(data.message || 'Sync Complete');
-            } else {
-                this.syncOverlay.style.display = 'none';
-                alert(data.error || 'Sync failed');
+            const text = await response.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error('Sync error response:', text);
+                throw new Error('Server returned invalid response');
             }
-        } catch (err) {
+
+            // Fake delay for effect
+            setTimeout(async () => {
+                this.syncOverlay.style.display = 'none';
+                if (response.ok) {
+                    await this.fetchBookmarks();
+                    alert(data.message || 'Sync complete!');
+                } else {
+                    alert(data.error || 'Sync failed');
+                }
+            }, 2000);
+
+        } catch (e) {
+            console.error(e);
             this.syncOverlay.style.display = 'none';
-            console.error('Sync error:', err);
-            alert('Failed to connect to sync service');
+            alert('Sync failed (check console)');
         }
+    }
+
+    connectAccount(provider) {
+        // Mock connection logic
+        const btn = event.target;
+        btn.textContent = 'Connecting...';
+        btn.disabled = true;
+
+        setTimeout(() => {
+            btn.textContent = 'Connected';
+            btn.classList.remove('secondary-btn');
+            btn.classList.add('primary-btn');
+
+            // Update status text
+            const statusEl = document.getElementById(provider === 'google-drive' ? 'driveStatus' : `${provider}Status`);
+            if (statusEl) {
+                statusEl.textContent = 'Active • Last synced just now';
+                statusEl.style.color = '#4ade80';
+            }
+        }, 1200);
     }
 
     async handleUpload(e) {
         e.preventDefault();
 
         const fileInput = document.getElementById('uploadFile');
+        const files = fileInput.files;
+        const btn = this.uploadForm.querySelector('button');
         const titleInput = document.getElementById('uploadTitle');
         const topicInput = document.getElementById('uploadTopic');
-        const btn = this.uploadForm.querySelector('button');
 
-        if (!fileInput.files[0]) return;
+        // Optional safe access if elements were removed/changed
+        const titleVal = titleInput ? titleInput.value : '';
+        const topicVal = topicInput ? topicInput.value : '';
+
+        if (files.length === 0) return;
+
+        if (files.length > 5) {
+            alert('Maximum 5 files allowed per upload.');
+            return;
+        }
 
         const originalText = btn.innerText;
-        btn.innerText = 'Uploading...';
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Uploading ${files.length} items...`;
         btn.disabled = true;
 
         const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
-        formData.append('title', titleInput.value);
-        formData.append('topic', topicInput.value);
+        for (let i = 0; i < files.length; i++) {
+            formData.append('file', files[i]);
+        }
+        if (titleVal) formData.append('title', titleVal);
+        if (topicVal) formData.append('topic', topicVal);
 
         try {
             const response = await fetch('/api/bookmarks/upload', {
@@ -192,18 +269,28 @@ class BookmarkManager {
                 body: formData
             });
 
+            const text = await response.text();
+            let result;
+            try {
+                result = JSON.parse(text);
+            } catch (e) {
+                console.error('Server error response:', text);
+                throw new Error('Server returned invalid response');
+            }
+
             if (response.ok) {
                 this.uploadForm.reset();
                 this.uploadModal.style.display = 'none';
                 await this.fetchBookmarks();
+                alert(result.message);
             } else {
-                const data = await response.json();
-                alert(data.error || 'Upload failed');
+                alert(result.error || 'Upload failed');
             }
         } catch (err) {
-            console.error('Upload error:', err);
+            console.error('Upload catch error:', err);
+            alert('Upload failed (check console for details)');
         } finally {
-            btn.innerText = originalText;
+            btn.innerHTML = originalText;
             btn.disabled = false;
         }
     }
@@ -383,14 +470,14 @@ class BookmarkManager {
                 </div>
                 
                 <div class="card-content">
-                    <div class="category-badge">${bm.topic || bm.category || 'General'}</div>
+                    <div class="category-badge">${escapeHTML(bm.topic || bm.category || 'General')}</div>
                     
-                    <h3 style="margin-bottom: 0.2rem;">${bm.title || 'Untitled'}</h3>
+                    <h3 style="margin-bottom: 0.2rem;">${escapeHTML(bm.title || 'Untitled')}</h3>
                     <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 0.8rem;">
-                        by <span style="color: white;">${author}</span>
+                        by <span style="color: white;">${escapeHTML(author)}</span>
                     </div>
 
-                    <p>${bm.description || 'No description available.'}</p>
+                    <p>${escapeHTML(bm.description || 'No description available.')}</p>
                     
                     ${metaString ? `<div style="font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-bottom: 1rem;">${metaString}</div>` : ''}
 
@@ -428,6 +515,9 @@ class BookmarkManager {
                             </a>
                             <button class="action-btn delete-btn" onclick="window.manager.deleteBookmark('${bm.id}')" title="Delete Securely">
                                 <i class="fas fa-trash-alt"></i>
+                            </button>
+                            <button class="action-btn share-btn" onclick="window.manager.openShareModal('${bm.id}', '${bm.title.replace(/'/g, "\\'")}', '${bm.resource_type}')" title="Share with Pod">
+                                <i class="fas fa-share-alt"></i>
                             </button>
                         </div>
                     </div>
@@ -467,6 +557,108 @@ class BookmarkManager {
         this.otpForm.reset();
         this.otpSentMsg.style.display = 'none';
     }
+
+    // ============================================================================
+    // SHARING LOGIC
+    // ============================================================================
+
+    async openShareModal(itemId, itemTitle, itemType) {
+        this.currentShareItem = { id: itemId, title: itemTitle, type: itemType || 'bookmark' };
+        this.selectedFriends = [];
+
+        document.getElementById('shareItemTitle').textContent = `Sharing: ${itemTitle}`;
+        document.getElementById('shareModal').style.display = 'flex';
+
+        await this.loadPodFriends();
+    }
+
+    async loadPodFriends() {
+        try {
+            const res = await fetch('/api/social/pod', {
+                headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+
+            if (res.ok) {
+                const friends = await res.json();
+                const selector = document.getElementById('friendSelector');
+
+                if (!Array.isArray(friends) || friends.length === 0) {
+                    selector.innerHTML = '<p style="text-align: center; opacity: 0.5; padding: 2rem;">No pod friends yet. Invite friends from the Pods page!</p>';
+                    return;
+                }
+
+                selector.innerHTML = friends.map(f => `
+                    <label class="friend-checkbox" style="display: flex; align-items: center; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                        <input type="checkbox" value="${f.id}" onchange="window.manager.toggleFriend('${f.id}')" style="margin-right: 1rem; width: 18px; height: 18px; cursor: pointer;">
+                        <div class="friend-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; margin-right: 1rem; font-weight: 700; font-size: 1rem;">
+                            ${(f.name || 'U').charAt(0)}
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; margin-bottom: 0.2rem;">${f.name}</div>
+                            <div style="font-size: 0.85rem; opacity: 0.6;">Level ${f.level || 1} Scholar</div>
+                        </div>
+                    </label>
+                `).join('');
+            } else {
+                document.getElementById('friendSelector').innerHTML = '<p style="text-align: center; color: #ef4444;">Error loading friends. (404/500)</p>';
+            }
+        } catch (e) {
+            console.error('Error loading friends:', e);
+            document.getElementById('friendSelector').innerHTML = '<p style="text-align: center; color: #ef4444;">Error loading friends. Please try again.</p>';
+        }
+    }
+
+    toggleFriend(friendId) {
+        if (!this.selectedFriends) this.selectedFriends = [];
+        if (this.selectedFriends.includes(friendId)) {
+            this.selectedFriends = this.selectedFriends.filter(id => id !== friendId);
+        } else {
+            this.selectedFriends.push(friendId);
+        }
+    }
+
+    async confirmShare() {
+        if (!this.selectedFriends || this.selectedFriends.length === 0) {
+            alert('Please select at least one friend to share with');
+            return;
+        }
+
+        const btn = document.querySelector('#shareModal .primary-btn');
+        const originalText = btn.innerText;
+        btn.innerText = 'Sharing...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/api/pod/share', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    content_type: this.currentShareItem.type,
+                    content_id: this.currentShareItem.id,
+                    content_title: this.currentShareItem.title,
+                    partner_ids: this.selectedFriends
+                })
+            });
+
+            if (res.ok) {
+                alert('Content shared successfully!');
+                document.getElementById('shareModal').style.display = 'none';
+                this.selectedFriends = [];
+            } else {
+                const err = await res.json();
+                alert('Share failed: ' + (err.error || 'Unknown error'));
+            }
+        } catch (e) {
+            console.error('Share error:', e);
+            alert('Share failed due to network error');
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
 }
 
 function closeUploadModal() {
@@ -475,6 +667,7 @@ function closeUploadModal() {
 
 function closeOtpModal() {
     if (window.manager) window.manager.closeOtpModal();
+
 }
 
 document.addEventListener('DOMContentLoaded', () => {

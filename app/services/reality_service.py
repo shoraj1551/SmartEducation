@@ -39,7 +39,28 @@ class RealityService:
             else:
                 user = user_id
                 
-            item = LearningItem.objects.get(id=learning_item_id)
+            try:
+                item = LearningItem.objects.get(id=learning_item_id)
+            except DoesNotExist:
+                # Try to find string ID in Bookmarks
+                from app.models import Bookmark
+                # Ensure user_id usage matches model
+                bookmark = Bookmark.objects.get(id=learning_item_id, user_id=user)
+                
+                # Create a temporary proxy object to emulate LearningItem for validation
+                class ProxyItem:
+                    def __init__(self, b):
+                        self.total_duration = 0
+                        # Try to find duration in metadata
+                        if b.metadata:
+                            # Check common duration paths
+                            if 'video_meta' in b.metadata:
+                                self.total_duration = b.metadata['video_meta'].get('duration', 0)
+                            elif 'duration' in b.metadata:
+                                self.total_duration = b.metadata['duration']
+                            
+                item = ProxyItem(bookmark)
+                
         except DoesNotExist:
             return {'is_feasible': False, 'message': 'Invalid user or item'}
 

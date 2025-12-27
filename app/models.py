@@ -34,6 +34,26 @@ class User(Document):
     level = IntField(default=1)
     badges = ListField(StringField(), default=list) # e.g. ["First Blood", "Night Owl"]
     
+    # Feature: Weekly Seasons (Phase 28)
+    weekly_xp = IntField(default=0)
+    last_weekly_reset = DateTimeField(default=datetime.utcnow)
+
+class DailyStat(Document):
+    """Pre-aggregated stats for dashboard performance (Phase 29)"""
+    meta = {'collection': 'daily_stats', 'indexes': [('user_id', 'date')]}
+    
+    user_id = ReferenceField('User', required=True)
+    date = DateTimeField(required=True) # Midnight UTC
+    total_minutes = IntField(default=0)
+    sessions_count = IntField(default=0)
+    
+    def to_dict(self):
+        return {
+            'date': self.date.isoformat(),
+            'total_minutes': self.total_minutes,
+            'sessions_count': self.sessions_count
+        }
+    
     # Onboarding / Learning Context (OLD - kept for backward compatibility)
     learning_goal = StringField(max_length=50) # upskill, switch, academic, hobby
     interests = ListField(StringField(max_length=50)) # tech, business, design, etc.
@@ -269,7 +289,12 @@ class Bookmark(Document):
 
 class UserSession(Document):
     """Tracks user login sessions"""
-    meta = {'collection': 'user_sessions'}
+    meta = {
+        'collection': 'user_sessions',
+        'indexes': [
+            {'fields': ['login_time'], 'expireAfterSeconds': 604800} # 7 days
+        ]
+    }
     
     user_id = ReferenceField(User, required=True)
     login_time = DateTimeField(default=datetime.utcnow)
@@ -279,6 +304,17 @@ class UserSession(Document):
     is_active = BooleanField(default=True)
     # New field to store generated session identifier
     session_id = StringField(max_length=255, required=True)
+
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'session_id': self.session_id,
+            'user_id': str(self.user_id.id),
+            'device_info': self.device_info,
+            'ip_address': self.ip_address,
+            'login_time': self.login_time.isoformat() if self.login_time else None,
+            'is_active': self.is_active
+        }
 
 
 class Schedule(Document):

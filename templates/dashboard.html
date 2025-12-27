@@ -1,953 +1,596 @@
 {% extends "layouts/dashboard_base.html" %}
 
-{% block title %}Dashboard - SmartEducation{% endblock %}
+{% block title %}Arena - SmartEducation{% endblock %}
 
 {% block content %}
-<!-- wrapper removed -->
-<!-- WELLNESS ENGINE: BURNOUT ALERT -->
-<div id="burnoutContainer" style="display: none; margin-bottom: 1.5rem;">
-    <!-- Injected by JS -->
+<!-- HUD HEADER (Heads-Up Display) -->
+<div class="hud-header">
+    <!-- 1. Player Profile -->
+    <div class="hud-card profile-hud">
+        <div class="level-ring-container">
+            <svg class="progress-ring" width="60" height="60">
+                <circle class="progress-ring__circle" stroke="rgba(255,255,255,0.1)" stroke-width="4" fill="transparent"
+                    r="26" cx="30" cy="30" />
+                <circle id="levelRing" class="progress-ring__circle fill" stroke="#60a5fa" stroke-width="4"
+                    fill="transparent" r="26" cx="30" cy="30" />
+            </svg>
+            <div class="level-number" id="hudLevel">0</div>
+        </div>
+        <div class="profile-text">
+            <h2 id="hudName">Scholar</h2>
+            <span class="hud-xp" id="hudXP">0 XP</span>
+        </div>
+    </div>
+
+    <!-- 2. Streak Counter -->
+    <div class="hud-card streak-hud">
+        <div class="fire-icon-wrapper">
+            <i class="fas fa-fire"></i>
+        </div>
+        <div class="streak-info">
+            <span class="label">Streak</span>
+            <strong id="hudStreak">0 Days</strong>
+        </div>
+    </div>
+
+    <!-- 3. Focus Score -->
+    <div class="hud-card focus-hud">
+        <div class="focus-icon-wrapper">
+            <i class="fas fa-brain"></i>
+        </div>
+        <div class="focus-info">
+            <span class="label">Focus Score</span>
+            <strong id="hudFocusScore" style="color: #4ade80;">--/100</strong>
+        </div>
+    </div>
 </div>
 
-<header class="section-header">
-    <div class="header-left">
-        <h1>Welcome back, <span id="userNameBrief">Scholar</span></h1>
-        <p class="subtitle">Ready to continue your journey?</p>
-    </div>
-
-    <div class="header-actions">
-        <!-- GAMIFICATION BADGE -->
-        <div id="gamificationContainer" style="display: none;" class="level-badge-container">
-            <!-- Injected by JS -->
-        </div>
-
-        <!-- NOTIFICATIONS -->
-        <div class="notification-wrapper" style="position: relative; margin-right: 1.5rem;">
-            <div class="icon-btn" onclick="toggleNotifications()">
-                <i class="fas fa-bell"></i>
-                <span class="badge" id="notifBadge" style="display:none;">0</span>
+<div class="arena-grid">
+    <!-- LEFT COLUMN: MISSION CONTROL -->
+    <div class="mission-control">
+        <!-- Hero Card: Current Mission -->
+        <div class="hero-card glass-panel" id="heroMission">
+            <div class="hero-header">
+                <span class="mission-badge"><i class="fas fa-crosshairs"></i> Current Mission</span>
+                <span class="mission-time" id="heroTimeRemaining">-- min left</span>
             </div>
-            <div class="notif-dropdown" id="notifDropdown" style="display:none;">
-                <div class="notif-header">Notifications</div>
-                <div id="notifList" class="notif-list">
-                    <div class="empty-notif">No new notifications</div>
+            <h1 class="hero-title" id="heroTitle">No Active Mission</h1>
+            <p class="hero-subtitle" id="heroSubtitle">Select a course to start your journey.</p>
+
+            <div class="hero-progress-container">
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="heroProgress" style="width: 0%"></div>
                 </div>
+                <span class="progress-text" id="heroProgressText">0% Complete</span>
             </div>
-        </div>
 
-        <div class="streak-badge">
-            <i class="fas fa-fire"></i>
-            <span id="streakCount">0</span> Days
-        </div>
-    </div>
-</header>
-
-<!-- INTELLIGENCE ENGINE: FOCUS SECTION -->
-<section id="focusTaskContainer" class="focus-section">
-    <!-- Javascript will inject the One Single Task here -->
-    <div class="loading-placeholder" style="height: 200px; background: rgba(255,255,255,0.05); border-radius: 20px;">
-    </div>
-</section>
-
-<div class="dashboard-grid">
-    <!-- Progress Overview -->
-    <div class="stats-grid" id="statsGrid">
-        <div class="stat-card">
-            <div class="stat-icon blue"><i class="fas fa-hourglass-half"></i></div>
-            <div class="stat-info">
-                <h4>Hours Spent</h4>
-                <p id="hoursSpent">0.0</p>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon purple"><i class="fas fa-tasks"></i></div>
-            <div class="stat-info">
-                <h4>Completed</h4>
-                <p id="completionRate">0%</p>
-            </div>
-        </div>
-        <div class="stat-card"
-            style="grid-column: span 2; display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem;">
-            <div style="display: flex; justify-content: space-between; width: 100%;">
-                <h4 style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase;">
-                    Weekly Commitment</h4>
-                <span id="commitmentLabel" style="font-size: 0.85rem; color: var(--primary);">Moderate
-                    (0/5h)</span>
-            </div>
-            <div
-                style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
-                <div id="commitmentBar"
-                    style="width: 0%; height: 100%; background: var(--primary-gradient); transition: width 0.5s ease;">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- REALITY ENGINE: THE TRUTH -->
-    <div id="realityContainer" style="margin-bottom: 2rem; display: none;">
-        <!-- Injected by JS -->
-    </div>
-
-    <!-- AI Recommendations -->
-    <div id="recommendationArea" style="margin-bottom: 3rem; display: none;">
-        <div class="section-header">
-            <h2>Recommended for your <span id="interestPathLabel" style="color: var(--primary);">Path</span>
-            </h2>
-        </div>
-        <div class="stats-grid" id="recommendationGrid" style="grid-template-columns: repeat(3, 1fr);">
-            <!-- Populated by JS -->
-        </div>
-    </div>
-
-    <!-- Dashboard Sections -->
-    <div class="dashboard-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
-        <!-- Bookmark Section -->
-        <div class="main-section">
-            <div class="section-header">
-                <h2>My Bookmarks</h2>
-                <button class="primary-btn" onclick="openBookmarkModal()"
-                    style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">
-                    <i class="fas fa-plus"></i> Add Bookmark
+            <div class="hero-actions">
+                <button class="btn-neon-primary" onclick="window.dashboard.resumeMission()">
+                    <i class="fas fa-play"></i> <span id="heroBtnText">Start Learning</span>
                 </button>
             </div>
 
-            <div class="activity-card" id="bookmarkContainer">
-                <div class="activity-list" id="bookmarkList">
-                    <!-- Populated by JS -->
-                    <div class="activity-item">
-                        <p style="color: rgba(255,255,255,0.4);">Loading bookmarks...</p>
-                    </div>
-                </div>
+            <!-- Background Decoration -->
+            <div class="hero-glow"></div>
+        </div>
 
-                <!-- Pagination -->
-                <div class="pagination-container" id="bookmarkPagination"
-                    style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem;">
-                    <!-- Populated by JS -->
-                </div>
+        <!-- Daily Quests -->
+        <div class="quests-section">
+            <h3 class="section-title"><i class="fas fa-scroll"></i> Daily Quests</h3>
+            <div class="quests-grid" id="dailyQuests">
+                <!-- Injected via JS -->
+                <div class="quest-loading">Generating quests...</div>
             </div>
         </div>
 
-        <!-- Activity Feed -->
-        <div class="activity-section">
-            <div class="section-header">
-                <h2>Recent Activity</h2>
+        <!-- Hours Banked Chart -->
+        <div class="stats-section glass-panel">
+            <div class="stats-header">
+                <h3 class="section-title"><i class="fas fa-chart-bar"></i> Hours Banked</h3>
+                <span class="stats-badge">This Week</span>
             </div>
-
-            <div class="activity-card">
-                <div class="activity-list" id="activityFeed">
-                    <!-- Populated by JS -->
-                    <div class="activity-item">
-                        <p style="color: rgba(255,255,255,0.4);">Loading activities...</p>
-                    </div>
+            <div class="chart-container">
+                <!-- Simple CSS Bar Chart -->
+                <div class="bar-chart" id="hoursChart">
+                    <!-- Bars injected via JS -->
                 </div>
             </div>
         </div>
     </div>
-</div>
-<!-- wrapper removed end -->
 
-<!-- Page Specific Modals -->
-<!-- Add Bookmark Modal -->
-<div class="resume-modal" id="bookmarkModal">
-    <div class="modal-card" style="max-width: 600px; text-align: left;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <h3 style="margin: 0;">Add Educational Bookmark</h3>
-            <button onclick="closeBookmarkModal()"
-                style="background: none; border: none; color: white; cursor: pointer; font-size: 1.5rem;">&times;</button>
+    <!-- RIGHT COLUMN: THE ARENA -->
+    <div class="the-arena-sidebar glass-panel">
+        <div class="arena-header">
+            <h3><i class="fas fa-trophy"></i> The Arena</h3>
+            <span class="arena-league">Gold League</span>
         </div>
 
-        <form id="addBookmarkForm" class="auth-form">
-            <div class="form-group slide-up" style="--delay: 1">
-                <label>Resource URL</label>
-                <input type="url" id="bmUrl" placeholder="https://youtube.com/watch?v=..." required
-                    style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
-            </div>
-            <div class="form-group slide-up" style="--delay: 2">
-                <label>Title (Optional)</label>
-                <input type="text" id="bmTitle" placeholder="Tutorial Name"
-                    style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
-            </div>
-            <div class="form-group slide-up" style="--delay: 3">
-                <label>Description (Optional)</label>
-                <textarea id="bmDesc" placeholder="What will you learn?" rows="3"
-                    style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; resize: none;"></textarea>
-            </div>
+        <div class="leaderboard-list" id="arenaLeaderboard">
+            <!-- Injected via JS -->
+        </div>
 
-            <button type="submit" class="primary-btn nav-btn" style="width: 100%; margin-top: 1rem;">
-                <i class="fas fa-magic"></i> Add with AI Identification
-            </button>
-        </form>
+        <!-- Active Recall Widget -->
+        <div class="recall-widget" id="arenaRecall" style="display: none;">
+            <div class="recall-icon"><i class="fas fa-history"></i></div>
+            <div class="recall-content">
+                <strong>Brain Boost</strong>
+                <span id="recallCount">0 Cards Due</span>
+            </div>
+            <button class="btn-micro" onclick="window.location.href='/recall'">Review</button>
+        </div>
     </div>
 </div>
+
 {% endblock %}
 
-{% block extra_js %}
-<script src="/static/js/dashboard.js"></script>
-{% endblock %}
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard - SmartEducation</title>
-<link rel="stylesheet" href="/static/css/styles.css">
-<link rel="stylesheet" href="/static/css/focus.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+{% block extra_css %}
 <style>
+    /* --- GLASSMORPHISM THEME --- */
     :root {
-        --sidebar-width: 280px;
+        --glass-bg: rgba(30, 41, 59, 0.7);
+        --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+        --neon-blue: #3b82f6;
+        --neon-purple: #8b5cf6;
+        --neon-green: #10b981;
     }
 
-    body {
-        background: #0f172a;
-        color: white;
-        overflow-x: hidden;
+    .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(12px);
+        border: var(--glass-border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     }
 
-    .dashboard-layout {
+    /* --- LAYOUT --- */
+    .hud-header {
         display: grid;
-        grid-template-columns: var(--sidebar-width) 1fr;
-        min-height: 100vh;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
     }
 
-    /* Glass Sidebar */
-    .sidebar {
-        background: rgba(30, 41, 59, 0.7);
-        backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 2rem 1.5rem;
-        display: flex;
-        flex-direction: column;
-        position: sticky;
-        top: 0;
-        height: 100vh;
+    .arena-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
     }
 
-    .logo-container {
+    @media (min-width: 1024px) {
+        .arena-grid {
+            grid-template-columns: 2fr 1fr;
+        }
+    }
+
+    /* --- HUD CARDS --- */
+    .hud-card {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 16px;
+        padding: 1rem 1.5rem;
         display: flex;
         align-items: center;
         gap: 1rem;
-        margin-bottom: 3rem;
-        padding: 0 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .logo-icon {
-        width: 40px;
-        height: 40px;
-        background: var(--primary-gradient);
-        border-radius: 10px;
+    .level-ring-container {
+        position: relative;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .progress-ring__circle {
+        transition: stroke-dashoffset 0.35s;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+        stroke-dasharray: 163;
+        stroke-dashoffset: 163;
+    }
+
+    .level-number {
+        position: absolute;
+        font-weight: 800;
+        font-size: 1.2rem;
+        color: white;
+    }
+
+    .profile-text h2 {
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    .hud-xp {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .fire-icon-wrapper,
+    .focus-icon-wrapper {
+        width: 45px;
+        height: 45px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.2rem;
-        box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
     }
 
-    .logo-text {
-        font-weight: 800;
-        font-size: 1.2rem;
-        letter-spacing: -0.5px;
+    .fire-icon-wrapper {
+        color: #f97316;
+        box-shadow: 0 0 15px rgba(249, 115, 22, 0.2);
     }
 
-    .nav-menu {
+    .focus-icon-wrapper {
+        color: #4ade80;
+        box-shadow: 0 0 15px rgba(74, 222, 128, 0.2);
+    }
+
+    .streak-info,
+    .focus-info {
         display: flex;
         flex-direction: column;
+    }
+
+    .label {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    strong {
+        font-size: 1.2rem;
+    }
+
+    /* --- MISSION CONTROL --- */
+    .hero-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 250px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+
+    .hero-glow {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
+        top: -100px;
+        right: -100px;
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    .hero-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        z-index: 1;
+    }
+
+    .mission-badge {
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .hero-title {
+        font-size: 2rem;
+        margin: 0 0 0.5rem 0;
+        z-index: 1;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        color: rgba(255, 255, 255, 0.6);
+        margin: 0 0 2rem 0;
+        z-index: 1;
+    }
+
+    .hero-progress-container {
+        margin-bottom: 2rem;
+        z-index: 1;
+    }
+
+    .progress-bar-bg {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        border-radius: 4px;
+        box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+        transition: width 1s ease;
+    }
+
+    .progress-text {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .btn-neon-primary {
+        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+        color: white;
+        border: none;
+        padding: 0.8rem 2rem;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+        transition: all 0.3s;
+        z-index: 1;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-neon-primary:hover {
+        box-shadow: 0 6px 25px rgba(37, 99, 235, 0.6);
+        transform: translateY(-2px);
+    }
+
+    /* --- QUESTS --- */
+    .section-title {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 1rem;
+    }
+
+    .quests-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .quest-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 1rem;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .quest-card:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .quest-checkbox {
+        width: 22px;
+        height: 22px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .quest-info {
+        font-size: 0.9rem;
+        line-height: 1.3;
+    }
+
+    .quest-xp {
+        font-size: 0.75rem;
+        color: #fbbf24;
+        font-weight: 600;
+    }
+
+    .quest-card.completed .quest-checkbox {
+        background: #10b981;
+        border-color: #10b981;
+    }
+
+    .quest-card.completed .quest-info {
+        text-decoration: line-through;
+        opacity: 0.5;
+    }
+
+    /* --- STATS CHART --- */
+    .bar-chart {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        height: 150px;
+        padding-top: 20px;
+    }
+
+    .bar-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         gap: 0.5rem;
         flex: 1;
     }
 
-    .nav-item {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem;
-        border-radius: 12px;
-        color: rgba(255, 255, 255, 0.6);
-        text-decoration: none;
-        transition: all 0.3s ease;
-    }
-
-    .nav-item:hover,
-    .nav-item.active {
-        background: rgba(255, 255, 255, 0.05);
-        color: white;
-    }
-
-    .nav-item.active {
-        background: rgba(124, 58, 237, 0.1);
-        color: var(--primary);
-        font-weight: 600;
-    }
-
-    /* Main Content */
-    .main-content {
-        padding: 2rem 3rem;
-        max-width: 1400px;
-    }
-
-    .top-nav {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 3rem;
-    }
-
-    .search-container {
+    .bar {
+        width: 100%;
+        max-width: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px 6px 0 0;
+        transition: height 1s ease;
         position: relative;
-        width: 400px;
     }
 
-    .search-container i {
-        position: absolute;
-        left: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
+    .bar.active {
+        background: linear-gradient(to top, #3b82f6, #60a5fa);
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .bar-day {
+        font-size: 0.75rem;
         color: rgba(255, 255, 255, 0.4);
     }
 
-    .search-input {
-        width: 100%;
-        padding: 0.8rem 1rem 0.8rem 2.8rem;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        color: white;
-        outline: none;
-        transition: all 0.3s ease;
+    /* --- ARENA SIDEBAR --- */
+    .the-arena-sidebar {
+        height: fit-content;
     }
 
-    .search-input:focus {
-        background: rgba(255, 255, 255, 0.08);
-        border-color: var(--primary);
-    }
-
-    /* User Profile Dropdown */
-    .user-menu-container {
-        position: relative;
-    }
-
-    .user-trigger {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 0.5rem 1rem;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 50px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .user-trigger:hover {
-        background: rgba(255, 255, 255, 0.08);
-    }
-
-    .user-avatar {
-        width: 35px;
-        height: 35px;
-        background: var(--primary-gradient);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 0.9rem;
-    }
-
-    .user-info-brief {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .user-name {
-        font-size: 0.9rem;
-        font-weight: 600;
-    }
-
-    .user-dropdown {
-        position: absolute;
-        top: 120%;
-        right: 0;
-        width: 220px;
-        background: rgba(30, 41, 59, 0.95);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        padding: 0.75rem;
-        display: none;
-        flex-direction: column;
-        gap: 0.25rem;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-        animation: slideInUp 0.3s ease;
-    }
-
-    .user-dropdown.active {
-        display: flex;
-    }
-
-    .dropdown-item {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 0.75rem 1rem;
-        border-radius: 10px;
-        color: rgba(255, 255, 255, 0.7);
-        text-decoration: none;
-        transition: all 0.2s ease;
-        font-size: 0.95rem;
-    }
-
-    .dropdown-item:hover {
-        background: rgba(255, 255, 255, 0.05);
-        color: white;
-    }
-
-    .dropdown-divider {
-        height: 1px;
-        background: rgba(255, 255, 255, 0.1);
-        margin: 0.5rem;
-    }
-
-    .logout-item {
-        color: #ef4444;
-    }
-
-    .logout-item:hover {
-        background: rgba(239, 68, 68, 0.1);
-        color: #ef4444;
-    }
-
-    /* Stats Cards */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1.5rem;
-        margin-bottom: 3rem;
-    }
-
-    .stat-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        padding: 1.5rem;
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        gap: 1.25rem;
-    }
-
-    .stat-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-    }
-
-    .blue {
-        background: rgba(59, 130, 246, 0.1);
-        color: #3b82f6;
-    }
-
-    .purple {
-        background: rgba(124, 58, 237, 0.1);
-        color: #7c3aed;
-    }
-
-    .green {
-        background: rgba(16, 185, 129, 0.1);
-        color: #10b981;
-    }
-
-    .orange {
-        background: rgba(245, 158, 11, 0.1);
-        color: #f59e0b;
-    }
-
-    .stat-info h4 {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.5);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 0.25rem;
-    }
-
-    .stat-info p {
-        font-size: 1.5rem;
-        font-weight: 700;
-    }
-
-    /* Recent Activity */
-    .section-header {
+    .arena-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 1.5rem;
     }
 
-    .activity-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 24px;
-        padding: 2rem;
+    .arena-league {
+        color: #fbbf24;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        border: 1px solid #fbbf24;
+        padding: 2px 8px;
+        border-radius: 8px;
     }
 
-    .activity-list {
+    .leaderboard-list {
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
+        gap: 0.75rem;
     }
 
-    .activity-item {
+    .player-row {
         display: flex;
-        gap: 1.5rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .activity-item:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-
-    .activity-marker {
-        position: relative;
-        display: flex;
-        flex-direction: column;
         align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.02);
+        transition: transform 0.2s;
     }
 
-    .activity-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: var(--primary);
-        box-shadow: 0 0 10px var(--primary);
+    .player-row:hover {
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateX(5px);
     }
 
-    .activity-line {
-        width: 2px;
-        flex: 1;
-        background: rgba(255, 255, 255, 0.1);
-        margin-top: 5px;
+    .player-row.is-me {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
     }
 
-    .activity-content h5 {
+    .rank {
+        font-weight: 700;
         font-size: 1rem;
-        margin-bottom: 0.25rem;
+        color: rgba(255, 255, 255, 0.4);
+        width: 25px;
+        text-align: center;
     }
 
-    .activity-content p {
-        color: rgba(255, 255, 255, 0.5);
+    .rank.top-1 {
+        color: #fbbf24;
+        text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+    }
+
+    .avatar-circle {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: #334155;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
         font-size: 0.9rem;
     }
 
-    .activity-time {
+    .player-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .player-name {
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .player-xp {
         font-size: 0.8rem;
-        color: rgba(255, 255, 255, 0.3);
-        margin-top: 0.5rem;
+        color: rgba(255, 255, 255, 0.5);
     }
 
-    @keyframes slideInUp {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    .btn-nudge {
+        background: none;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.6);
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
     }
 
-    /* Resume Modal */
-    .resume-modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(8px);
-        display: none;
+    .btn-nudge:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    /* Recall Widget */
+    .recall-widget {
+        margin-top: 2rem;
+        background: linear-gradient(135deg, rgba(88, 28, 135, 0.2), rgba(124, 58, 237, 0.1));
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 12px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .recall-icon {
+        width: 32px;
+        height: 32px;
+        background: rgba(139, 92, 246, 0.2);
+        border-radius: 8px;
+        display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 2000;
+        color: #a78bfa;
     }
 
-    .modal-card {
-        background: rgba(30, 41, 59, 0.9);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 24px;
-        padding: 3rem;
-        max-width: 500px;
-        text-align: center;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    }
-
-    .modal-icon {
-        font-size: 3rem;
-        color: var(--primary);
-        margin-bottom: 1.5rem;
-    }
-
-    .modal-card h3 {
-        font-size: 1.8rem;
-        margin-bottom: 1rem;
-    }
-
-    .modal-card p {
-        color: rgba(255, 255, 255, 0.6);
-        margin-bottom: 2rem;
-        line-height: 1.6;
-    }
-
-    .modal-btns {
+    .recall-content {
         display: flex;
-        gap: 1rem;
+        flex-direction: column;
+        font-size: 0.9rem;
+    }
+
+    .btn-micro {
+        background: white;
+        color: #7c3aed;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 0.75rem;
+        cursor: pointer;
     }
 </style>
-</head>
-
-<body class="dashboard-body">
-    <div class="background-animation">
-        <div class="floating-shapes">
-            <div class="shape shape-1"></div>
-            <div class="shape shape-2"></div>
-            <div class="shape shape-3"></div>
-            <div class="shape shape-4"></div>
-        </div>
-    </div>
-
-    <div class="dashboard-layout">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="logo-container">
-                <div class="logo-icon">
-                    <i class="fas fa-graduation-cap"></i>
-                </div>
-                <span class="logo-text">SmartEdu</span>
-            </div>
-
-            <nav class="nav-menu">
-                <a href="/dashboard" class="nav-item active">
-                    <i class="fas fa-th-large"></i>
-                    Dashboard
-                </a>
-                <a href="/inbox" class="nav-item">
-                    <i class="fas fa-inbox"></i>
-                    Learning Inbox
-                </a>
-                <a href="/bookmarks" class="nav-item">
-                    <i class="fas fa-bookmark"></i>
-                    <span>Library</span>
-                </a>
-                <a href="/flashcards" class="nav-item">
-                    <i class="fas fa-layer-group"></i>
-                    <span>Active Recall</span>
-                </a>
-                <a href="/pods" class="nav-item">
-                    <i class="fas fa-users"></i>
-                    <span>Pods</span>
-                </a>
-                <a href="/settings" class="nav-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
-                <a href="/schedule" class="nav-item">
-                    <i class="fas fa-calendar-alt"></i>
-                    Schedule
-                </a>
-                <a href="/settings" class="nav-item">
-                    <i class="fas fa-cog"></i>
-                    Settings
-                </a>
-            </nav>
-
-            <div class="sidebar-footer">
-                <div class="nav-item logout-item" id="sidebarLogout">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Logout
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="top-nav">
-                <div class="search-container">
-                    <i class="fas fa-search"></i>
-                    <input type="text" class="search-input" placeholder="Search for courses, activities...">
-                </div>
-
-                <div class="user-menu-container">
-                    <div class="user-trigger" id="userMenuTrigger">
-                        <div class="user-avatar" id="avatarInitials">U</div>
-                        <div class="user-info-brief">
-                            <span class="user-name" id="userNameBrief">User Name</span>
-                        </div>
-                        <i class="fas fa-chevron-down" style="font-size: 0.8rem; opacity: 0.5;"></i>
-                    </div>
-
-                    <div class="user-dropdown" id="userDropdown">
-                        <a href="/profile" class="dropdown-item">
-                            <i class="fas fa-user-circle"></i>
-                            My Profile
-                        </a>
-                        <a href="/preferences" class="dropdown-item">
-                            <i class="fas fa-sliders-h"></i>
-                            Preferences
-                        </a>
-                        <a href="/security" class="dropdown-item">
-                            <i class="fas fa-shield-alt"></i>
-                            Security
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item logout-item" id="dropdownLogout">
-                            <i class="fas fa-sign-out-alt"></i>
-                            Log Out
-                        </a>
-                    </div>
-                </div>
-            </header>
-
-            <div class="main-content">
-                <!-- WELLNESS ENGINE: BURNOUT ALERT -->
-                <div id="burnoutContainer" style="display: none; margin-bottom: 1.5rem;">
-                    <!-- Injected by JS -->
-                </div>
-
-                <header>
-                    <div class="header-left">
-                        <h1>Welcome back, <span id="userNameBrief">Scholar</span></h1>
-                        <p class="subtitle">Ready to continue your journey?</p>
-                    </div>
-
-                    <div class="header-actions">
-                        <!-- GAMIFICATION BADGE -->
-                        <div id="gamificationContainer" style="display: none;" class="level-badge-container">
-                            <!-- Injected by JS -->
-                        </div>
-
-                        <!-- NOTIFICATIONS -->
-                        <div class="notification-wrapper" style="position: relative; margin-right: 1.5rem;">
-                            <div class="icon-btn" onclick="toggleNotifications()">
-                                <i class="fas fa-bell"></i>
-                                <span class="badge" id="notifBadge" style="display:none;">0</span>
-                            </div>
-                            <div class="notif-dropdown" id="notifDropdown" style="display:none;">
-                                <div class="notif-header">Notifications</div>
-                                <div id="notifList" class="notif-list">
-                                    <div class="empty-notif">No new notifications</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="streak-badge">
-                            <i class="fas fa-fire"></i>
-                            <span id="streakCount">0</span> Days
-                        </div>
-                        <div class="user-menu-container">
-                            <div class="user-avatar" id="userMenuTrigger">
-                                <span id="avatarInitials">ST</span>
-                            </div>
-                            <!-- Dropdown Menu -->
-                            <div class="user-dropdown" id="userDropdown">
-                                <a href="/profile"><i class="fas fa-user"></i> My Profile</a>
-                                <a href="/settings"><i class="fas fa-cog"></i> Settings</a>
-                                <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
-                <!-- INTELLIGENCE ENGINE: FOCUS SECTION -->
-                <section id="focusTaskContainer" class="focus-section">
-                    <!-- Javascript will inject the One Single Task here -->
-                    <div class="loading-placeholder"
-                        style="height: 200px; background: rgba(255,255,255,0.05); border-radius: 20px;"></div>
-                </section>
-
-                <div class="dashboard-grid">
-                    <!-- Progress Overview -->
-                    <div class="stats-grid" id="statsGrid">
-                        <div class="stat-card">
-                            <div class="stat-icon blue"><i class="fas fa-hourglass-half"></i></div>
-                            <div class="stat-info">
-                                <h4>Hours Spent</h4>
-                                <p id="hoursSpent">0.0</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon purple"><i class="fas fa-tasks"></i></div>
-                            <div class="stat-info">
-                                <h4>Completed</h4>
-                                <p id="completionRate">0%</p>
-                            </div>
-                        </div>
-                        <div class="stat-card"
-                            style="grid-column: span 2; display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem;">
-                            <div style="display: flex; justify-content: space-between; width: 100%;">
-                                <h4
-                                    style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase;">
-                                    Weekly Commitment</h4>
-                                <span id="commitmentLabel" style="font-size: 0.85rem; color: var(--primary);">Moderate
-                                    (0/5h)</span>
-                            </div>
-                            <div
-                                style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
-                                <div id="commitmentBar"
-                                    style="width: 0%; height: 100%; background: var(--primary-gradient); transition: width 0.5s ease;">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- REALITY ENGINE: THE TRUTH -->
-                    <div id="realityContainer" style="margin-bottom: 2rem; display: none;">
-                        <!-- Injected by JS -->
-                    </div>
-
-                    <!-- AI Recommendations -->
-                    <div id="recommendationArea" style="margin-bottom: 3rem; display: none;">
-                        <div class="section-header">
-                            <h2>Recommended for your <span id="interestPathLabel"
-                                    style="color: var(--primary);">Path</span>
-                            </h2>
-                        </div>
-                        <div class="stats-grid" id="recommendationGrid" style="grid-template-columns: repeat(3, 1fr);">
-                            <!-- Populated by JS -->
-                        </div>
-                    </div>
-
-                    <!-- Dashboard Sections -->
-                    <div class="dashboard-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
-                        <!-- Bookmark Section -->
-                        <div class="main-section">
-                            <div class="section-header">
-                                <h2>My Bookmarks</h2>
-                                <button class="primary-btn" onclick="openBookmarkModal()"
-                                    style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">
-                                    <i class="fas fa-plus"></i> Add Bookmark
-                                </button>
-                            </div>
-
-                            <div class="activity-card" id="bookmarkContainer">
-                                <div class="activity-list" id="bookmarkList">
-                                    <!-- Populated by JS -->
-                                    <div class="activity-item">
-                                        <p style="color: rgba(255,255,255,0.4);">Loading bookmarks...</p>
-                                    </div>
-                                </div>
-
-                                <!-- Pagination -->
-                                <div class="pagination-container" id="bookmarkPagination"
-                                    style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem;">
-                                    <!-- Populated by JS -->
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Activity Feed -->
-                        <div class="activity-section">
-                            <div class="section-header">
-                                <h2>Recent Activity</h2>
-                            </div>
-
-                            <div class="activity-card">
-                                <div class="activity-list" id="activityFeed">
-                                    <!-- Populated by JS -->
-                                    <div class="activity-item">
-                                        <p style="color: rgba(255,255,255,0.4);">Loading activities...</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-        </main>
-    </div>
-
-    <!-- Add Bookmark Modal -->
-    <div class="resume-modal" id="bookmarkModal">
-        <div class="modal-card" style="max-width: 600px; text-align: left;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h3 style="margin: 0;">Add Educational Bookmark</h3>
-                <button onclick="closeBookmarkModal()"
-                    style="background: none; border: none; color: white; cursor: pointer; font-size: 1.5rem;">&times;</button>
-            </div>
-
-            <form id="addBookmarkForm" class="auth-form">
-                <div class="form-group slide-up" style="--delay: 1">
-                    <label>Resource URL</label>
-                    <input type="url" id="bmUrl" placeholder="https://youtube.com/watch?v=..." required
-                        style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
-                </div>
-                <div class="form-group slide-up" style="--delay: 2">
-                    <label>Title (Optional)</label>
-                    <input type="text" id="bmTitle" placeholder="Tutorial Name"
-                        style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
-                </div>
-                <div class="form-group slide-up" style="--delay: 3">
-                    <label>Description (Optional)</label>
-                    <textarea id="bmDesc" placeholder="What will you learn?" rows="3"
-                        style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; resize: none;"></textarea>
-                </div>
-
-                <button type="submit" class="primary-btn nav-btn" style="width: 100%; margin-top: 1rem;">
-                    <i class="fas fa-magic"></i> Add with AI Identification
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Resume Session Modal -->
-    <div class="resume-modal" id="resumeModal">
-        <div class="modal-card">
-            <div class="modal-icon"><i class="fas fa-history"></i></div>
-            <h3>Welcome Back!</h3>
-            <p>Would you like to resume your last session and pick up where you left off?</p>
-            <div class="modal-btns">
-                <button class="nav-btn secondary-btn" id="startFreshBtn" style="flex: 1;">Start Fresh</button>
-                <button class="nav-btn primary-btn" id="resumeSessionBtn" style="flex: 1;">Resume Session</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="/static/js/common.js"></script>
-    <!-- SEARCH MODAL (CMD+K) -->
-    <div id="searchModal" style="display:none;" class="search-overlay">
-        <div class="search-box">
-            <div class="search-input-wrapper">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Search... (Tasks, Notes, Flashcards)"
-                    autocomplete="off">
-                <span class="kbd-hint">ESC</span>
-            </div>
-            <div id="searchResults" class="search-results">
-                <!-- Injected JS -->
-                <div class="search-placeholder">Type to search your brain...</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- WEEKLY REVIEW MODAL -->
-    <div id="reviewModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content review-modal">
-            <div class="modal-header">
-                <h2><i class="fas fa-calendar-check"></i> Weekly Review</h2>
-                <button class="close-modal" onclick="closeReviewModal()">&times;</button>
-            </div>
-            <div id="reviewContent" class="modal-body">
-                <!-- Injected via JS -->
-                <div class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i> Analyzing your performance...
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" onclick="closeReviewModal()">Plan Next Week</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="/static/js/dashboard.js"></script>
-</body>
-
-</html>
+{% endblock %}

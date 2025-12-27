@@ -403,7 +403,7 @@ def export_user_data(current_user):
 def get_sessions(current_user):
     """Get active sessions for user"""
     from app.models import UserSession
-    sessions = UserSession.objects(user_id=current_user, is_active=True).order_by('-created_at')
+    sessions = UserSession.objects(user_id=current_user, is_active=True).order_by('-login_time').limit(3)
     
     # Enrich with current session flag
     token = request.headers.get('Authorization').split(' ')[1]

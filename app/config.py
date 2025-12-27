@@ -64,6 +64,15 @@ class Config:
         if missing:
             # In development or when optional services are not configured, we log a warning instead of raising
             print(f"Warning: Missing environment variables for production: {', '.join(missing)}")
+            
+        # CRITICAL: Check for insecure defaults in production
+        insecure_defaults = [
+            'dev-secret-key-change-in-production',
+            'dev-jwt-secret-key-change-in-production'
+        ]
+        
+        if cls.SECRET_KEY in insecure_defaults or cls.JWT_SECRET_KEY in insecure_defaults:
+             raise ValueError("CRITICAL: Application is running in PRODUCTION mode (DEBUG=False) but is using insecure default SECRET_KEY or JWT_SECRET_KEY. Please set these environment variables.")
 
 # Run validation when the module is imported (in production mode)
 Config.validate()

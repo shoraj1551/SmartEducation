@@ -3,6 +3,17 @@
  * Shared across all dashboard pages
  */
 
+// Global XSS Protection Utility
+window.escapeHTML = function (str) {
+    if (!str) return '';
+    return str.toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+};
+
 class CommonUI {
     constructor() {
         this.token = localStorage.getItem('token');

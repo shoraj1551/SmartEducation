@@ -339,7 +339,7 @@ if (emailOtpForm) {
         } catch (error) {
             console.error('Error:', error);
             // Fallback for demo if offline (should not happen in prod)
-            if (otpCode === '123456') {
+            if (window.location.hostname === 'localhost' && otpCode === '123456') {
                 emailVerified = true;
                 verifyEmailBtn.classList.add('verified');
                 verifyEmailBtn.disabled = true;
@@ -396,7 +396,7 @@ if (mobileOtpForm) {
         } catch (error) {
             console.error('Error:', error);
             // Fallback
-            if (otpCode === '123456') {
+            if (window.location.hostname === 'localhost' && otpCode === '123456') {
                 mobileVerified = true;
                 verifyMobileBtn.classList.add('verified');
                 verifyMobileBtn.disabled = true;

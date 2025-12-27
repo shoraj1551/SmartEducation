@@ -35,3 +35,14 @@ def get_progress(user_id):
         return jsonify(data), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@gamification_bp.route('/stats/weekly', methods=['GET'])
+@token_required
+def get_weekly_stats(user_id):
+    """Get last 7 days of daily stats (Phase 29)"""
+    from app.services.stats_service import StatsService
+    try:
+        data = StatsService.get_weekly_stats(user_id)
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

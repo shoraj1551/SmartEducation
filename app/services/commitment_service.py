@@ -36,9 +36,21 @@ class CommitmentService:
             else:
                 user = user_id
             
-            item = LearningItem.objects.get(id=learning_item_id)
+            try:
+                item = LearningItem.objects.get(id=learning_item_id)
+            except DoesNotExist:
+                # Try to find it as a Bookmark and auto-import
+                from app.models import Bookmark
+                from app.services.inbox_service import InboxService
+                try:
+                    # Verify bookmark exists and belongs to user
+                    Bookmark.objects.get(id=learning_item_id, user_id=user)
+                    # Import it -> Returns new LearningItem
+                    item = InboxService.import_from_bookmark(user, learning_item_id)
+                except DoesNotExist:
+                    raise ValueError("Learning item or bookmark not found")
         except DoesNotExist:
-            raise ValueError("User or learning item not found")
+            raise ValueError("User not found")
         
         # Check if commitment already exists for this item
         existing = Commitment.objects(

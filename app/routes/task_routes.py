@@ -23,11 +23,11 @@ def token_required(f):
             if token.startswith('Bearer '):
                 token = token[7:]
             
-            user_data = AuthService.verify_token(token)
-            if not user_data:
+            user_id = AuthService.verify_token(token)
+            if not user_id:
                 return jsonify({'error': 'Invalid token'}), 401
             
-            kwargs['user_id'] = user_data['user_id']
+            kwargs['user_id'] = user_id
             return f(*args, **kwargs)
         except Exception as e:
             return jsonify({'error': 'Token verification failed'}), 401

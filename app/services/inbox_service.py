@@ -300,7 +300,18 @@ class InboxService:
             else:
                 user = user_id
         except DoesNotExist:
-            return {}
+            print(f"ERROR: User not found in get_inbox_stats. ID: {user_id}")
+            return {
+                'total_items': 0,
+                'active_items': 0,
+                'paused_items': 0,
+                'completed_items': 0,
+                'dropped_items': 0,
+                'total_time_invested_minutes': 0,
+                'can_add_new_item': False,
+                'max_active_items': InboxService.MAX_ACTIVE_ITEMS,
+                'slots_available': 0
+            }
         
         total_items = LearningItem.objects(user_id=user).count()
         active_items = LearningItem.objects(user_id=user, status='active').count()
@@ -586,7 +597,7 @@ class InboxService:
             else:
                 user = user_id
                 
-            bookmark = Bookmark.objects.get(id=bookmark_id, user=user)
+            bookmark = Bookmark.objects.get(id=bookmark_id, user_id=user)
         except DoesNotExist:
             raise ValueError("Bookmark not found or access denied")
 

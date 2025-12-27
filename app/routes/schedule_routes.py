@@ -68,12 +68,21 @@ def get_events(user_id):
         # Convert to dict format
         events = []
         for schedule in schedules:
+            # Ensure we return timezone-aware ISO strings
+            start_iso = schedule.start_time.isoformat() if schedule.start_time else None
+            if start_iso and not start_iso.endswith('Z') and '+' not in start_iso:
+                start_iso += 'Z'
+                
+            end_iso = schedule.end_time.isoformat() if schedule.end_time else None
+            if end_iso and not end_iso.endswith('Z') and '+' not in end_iso:
+                end_iso += 'Z'
+                
             event = {
                 'id': str(schedule.id),
                 'title': schedule.title,
                 'description': schedule.description or '',
-                'start_time': schedule.start_time.isoformat() if schedule.start_time else None,
-                'end_time': schedule.end_time.isoformat() if schedule.end_time else None,
+                'start_time': start_iso,
+                'end_time': end_iso,
                 'meeting_url': schedule.meeting_url if hasattr(schedule, 'meeting_url') else None
             }
             events.append(event)

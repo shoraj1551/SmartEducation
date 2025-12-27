@@ -100,14 +100,48 @@ class ScheduleManager {
 
     async fetchTasks() {
         try {
-            const response = await fetch('/api/user/schedules', {
+            // 1. Fetch Calendar Schedules
+            const schedResponse = await fetch('/api/user/schedules', {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
-            if (response.ok) {
-                this.tasks = await response.json();
+
+            if (schedResponse.status === 401) {
+                localStorage.removeItem('token');
+                window.location.href = '/';
+                return;
             }
+
+            let schedules = [];
+            if (schedResponse.ok) {
+                schedules = await schedResponse.json();
+            }
+
+            // 2. Fetch Auto-Generated Daily Tasks (Today Only for now)
+            const tasksResponse = await fetch('/api/tasks/today', {
+                headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+
+            let dailyTasks = [];
+            if (tasksResponse.ok) {
+                const data = await tasksResponse.json();
+                dailyTasks = data.tasks.map(t => ({
+                    id: t.id,
+                    title: `📚 ${t.title}`, // Visual indicator
+                    description: t.description,
+                    start_time: t.scheduled_date,
+                    // Calculate end time based on duration
+                    end_time: new Date(new Date(t.scheduled_date).getTime() + t.estimated_duration_minutes * 60000).toISOString(),
+                    is_completed: t.status === 'completed',
+                    type: 'daily_task', // Distinguished type
+                    original_data: t
+                }));
+            }
+
+            // Merge details
+            this.tasks = [...schedules, ...dailyTasks];
+
         } catch (err) {
-            console.error('Error fetching schedules:', err);
+            console.error('Error fetching schedules/tasks:', err);
         }
     }
 
@@ -144,9 +178,16 @@ class ScheduleManager {
                 dayEl.classList.add('today');
             }
 
-            dayEl.innerHTML = `<span class="day-number">${day}</span>`;
+            // Check for tasks on this day
+            const dateStr = new Date(year, month, day).toDateString();
+            const hasTasks = this.tasks.some(t => new Date(t.start_time).toDateString() === dateStr);
 
-            // Smart Slot Indicator (Mock logic: every weekday has a peak slot)
+            dayEl.innerHTML = `
+                <span class="day-number">${day}</span>
+                ${hasTasks ? '<div style="width: 4px; height: 4px; background: var(--primary); border-radius: 50%; margin: 2px auto;"></div>' : ''}
+            `;
+
+            // Smart Slot Indicator (Mock logic)
             const dateObj = new Date(year, month, day);
             const dayOfWeek = dateObj.getDay();
             if (dayOfWeek >= 1 && dayOfWeek <= 5) {
@@ -159,6 +200,12 @@ class ScheduleManager {
             dayEl.onclick = () => {
                 this.currentDate = new Date(year, month, day);
                 this.renderDailyTasks();
+            };
+
+            // Double click to switch to Day View
+            dayEl.ondblclick = () => {
+                this.currentDate = new Date(year, month, day);
+                this.switchView('day');
             };
 
             this.calendarGrid.appendChild(dayEl);
@@ -179,8 +226,8 @@ class ScheduleManager {
         this.emptyTasks.style.display = 'none';
 
         this.taskList.innerHTML = dailyTasks.map(task => `
-            <div class="task-item ${task.is_completed ? 'completed' : ''}" style="position: relative;">
-                <div class="task-check" onclick="window.scheduleManager.toggleTask('${task.id}', ${!task.is_completed})">
+            <div class="task-item ${task.is_completed ? 'completed' : ''}" style="position: relative; border-left: 3px solid ${task.type === 'daily_task' ? '#8b5cf6' : 'var(--primary)'};">
+                <div class="task-check" onclick="window.scheduleManager.toggleTask('${task.id}', ${!task.is_completed}, '${task.type}')">
                     ${task.is_completed ? '<i class="fas fa-check" style="font-size: 0.6rem; color: white;"></i>' : ''}
                 </div>
                 <div class="task-info">
@@ -188,26 +235,54 @@ class ScheduleManager {
                     <p>${task.description || 'Focus session'}</p>
                     <span class="time-badge">${this.formatTime(task.start_time)}</span>
                 </div>
+                ${task.type !== 'daily_task' ? `
                 <button class="delete-task-btn" onclick="window.scheduleManager.deleteTask('${task.id}')" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: rgba(239, 68, 68, 0.1); border: none; color: #ef4444; padding: 0.5rem; border-radius: 6px; cursor: pointer; opacity: 0.7; transition: opacity 0.2s;">
                     <i class="fas fa-trash"></i>
                 </button>
+                ` : ''}
             </div>
         `).join('');
     }
 
-    async toggleTask(id, status) {
+    async toggleTask(id, status, type) {
         try {
-            const response = await fetch(`/api/user/schedules/${id}`, {
-                method: 'PUT',
+            let url = `/api/user/schedules/${id}`;
+            let method = 'PUT';
+            let body = { is_completed: status };
+
+            // Handle Daily Tasks (Backend Logic)
+            if (type === 'daily_task') {
+                if (status) {
+                    // Mark complete
+                    url = `/api/tasks/${id}/complete`;
+                    body = { actual_duration_minutes: 45 }; // Default or prompt user
+                } else {
+                    // Cannot un-complete daily tasks easily in current API, but let's try
+                    console.warn('Un-completing daily tasks not fully supported by API yet.');
+                    return;
+                }
+            }
+
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${this.token}`
                 },
-                body: JSON.stringify({ is_completed: status })
+                body: JSON.stringify(body)
             });
+
             if (response.ok) {
                 const updated = await response.json();
-                this.tasks = this.tasks.map(t => t.id === id ? updated : t);
+
+                // Update local state
+                this.tasks = this.tasks.map(t => {
+                    if (t.id === id) {
+                        return { ...t, is_completed: status };
+                    }
+                    return t;
+                });
+
                 this.renderDailyTasks();
                 if (this.viewMode === 'day') this.renderDayView();
             }
@@ -284,7 +359,9 @@ class ScheduleManager {
         // Calculate end time (1 hour later by default)
         const startDate = new Date(start_time);
         const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
-        const end_time = endDate.toISOString();
+
+        const start_time_iso = startDate.toISOString();
+        const end_time_iso = endDate.toISOString();
 
         const repeat_pattern = frequency;
 
@@ -297,8 +374,8 @@ class ScheduleManager {
                 },
                 body: JSON.stringify({
                     title,
-                    start_time,
-                    end_time,
+                    start_time: start_time_iso,
+                    end_time: end_time_iso,
                     repeat_pattern,
                     priority,
                     importance
@@ -335,8 +412,19 @@ class ScheduleManager {
     }
 
     formatTime(dateStr) {
+        if (!dateStr) return '';
         const date = new Date(dateStr);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const timeZone = this.userData.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+        try {
+            return date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: timeZone
+            });
+        } catch (e) {
+            console.warn('Invalid timezone', timeZone);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
     }
 
     switchView(mode) {
@@ -393,7 +481,7 @@ class ScheduleManager {
                 });
 
                 html += `
-                    <div class="hour-slot" style="display: flex; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 0.75rem 0; min-height: 50px;">
+                    <div class="hour-slot" ondblclick="window.scheduleManager.openAddModalWithTime('${hourStr}:${minuteStr} ${ampm}')" style="display: flex; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 0.75rem 0; min-height: 50px; cursor: pointer;" title="Double-click to add task">
                         <div class="hour-label" style="width: 100px; color: rgba(255,255,255,0.4); font-size: 0.85rem; font-weight: ${minute === 0 ? '600' : '400'};">${timeLabel}</div>
                         <div class="hour-tasks" style="flex: 1;">
                             ${tasksInSlot.map(task => `
@@ -420,6 +508,45 @@ class ScheduleManager {
     }
 
     openAddModal() { this.addModal.style.display = 'flex'; }
+
+    openAddModalWithTime(timeStr) {
+        this.openAddModal();
+
+        // Convert 12h time (e.g. "2:30 PM") to 24h format for input (e.g. "14:30")
+        const [time, modifier] = timeStr.split(' ');
+        let [hours, minutes] = time.split(':');
+
+        if (hours === '12') {
+            hours = '00';
+        }
+
+        if (modifier === 'PM') {
+            hours = parseInt(hours, 10) + 12;
+        }
+
+        // Handle 12 PM (Noon) edge case: 12 PM -> 12:00, 12 AM -> 00:00 (handled above)
+        // Wait, the logic above: 
+        // 12 PM: hours='12', modifier='PM' -> 12 + 12 = 24? INCORRECT.
+        // 12 AM: hours='12', modifier='AM' -> '00' (Correct)
+        // 1 PM: hours='1', modifier='PM' -> 1 + 12 = 13 (Correct)
+
+        // Let's retry standard conversion:
+        // Parse original again
+        const parts = timeStr.match(/(\d+):(\d+) (AM|PM)/);
+        if (parts) {
+            let h = parseInt(parts[1], 10);
+            let m = parts[2];
+            let ampm = parts[3];
+
+            if (ampm === 'PM' && h < 12) h += 12;
+            if (ampm === 'AM' && h === 12) h = 0;
+
+            const isoTime = `${String(h).padStart(2, '0')}:${m}`;
+            const timeInput = document.getElementById('taskTime');
+            if (timeInput) timeInput.value = isoTime;
+        }
+    }
+
     closeAddModal() { this.addModal.style.display = 'none'; }
 }
 

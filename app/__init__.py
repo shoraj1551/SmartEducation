@@ -30,7 +30,7 @@ def create_app():
     from .routes.user_routes import user_bp
     from .routes.bookmark_routes import bookmark_bp
     from .routes.inbox_routes import inbox_bp
-    # from .routes.task_routes import tasks_bp
+    from .routes.task_routes import tasks_bp
     from .routes.commitment_routes import commitment_bp
     from .routes.priority_routes import priority_bp
     from .routes.dashboard_routes import dashboard_bp
@@ -55,13 +55,13 @@ def create_app():
     from .routes.main_routes import main_bp
     # from .routes.admin_routes import admin_bp
     # from .routes.category_routes import category_bp
-    # from .routes.learning_routes import learning_bp
+    from .routes.learning_routes import learning_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(bookmark_bp)
     app.register_blueprint(inbox_bp)
-    # app.register_blueprint(tasks_bp)
+    app.register_blueprint(tasks_bp)
     app.register_blueprint(commitment_bp)
     app.register_blueprint(priority_bp)
     app.register_blueprint(dashboard_bp)
@@ -86,6 +86,6 @@ def create_app():
     app.register_blueprint(main_bp)
     # app.register_blueprint(admin_bp)
     # app.register_blueprint(category_bp)
-    # app.register_blueprint(learning_bp)
+    app.register_blueprint(learning_bp)
 
     return app
