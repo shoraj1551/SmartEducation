@@ -14,8 +14,9 @@ def create_app():
     app.config.from_object(Config)
     
     # Configure session
-    app.config['SESSION_TYPE'] = 'filesystem'
-    app.config['SESSION_PERMANENT'] = False
+    # Configure session - Use default client-side cookies for Vercel compatibility
+    # app.config['SESSION_TYPE'] = 'filesystem' # Removed for Vercel
+    # app.config['SESSION_PERMANENT'] = False
     
     # Initialize extensions
     mail.init_app(app)
