@@ -16,7 +16,7 @@ class Config:
     DEBUG = os.getenv('DEBUG', 'True') == 'True'
     
     # Database
-    db_url = os.getenv('DATABASE_URL', 'mongodb://localhost:27017/SmartEducation')
+    db_url = os.getenv('MONGODB_URI', os.getenv('DATABASE_URL', 'mongodb://localhost:27017/SmartEducation'))
     # MongoDB Settings for Flask-MongoEngine
     MONGODB_SETTINGS = {
         'host': db_url
