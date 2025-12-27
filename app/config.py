@@ -74,5 +74,10 @@ class Config:
         if cls.SECRET_KEY in insecure_defaults or cls.JWT_SECRET_KEY in insecure_defaults:
              raise ValueError("CRITICAL: Application is running in PRODUCTION mode (DEBUG=False) but is using insecure default SECRET_KEY or JWT_SECRET_KEY. Please set these environment variables.")
 
+        # CRITICAL: Prevent localhost DB in Vercel
+        if os.getenv('VERCEL') == '1' and ('localhost' in cls.db_url or '127.0.0.1' in cls.db_url):
+            raise ValueError("DEPLOYMENT ERROR: MONGODB_URI is not set! You are running on Vercel but trying to connect to 'localhost'. Please add MONGODB_URI to your Vercel Environment Variables.")
+
+
 # Run validation when the module is imported (in production mode)
 Config.validate()
