@@ -149,6 +149,18 @@ def validate_plan(user_id):
         )
         
         return jsonify(result), 200
-
     except Exception as e:
         return jsonify({'error': f'Validation failed: {str(e)}'}), 500
+
+
+@commitment_bp.route('/<commitment_id>/break', methods=['POST'])
+@token_required
+def break_commitment(user_id, commitment_id):
+    """Break/abandon a commitment with reputation penalty (Phase 33)"""
+    try:
+        result = CommitmentService.break_commitment(commitment_id, user_id)
+        return jsonify(result), 200
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f'Failed to break commitment: {str(e)}'}), 500

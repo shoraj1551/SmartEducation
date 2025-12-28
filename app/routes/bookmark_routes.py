@@ -41,7 +41,7 @@ def get_bookmarks(current_user):
     bookmarks, total = BookmarkService.get_bookmarks(current_user.email, page, per_page)
     
     return jsonify({
-        'bookmarks': [b.to_dict() for b in bookmarks],
+        'bookmarks': bookmarks,  # Already dictionaries with in_inbox flag
         'total': total,
         'page': page,
         'per_page': per_page
@@ -119,24 +119,14 @@ def upload_book(current_user):
 def request_delete_otp(current_user, bookmark_id):
     """Request OTP for bookmark deletion"""
     # Verify bookmark ownership
-    bookmark = Bookmark.objects(id=bookmark_id, user=current_user).first()
+    bookmark = Bookmark.objects(id=bookmark_id, user_id=current_user).first()
     if not bookmark:
         return jsonify({'error': 'Resource not found'}), 404
         
     from app.services.otp_service import OTPService
-    OTPService.create_otp(current_user.id, 'deletion', f'delete_{bookmark_id}')
     
-    # Send email (mocked in service if config missing)
-    # Ideally we'd look up the OTP here to send it via email service,
-    # but the service handles creation and sending logic usually.
-    # Here checking the service implementation: create_otp just creates.
-    # We need to send it.
-    
-    # Re-reading OTPService from previous view: 
-    # create_otp returns otp object.
-    # send_email_otp takes (email, code, purpose).
-    
-    otp = OTPService.create_otp(current_user.id, 'deletion', f'delete_{bookmark_id}')
+    # Create OTP and send email
+    otp = OTPService.create_otp(str(current_user.id), 'deletion', f'delete_{bookmark_id}')
     OTPService.send_email_otp(current_user.email, otp.otp_code, 'Resource Deletion')
     
     return jsonify({'message': 'OTP sent to your email'}), 200
@@ -149,13 +139,13 @@ def confirm_delete(current_user, bookmark_id):
     if not data or 'otp' not in data:
         return jsonify({'error': 'OTP is required'}), 400
         
-    bookmark = Bookmark.objects(id=bookmark_id, user=current_user).first()
+    bookmark = Bookmark.objects(id=bookmark_id, user_id=current_user).first()
     if not bookmark:
         return jsonify({'error': 'Resource not found'}), 404
         
     from app.services.otp_service import OTPService
     success, message = OTPService.verify_otp(
-        current_user.id, 
+        str(current_user.id), 
         data['otp'], 
         'deletion', 
         f'delete_{bookmark_id}'

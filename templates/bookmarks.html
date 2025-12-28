@@ -262,6 +262,26 @@
 
 <!-- Includes -->
 {% include 'components/commitment_modal.html' %}
+
+<!-- Debug: Verify commitment modal function loaded -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('Checking openCommitmentModal function...');
+        if (typeof window.openCommitmentModal === 'function') {
+            console.log('✅ openCommitmentModal is available');
+        } else {
+            console.error('❌ openCommitmentModal is NOT available');
+        }
+
+        // Verify modal element exists
+        const modal = document.getElementById('commitmentModal');
+        if (modal) {
+            console.log('✅ Commitment modal element found');
+        } else {
+            console.error('❌ Commitment modal element NOT found');
+        }
+    });
+</script>
 {% endblock %}
 
 {% block extra_js %}

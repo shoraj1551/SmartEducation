@@ -79,21 +79,32 @@ class BookmarkManager {
         const container = document.getElementById('filterContainer');
         if (!container) return;
 
-        // Keep "All Items"
-        container.innerHTML = '<div class="filter-tab active" data-filter="all">All Items</div>';
+        // Clear container safely
+        container.innerHTML = '';
 
-        // Sort and Render
+        // Create helper for click handling
+        const onTabClick = (e) => {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            e.target.classList.add('active');
+            this.handleFilter();
+        };
+
+        // Create "All Items" Tab Programmatically to ensure listener works
+        const allTab = document.createElement('div');
+        allTab.className = 'filter-tab active';
+        allTab.dataset.filter = 'all';
+        allTab.textContent = 'All Items';
+        allTab.onclick = onTabClick;
+        container.appendChild(allTab);
+
+        // Sort and Render dynamic tabs
         Array.from(types).sort().forEach(type => {
             const label = type.charAt(0).toUpperCase() + type.slice(1);
             const tab = document.createElement('div');
             tab.className = 'filter-tab';
             tab.dataset.filter = type;
             tab.textContent = label;
-            tab.onclick = (e) => {
-                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active');
-                this.handleFilter();
-            };
+            tab.onclick = onTabClick;
             container.appendChild(tab);
         });
     }
@@ -459,6 +470,11 @@ class BookmarkManager {
             metaString = parts.join(' &nbsp;&bull;&nbsp; ');
         }
 
+        // Inbox Button State
+        const isInboxDisabled = bm.in_inbox ? 'disabled' : '';
+        const inboxBtnText = bm.in_inbox ? '<i class="fas fa-check"></i>' : '<i class="fas fa-inbox"></i>';
+        const inboxBtnClass = bm.in_inbox ? 'action-btn inbox-btn disabled' : 'action-btn inbox-btn';
+
         return `
             <div class="bookmark-card">
                 <div class="status-badge status-${status}">
@@ -501,8 +517,11 @@ class BookmarkManager {
                         </div>
                         <div class="card-actions">
                             <!-- Add to Inbox Button -->
-                            <button class="action-btn inbox-btn" onclick="window.manager.addToInbox('${bm.id}', '${bm.title.replace(/'/g, "\\'")}')" title="Add to Learning Inbox">
-                                <i class="fas fa-inbox"></i>
+                            <button class="${inboxBtnClass}"
+                                    onclick="window.manager.addToInbox('${bm.id}', '${bm.title.replace(/'/g, "\\'")}')"
+                                    title="Add to Learning Inbox"
+                                    ${isInboxDisabled}>
+                                ${inboxBtnText}
                             </button>
                             
                             <!-- Commit Button for Features 1 & 3 -->
@@ -659,6 +678,79 @@ class BookmarkManager {
             btn.disabled = false;
         }
     }
+    // ============================================================================
+    // COMMITMENT MODAL LOGIC
+    // ============================================================================
+
+    openCommitmentModal(id, title) {
+        document.getElementById('commitResourceId').value = id;
+        document.getElementById('commitResourceTitle').textContent = `Commitment for: ${title}`;
+
+        // Default Date: 7 days from now
+        const date = new Date();
+        date.setDate(date.getDate() + 7);
+        document.getElementById('commitDate').valueAsDate = date;
+
+        document.getElementById('commitmentModal').style.display = 'flex';
+    }
+
+    closeCommitmentModal() {
+        document.getElementById('commitmentModal').style.display = 'none';
+        document.getElementById('commitmentForm').reset();
+    }
+
+    async handleCommitment(e) {
+        e.preventDefault();
+
+        const resourceId = document.getElementById('commitResourceId').value;
+        const targetDate = document.getElementById('commitDate').value;
+        const dailyMinutes = document.getElementById('commitMinutes').value;
+
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/commitment', { // Assuming this route handles creation
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    resource_id: resourceId,
+                    target_date: targetDate,
+                    daily_minutes: parseInt(dailyMinutes)
+                })
+            });
+
+            if (response.ok) {
+                alert('Commitment Signed! The Penalty Clause is now active.');
+                this.closeCommitmentModal();
+                // Optionally update UI to show "Signed" status
+                await this.fetchBookmarks();
+            } else {
+                const data = await response.json();
+                alert('Failed to sign commitment: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Commitment error:', error);
+            alert('Network error signing commitment');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+}
+
+// Global functions for HTML onclick handlers
+function openCommitmentModal(id, title) {
+    if (window.manager) window.manager.openCommitmentModal(id, title);
+}
+
+function closeCommitmentModal() {
+    if (window.manager) window.manager.closeCommitmentModal();
 }
 
 function closeUploadModal() {
@@ -667,9 +759,14 @@ function closeUploadModal() {
 
 function closeOtpModal() {
     if (window.manager) window.manager.closeOtpModal();
-
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     window.manager = new BookmarkManager();
+
+    // Bind Commitment Form
+    const commitForm = document.getElementById('commitmentForm');
+    if (commitForm) {
+        commitForm.addEventListener('submit', (e) => window.manager.handleCommitment(e));
+    }
 });

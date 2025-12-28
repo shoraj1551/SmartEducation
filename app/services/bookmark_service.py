@@ -105,9 +105,11 @@ class BookmarkService:
         except Exception as e:
             return None, str(e)
 
+        return list(items), total
+
     @staticmethod
     def get_bookmarks(user_email, page=1, per_page=20):
-        """Fetch paginated bookmarks for a user by email"""
+        """Fetch paginated bookmarks for a user by email, with inbox status"""
         user = User.objects(email=user_email).first()
         if not user:
             return [], 0
@@ -115,5 +117,21 @@ class BookmarkService:
         query = Bookmark.objects(user_id=user.id).order_by('-relevance_score', '-created_at')
         total = query.count()
         items = query.skip((page - 1) * per_page).limit(per_page)
+        
+        # Optimization: Fetch all active inbox URLs for this user in one query
+        from app.models import LearningItem
+        active_urls = set(
+            LearningItem.objects(
+                user_id=user.id, 
+                status__in=['active', 'paused', 'completed']
+            ).distinct('source_url')
+        )
+        
+        # Convert to dictionaries and inject 'in_inbox' flag
+        result = []
+        for item in items:
+            item_dict = item.to_dict()
+            item_dict['in_inbox'] = item.url in active_urls
+            result.append(item_dict)
             
-        return list(items), total
+        return result, total

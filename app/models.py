@@ -38,6 +38,9 @@ class User(Document):
     # Feature: Weekly Seasons (Phase 28)
     weekly_xp = IntField(default=0)
     last_weekly_reset = DateTimeField(default=datetime.utcnow)
+    
+    # Feature: Commitment Reputation (Phase 33)
+    reputation_score = IntField(default=100)  # Starts at 100, decreases on broken commitments
 
     
     # Onboarding / Learning Context (OLD - kept for backward compatibility)

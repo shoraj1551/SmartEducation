@@ -3,7 +3,7 @@
     <div class="modal-content iron-theme">
         <div class="modal-header">
             <h2><i class="fas fa-scroll"></i> Iron Commitment Contract</h2>
-            <button class="close-btn" onclick="closeCommitmentModal()">&times;</button>
+            <button class="close-btn" onclick="window.closeCommitmentModal()">&times;</button>
         </div>
 
         <div class="modal-body">
@@ -58,7 +58,7 @@
         </div>
 
         <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeCommitmentModal()">Cancel</button>
+            <button class="btn btn-secondary" onclick="window.closeCommitmentModal()">Cancel</button>
             <button id="sealContractBtn" class="btn btn-primary iron-btn" onclick="sealContract()" disabled>
                 <i class="fas fa-file-signature"></i> Seal the Contract
             </button>
@@ -67,6 +67,20 @@
 </div>
 
 <style>
+    /* Modal Backdrop */
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    }
+
     /* Iron Theme Styles */
     .iron-theme {
         background: linear-gradient(145deg, #1a1c23, #111);
@@ -350,14 +364,15 @@
         }
     }
 
-    function openCommitmentModal(itemId, itemTitle) {
+    // Make functions globally accessible
+    window.openCommitmentModal = function (itemId, itemTitle) {
         document.getElementById('commitmentModal').style.display = 'flex';
         document.getElementById('contractItemId').value = itemId;
         document.getElementById('contractItemTitle').textContent = itemTitle;
         runRealityCheck(); // Run initial check with defaults
     }
 
-    function closeCommitmentModal() {
+    window.closeCommitmentModal = function () {
         document.getElementById('commitmentModal').style.display = 'none';
     }
 

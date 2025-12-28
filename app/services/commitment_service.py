@@ -52,6 +52,16 @@ class CommitmentService:
         except DoesNotExist:
             raise ValueError("User not found")
         
+        # Phase 33: Enforce 2-commitment maximum
+        active_count = Commitment.objects(user_id=user, status='active').count()
+        if active_count >= 2:
+            active_commitments = Commitment.objects(user_id=user, status='active')
+            commitment_titles = [c.learning_item_id.title for c in active_commitments]
+            raise ValueError(
+                f"Maximum 2 active commitments allowed. You currently have: {', '.join(commitment_titles)}. "
+                f"Please complete or break an existing commitment first."
+            )
+        
         # Check if commitment already exists for this item
         existing = Commitment.objects(
             user_id=user,
@@ -283,13 +293,64 @@ class CommitmentService:
         violation.save()
         return violation
     
+    
     @staticmethod
     def _notify_accountability_partner(commitment):
-        """Send notification to accountability partner"""
-        # Placeholder - would integrate with email service
-        if commitment.accountability_partner_email:
-            # TODO: Send email notification
-            pass
+        """Send notification to accountability partner and user about missed commitment"""
+        from flask_mail import Message
+        from flask import current_app
+        from app import mail
+        
+        user = commitment.user_id
+        
+        # Send email to user about missed commitment
+        try:
+            user_msg = Message(
+                subject='⚠️ Commitment Alert: Missed Session Detected',
+                sender=current_app.config['MAIL_DEFAULT_SENDER'],
+                recipients=[user.email]
+            )
+            user_msg.html = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #ef4444;">Commitment Alert</h2>
+                <p>You missed a session for your commitment:</p>
+                <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <strong>{commitment.learning_item_id.title}</strong><br>
+                    Daily Target: {commitment.daily_study_minutes} minutes
+                </div>
+                <p>Remember your commitment! Get back on track today.</p>
+                <p style="color: #64748b; font-size: 0.9em;">
+                    Current Streak: {commitment.current_streak} days<br>
+                    Longest Streak: {commitment.longest_streak} days
+                </p>
+            </div>
+            """
+            mail.send(user_msg)
+        except Exception as e:
+            print(f"Failed to send user notification: {e}")
+        
+        # Send to accountability partner if exists
+        if commitment.has_accountability_partner and commitment.accountability_partner_email:
+            try:
+                partner_msg = Message(
+                    subject=f'Accountability Alert: {user.name} missed a commitment session',
+                    sender=current_app.config['MAIL_DEFAULT_SENDER'],
+                    recipients=[commitment.accountability_partner_email]
+                )
+                partner_msg.html = f"""
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2>Accountability Partner Alert</h2>
+                    <p>{user.name} missed a session for their commitment:</p>
+                    <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <strong>{commitment.learning_item_id.title}</strong>
+                    </div>
+                    <p>As their accountability partner, please check in with them.</p>
+                </div>
+                """
+                mail.send(partner_msg)
+            except Exception as e:
+                print(f"Failed to send partner notification: {e}")
+
     
     @staticmethod
     def get_active_commitments(user_id):
@@ -377,3 +438,45 @@ class CommitmentService:
         commitment.save()
         
         return commitment
+    
+    @staticmethod
+    def break_commitment(commitment_id, user_id):
+        """
+        Break/abandon a commitment with reputation penalty (Phase 33)
+        
+        Args:
+            commitment_id: Commitment ID
+            user_id: User ID (for ownership verification)
+            
+        Returns:
+            Dictionary with updated commitment and reputation info
+        """
+        try:
+            commitment = Commitment.objects.get(id=commitment_id)
+        except DoesNotExist:
+            raise ValueError("Commitment not found")
+        
+        # Verify ownership
+        if str(commitment.user_id.id) != str(user_id):
+            raise ValueError("Access denied")
+        
+        if commitment.status != 'active':
+            raise ValueError(f"Cannot break commitment with status: {commitment.status}")
+        
+        # Mark as broken
+        commitment.status = 'broken'
+        commitment.broken_at = datetime.utcnow()
+        commitment.save()
+        
+        # Apply reputation penalty
+        user = commitment.user_id
+        REPUTATION_PENALTY = 50  # Deduct 50 points for breaking commitment
+        user.reputation_score = max(0, user.reputation_score - REPUTATION_PENALTY)
+        user.save()
+        
+        return {
+            'commitment': commitment.to_dict(),
+            'reputation_score': user.reputation_score,
+            'penalty_applied': REPUTATION_PENALTY,
+            'message': f'Commitment broken. Reputation decreased by {REPUTATION_PENALTY} points.'
+        }

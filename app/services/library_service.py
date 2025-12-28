@@ -190,6 +190,11 @@ class LibraryService:
 
         if not user:
             return False, "User not found"
+        
+        # Check for duplicate file by title
+        existing = Bookmark.objects(user_id=user, title=title or filename).first()
+        if existing:
+            return False, f"File '{title or filename}' already exists in your library"
             
         # Ensure directory exists in configured static folder
         # Use root_path to be safe against relative path issues
