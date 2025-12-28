@@ -356,9 +356,17 @@ class ScheduleManager {
         const day = String(this.currentDate.getDate()).padStart(2, '0');
         const start_time = `${year}-${month}-${day}T${time}:00`;
 
-        // Calculate end time (1 hour later by default)
+        // Get end time from input field
+        const endTime = document.getElementById('taskEndTime').value;
+        if (!endTime) {
+            alert('Please select an end time');
+            return;
+        }
+
+        // Create end time ISO string
+        const end_time = `${year}-${month}-${day}T${endTime}:00`;
         const startDate = new Date(start_time);
-        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+        const endDate = new Date(end_time);
 
         const start_time_iso = startDate.toISOString();
         const end_time_iso = endDate.toISOString();

@@ -126,6 +126,18 @@ class CommitmentService:
         except Exception as e:
             # Non-blocking error logging (Plan generation shouldn't fail commitment creation)
             print(f"Stats generation failed: {e}")
+        
+        # ---------------------------------------------------------
+        # GOOGLE CALENDAR SYNC (Phase 34.2)
+        # ---------------------------------------------------------
+        # Automatically sync to Google Calendar if connected
+        try:
+            if user.google_calendar_connected:
+                from app.services.google_calendar_service import GoogleCalendarService
+                GoogleCalendarService.sync_commitment_to_google(commitment)
+        except Exception as e:
+            # Non-blocking error logging
+            print(f"Google Calendar sync failed: {e}")
 
         return commitment
     
@@ -467,6 +479,14 @@ class CommitmentService:
         commitment.status = 'broken'
         commitment.broken_at = datetime.utcnow()
         commitment.save()
+        
+        # Phase 34.2: Delete from Google Calendar if synced
+        try:
+            if commitment.user_id.google_calendar_connected:
+                from app.services.google_calendar_service import GoogleCalendarService
+                GoogleCalendarService.delete_google_event(commitment)
+        except Exception as e:
+            print(f"Failed to delete Google Calendar event: {e}")
         
         # Apply reputation penalty
         user = commitment.user_id

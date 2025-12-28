@@ -119,34 +119,96 @@
                     onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(255,255,255,0.08)'; this.style.boxShadow='none';">
             </div>
 
-            <!-- Time and Frequency Row -->
+            <!-- Time and End Time Row -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 2rem;">
                 <div class="form-group">
                     <label
                         style="display: block; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem; color: rgba(255,255,255,0.9); letter-spacing: 0.3px;">
                         <i class="fas fa-clock"
-                            style="margin-right: 0.5rem; color: #3b82f6; font-size: 0.9rem;"></i>Time
+                            style="margin-right: 0.5rem; color: #3b82f6; font-size: 0.9rem;"></i>Start Time
                     </label>
                     <input type="time" id="taskTime" required class="form-control"
                         style="width: 100%; padding: 1rem 1.25rem; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-size: 1rem; transition: all 0.3s; outline: none; color-scheme: dark;"
                         onfocus="this.style.borderColor='#3b82f6'; this.style.background='rgba(59,130,246,0.1)'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)';"
-                        onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(255,255,255,0.08)'; this.style.boxShadow='none';">
+                        onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(255,255,255,0.08)'; this.style.boxShadow='none';"
+                        onchange="updateEndTimeFromStart()">
                 </div>
                 <div class="form-group">
                     <label
                         style="display: block; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem; color: rgba(255,255,255,0.9); letter-spacing: 0.3px;">
-                        <i class="fas fa-repeat"
-                            style="margin-right: 0.5rem; color: #8b5cf6; font-size: 0.9rem;"></i>Frequency
+                        <i class="fas fa-clock" style="margin-right: 0.5rem; color: #10b981; font-size: 0.9rem;"></i>End
+                        Time
                     </label>
-                    <select id="taskFreq" class="form-control"
-                        style="width: 100%; padding: 1rem 1.25rem; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-size: 1rem; transition: all 0.3s; outline: none; cursor: pointer;"
-                        onfocus="this.style.borderColor='#8b5cf6'; this.style.background='rgba(139,92,246,0.1)'; this.style.boxShadow='0 0 0 3px rgba(139,92,246,0.1)';"
+                    <input type="time" id="taskEndTime" required class="form-control"
+                        style="width: 100%; padding: 1rem 1.25rem; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-size: 1rem; transition: all 0.3s; outline: none; color-scheme: dark;"
+                        onfocus="this.style.borderColor='#10b981'; this.style.background='rgba(16,185,129,0.1)'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)';"
                         onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(255,255,255,0.08)'; this.style.boxShadow='none';">
-                        <option value="once" style="color: black;">Once</option>
-                        <option value="daily" style="color: black;">Daily</option>
-                        <option value="weekly" style="color: black;">Weekly</option>
-                    </select>
                 </div>
+            </div>
+
+            <!-- Frequency -->
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <label
+                    style="display: block; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem; color: rgba(255,255,255,0.9); letter-spacing: 0.3px;">
+                    <i class="fas fa-repeat"
+                        style="margin-right: 0.5rem; color: #8b5cf6; font-size: 0.9rem;"></i>Frequency
+                </label>
+                <select id="taskFreq" class="form-control"
+                    style="width: 100%; padding: 1rem 1.25rem; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-size: 1rem; transition: all 0.3s; outline: none; cursor: pointer;"
+                    onfocus="this.style.borderColor='#8b5cf6'; this.style.background='rgba(139,92,246,0.1)'; this.style.boxShadow='0 0 0 3px rgba(139,92,246,0.1)';"
+                    onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(255,255,255,0.08)'; this.style.boxShadow='none';">
+                    <option value="once" style="color: black;">Once</option>
+                    <option value="daily" style="color: black;">Daily</option>
+                    <option value="weekly" style="color: black;">Weekly</option>
+                </select>
+            </div>
+
+            <!-- Duration Selector (Quick Presets) -->
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <label
+                    style="display: block; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem; color: rgba(255,255,255,0.9); letter-spacing: 0.3px;">
+                    <i class="fas fa-hourglass-half"
+                        style="margin-right: 0.5rem; color: #10b981; font-size: 0.9rem;"></i>Duration
+                </label>
+                <div class="duration-selector" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <button type="button" class="duration-option" data-minutes="30" onclick="selectDuration(this, 30)"
+                        style="flex: 1; min-width: 90px; padding: 0.85rem 1rem; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 10px; color: rgba(255,255,255,0.7); font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 0.25rem;"
+                        onmouseover="if(!this.classList.contains('active')) { this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='rgba(255,255,255,0.2)'; }"
+                        onmouseout="if(!this.classList.contains('active')) { this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)'; }">
+                        <span style="font-size: 1.1rem;">30</span>
+                        <span style="font-size: 0.75rem; opacity: 0.6;">minutes</span>
+                    </button>
+                    <button type="button" class="duration-option active" data-minutes="60"
+                        onclick="selectDuration(this, 60)"
+                        style="flex: 1; min-width: 90px; padding: 0.85rem 1rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: 2px solid #10b981; border-radius: 10px; color: white; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; box-shadow: 0 4px 12px rgba(16,185,129,0.3);"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(16,185,129,0.4)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(16,185,129,0.3)';">
+                        <span style="font-size: 1.1rem;">1</span>
+                        <span style="font-size: 0.75rem; opacity: 0.9;">hour</span>
+                    </button>
+                    <button type="button" class="duration-option" data-minutes="90" onclick="selectDuration(this, 90)"
+                        style="flex: 1; min-width: 90px; padding: 0.85rem 1rem; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 10px; color: rgba(255,255,255,0.7); font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 0.25rem;"
+                        onmouseover="if(!this.classList.contains('active')) { this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='rgba(255,255,255,0.2)'; }"
+                        onmouseout="if(!this.classList.contains('active')) { this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)'; }">
+                        <span style="font-size: 1.1rem;">1.5</span>
+                        <span style="font-size: 0.75rem; opacity: 0.6;">hours</span>
+                    </button>
+                    <button type="button" class="duration-option" data-minutes="120" onclick="selectDuration(this, 120)"
+                        style="flex: 1; min-width: 90px; padding: 0.85rem 1rem; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 10px; color: rgba(255,255,255,0.7); font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 0.25rem;"
+                        onmouseover="if(!this.classList.contains('active')) { this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='rgba(255,255,255,0.2)'; }"
+                        onmouseout="if(!this.classList.contains('active')) { this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)'; }">
+                        <span style="font-size: 1.1rem;">2</span>
+                        <span style="font-size: 0.75rem; opacity: 0.6;">hours</span>
+                    </button>
+                    <button type="button" class="duration-option" data-minutes="180" onclick="selectDuration(this, 180)"
+                        style="flex: 1; min-width: 90px; padding: 0.85rem 1rem; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 10px; color: rgba(255,255,255,0.7); font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 0.25rem;"
+                        onmouseover="if(!this.classList.contains('active')) { this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='rgba(255,255,255,0.2)'; }"
+                        onmouseout="if(!this.classList.contains('active')) { this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)'; }">
+                        <span style="font-size: 1.1rem;">3</span>
+                        <span style="font-size: 0.75rem; opacity: 0.6;">hours</span>
+                    </button>
+                </div>
+                <input type="hidden" id="taskDuration" value="60">
             </div>
 
             <!-- Priority and Importance Section -->
@@ -278,5 +340,60 @@
             document.getElementById('addTaskModal').style.display = "none";
         }
     };
+
+    // Duration selector function - auto-fills end time
+    function selectDuration(button, minutes) {
+        // Remove active class from all duration buttons
+        document.querySelectorAll('.duration-option').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.background = 'rgba(255,255,255,0.05)';
+            btn.style.border = '2px solid rgba(255,255,255,0.1)';
+            btn.style.color = 'rgba(255,255,255,0.7)';
+            btn.style.boxShadow = 'none';
+        });
+
+        // Add active class to clicked button
+        button.classList.add('active');
+        button.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+        button.style.border = '2px solid #10b981';
+        button.style.color = 'white';
+        button.style.boxShadow = '0 4px 12px rgba(16,185,129,0.3)';
+
+        // Update hidden input
+        document.getElementById('taskDuration').value = minutes;
+
+        // Auto-calculate and fill end time
+        const startTime = document.getElementById('taskTime').value;
+        if (startTime) {
+            const [hours, mins] = startTime.split(':').map(Number);
+            const startDate = new Date();
+            startDate.setHours(hours, mins, 0, 0);
+
+            const endDate = new Date(startDate.getTime() + minutes * 60 * 1000);
+            const endHours = String(endDate.getHours()).padStart(2, '0');
+            const endMins = String(endDate.getMinutes()).padStart(2, '0');
+
+            document.getElementById('taskEndTime').value = `${endHours}:${endMins}`;
+        }
+    }
+
+    // Update end time when start time changes (if duration is selected)
+    function updateEndTimeFromStart() {
+        const durationMinutes = parseInt(document.getElementById('taskDuration').value);
+        if (durationMinutes) {
+            const startTime = document.getElementById('taskTime').value;
+            if (startTime) {
+                const [hours, mins] = startTime.split(':').map(Number);
+                const startDate = new Date();
+                startDate.setHours(hours, mins, 0, 0);
+
+                const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
+                const endHours = String(endDate.getHours()).padStart(2, '0');
+                const endMins = String(endDate.getMinutes()).padStart(2, '0');
+
+                document.getElementById('taskEndTime').value = `${endHours}:${endMins}`;
+            }
+        }
+    }
 </script>
 {% endblock %}

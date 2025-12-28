@@ -79,7 +79,8 @@ def create_app():
     app.register_blueprint(pod_bp)
     app.register_blueprint(advanced_pod_bp)
     app.register_blueprint(live_class_bp)
-    app.register_blueprint(schedule_bp)
+    from app.routes.schedule_routes import schedule_bp
+    from app.routes.calendar_routes import calendar_bp  # Phase 34.2
     # app.register_blueprint(video_guard_bp)
     # app.register_blueprint(weekly_review_bp)
     # app.register_blueprint(burnout_bp)
@@ -88,5 +89,7 @@ def create_app():
     # app.register_blueprint(admin_bp)
     # app.register_blueprint(category_bp)
     app.register_blueprint(learning_bp)
+    app.register_blueprint(calendar_bp)  # Phase 34.2
+
 
     return app

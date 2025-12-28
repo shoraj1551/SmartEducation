@@ -33,6 +33,52 @@
                     </div>
                 </div>
 
+                <!-- Phase 34: Start Time & End Time (Standardized UX) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label>Start Time</label>
+                        <input type="time" id="contractStartTime" class="iron-input"
+                            onchange="updateCommitmentEndTime()">
+                        <small style="color: #94a3b8; font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                            When you'll start each day
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label>End Time</label>
+                        <input type="time" id="contractEndTime" class="iron-input">
+                        <small style="color: #94a3b8; font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                            When you'll finish each day
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Quick Duration Presets</label>
+                    <small style="color: #94a3b8; font-size: 0.85rem; display: block; margin-bottom: 0.75rem;">
+                        Click to auto-fill end time, or manually set above
+                    </small>
+                    <div class="duration-options" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" class="duration-btn" data-duration="15"
+                            style="flex: 1; min-width: 60px; padding: 0.6rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; transition: all 0.2s;">15
+                            min</button>
+                        <button type="button" class="duration-btn active" data-duration="30"
+                            style="flex: 1; min-width: 60px; padding: 0.6rem; background: linear-gradient(to right, #d97706, #b45309); border: 1px solid #d97706; border-radius: 6px; color: white; cursor: pointer; transition: all 0.2s; font-weight: bold;">30
+                            min</button>
+                        <button type="button" class="duration-btn" data-duration="45"
+                            style="flex: 1; min-width: 60px; padding: 0.6rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; transition: all 0.2s;">45
+                            min</button>
+                        <button type="button" class="duration-btn" data-duration="60"
+                            style="flex: 1; min-width: 60px; padding: 0.6rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; transition: all 0.2s;">60
+                            min</button>
+                        <button type="button" class="duration-btn" data-duration="90"
+                            style="flex: 1; min-width: 60px; padding: 0.6rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; transition: all 0.2s;">90
+                            min</button>
+                        <button type="button" class="duration-btn" data-duration="120"
+                            style="flex: 1; min-width: 60px; padding: 0.6rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; transition: all 0.2s;">2
+                            hrs</button>
+                    </div>
+                </div>
+
                 <!-- Reality Check Feedback -->
                 <div id="realityCheckFeedback" class="reality-feedback">
                     <div class="reality-spinner" style="display: none;">
@@ -197,6 +243,18 @@
         font-size: 0.8rem;
         text-transform: uppercase;
     }
+
+    /* Duration Button Styles */
+    .duration-btn:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+
+    .duration-btn.active {
+        background: linear-gradient(to right, #d97706, #b45309) !important;
+        border-color: #d97706 !important;
+        font-weight: bold;
+    }
 </style>
 
 <script>
@@ -213,7 +271,72 @@
             future.setDate(future.getDate() + 30);
             dateInput.valueAsDate = future;
         }
+
+        // Phase 34: Handle duration button clicks - auto-fill end time
+        document.querySelectorAll('.duration-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const duration = parseInt(this.getAttribute('data-duration'));
+
+                // Remove active class from all buttons
+                document.querySelectorAll('.duration-btn').forEach(b => {
+                    b.classList.remove('active');
+                    b.style.background = 'rgba(255,255,255,0.05)';
+                    b.style.border = '1px solid rgba(255,255,255,0.2)';
+                    b.style.fontWeight = 'normal';
+                });
+
+                // Add active class to clicked button
+                this.classList.add('active');
+                this.style.background = 'linear-gradient(to right, #d97706, #b45309)';
+                this.style.border = '1px solid #d97706';
+                this.style.fontWeight = 'bold';
+
+                // Auto-calculate and fill end time
+                const startTime = document.getElementById('contractStartTime').value;
+                if (startTime) {
+                    const [hours, mins] = startTime.split(':').map(Number);
+                    const start = new Date();
+                    start.setHours(hours, mins, 0, 0);
+
+                    const end = new Date(start.getTime() + duration * 60 * 1000);
+                    const endHours = String(end.getHours()).padStart(2, '0');
+                    const endMins = String(end.getMinutes()).padStart(2, '0');
+
+                    document.getElementById('contractEndTime').value = `${endHours}:${endMins}`;
+                } else {
+                    alert('Please select a start time first');
+                }
+            });
+        });
     });
+
+    // Update end time when start time changes (if duration is selected)
+    function updateCommitmentEndTime() {
+        const activeBtn = document.querySelector('.duration-btn.active');
+        if (activeBtn) {
+            const duration = parseInt(activeBtn.getAttribute('data-duration'));
+            const startTime = document.getElementById('contractStartTime').value;
+
+            if (startTime && duration) {
+                const [hours, mins] = startTime.split(':').map(Number);
+                const start = new Date();
+                start.setHours(hours, mins, 0, 0);
+
+                const end = new Date(start.getTime() + duration * 60 * 1000);
+                const endHours = String(end.getHours()).padStart(2, '0');
+                const endMins = String(end.getMinutes()).padStart(2, '0');
+
+                document.getElementById('contractEndTime').value = `${endHours}:${endMins}`;
+            }
+        }
+    }
+
+    // Remove old generateTimeSlots function - no longer needed
+    function formatTime12Hour(hour, min) {
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+        return `${hour12}:${min.toString().padStart(2, '0')} ${period}`;
+    }
 
     function initCanvas() {
         const canvas = document.getElementById('signatureCanvas');
@@ -380,34 +503,53 @@
         const itemId = document.getElementById('contractItemId').value;
         const date = document.getElementById('contractTargetDate').value;
         const minutes = document.getElementById('contractDailyMinutes').value;
+
+        // Phase 34: Use new start/end time fields instead of time slot
+        const startTime = document.getElementById('contractStartTime').value;
+        const endTime = document.getElementById('contractEndTime').value;
+
+        const activeDurationBtn = document.querySelector('.duration-btn.active');
+        const sessionDuration = activeDurationBtn ? parseInt(activeDurationBtn.dataset.duration) : 30;
         const token = localStorage.getItem('token');
 
+        if (!hasSigned) {
+            alert('Please sign the contract first');
+            return;
+        }
+
+        if (!date) {
+            alert('Please select a target completion date');
+            return;
+        }
+
         try {
-            const response = await fetch('/api/commitment/create', {
+            const res = await fetch('/api/commitment/create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    learning_item_id: itemId,
-                    target_completion_date: date,
-                    daily_study_minutes: parseInt(minutes)
+                    bookmark_id: itemId,
+                    target_date: date,
+                    daily_minutes: parseInt(minutes),
+                    preferred_time_slot: startTime && endTime ? `${startTime}-${endTime}` : '', // Format for backend compatibility
+                    session_duration_minutes: sessionDuration
                 })
             });
 
-            const data = await response.json();
-
-            if (response.ok) {
-                alert('Commitment Sealed! Your journey begins.');
-                closeCommitmentModal();
-                // Optionally refresh grid to show locked status
-                if (window.loadBookmarks) window.loadBookmarks();
+            const data = await res.json();
+            if (res.ok) {
+                alert('✅ Commitment sealed! Your journey begins now.');
+                window.closeCommitmentModal();
+                location.reload(); // Refresh to show updated state
             } else {
-                alert('Error: ' + data.error);
+                alert('Error: ' + (data.error || 'Failed to create commitment'));
             }
         } catch (err) {
-            alert('Failed to seal contract');
+            console.error(err);
+            alert('Network error. Please try again.');
         }
     }
 </script>
+```

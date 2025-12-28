@@ -13,7 +13,7 @@ class Config:
     # Application
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'dev-jwt-secret-key-change-in-production')
-    DEBUG = os.getenv('DEBUG', 'True') == 'True'
+    DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
     
     # Database
     # Database
@@ -53,12 +53,19 @@ class Config:
     
     # JWT Configuration
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
-
+    
+    # Phase 34.2: Google Calendar Integration
+    GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
+    GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
+    GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:5000/api/calendar/google/callback')
+    
     @classmethod
     def validate(cls):
-        """Validate that required environment variables are set in production."""
+        """Validate critical configuration in production"""
+        # Skip validation in debug/development mode
         if cls.DEBUG:
-            return  # Skip validation in debug mode
+            return
+            
         required = {
             'SECRET_KEY': cls.SECRET_KEY,
             'JWT_SECRET_KEY': cls.JWT_SECRET_KEY,

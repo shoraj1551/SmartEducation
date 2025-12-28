@@ -41,8 +41,13 @@ class User(Document):
     
     # Feature: Commitment Reputation (Phase 33)
     reputation_score = IntField(default=100)  # Starts at 100, decreases on broken commitments
-
     
+    # Feature: Google Calendar Sync (Phase 34.2)
+    google_calendar_token = StringField()  # Access token
+    google_calendar_refresh_token = StringField()  # Refresh token for persistent access
+    google_calendar_token_expiry = DateTimeField()  # When the token expires
+    google_calendar_connected = BooleanField(default=False)  # Connection status
+
     # Onboarding / Learning Context (OLD - kept for backward compatibility)
     learning_goal = StringField(max_length=50) # upskill, switch, academic, hobby
     interests = ListField(StringField(max_length=50)) # tech, business, design, etc.
@@ -669,6 +674,10 @@ class Commitment(Document):
     target_completion_date = DateTimeField(required=True)
     daily_study_minutes = IntField(required=True)  # Committed daily study time
     study_days_per_week = IntField(default=5)  # How many days per week
+    
+    # Phase 34: Time Slot Selection
+    preferred_time_slot = StringField(max_length=20)  # e.g., "09:00-09:30"
+    session_duration_minutes = IntField(default=30)  # 15, 30, 45, 60, 90, etc.
     
     # Lock Settings
     is_locked = BooleanField(default=True)  # Once locked, cannot be easily modified
